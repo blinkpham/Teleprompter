@@ -28,7 +28,7 @@ export const groupCheatsheetResults = (
       familyId: item.id,
       entryIds: catalog.entries
         .filter((entry) => entry.familyId === item.id && scores.has(entry.id))
-        .sort((left, right) => left.order - right.order)
+        .sort((left, right) => (scores.get(right.id) ?? 0) - (scores.get(left.id) ?? 0) || left.order - right.order)
         .map((entry) => entry.id),
       scores: Object.fromEntries(catalog.entries.filter((entry) => entry.familyId === item.id).map((entry) => [entry.id, scores.get(entry.id) ?? 0])),
     }))

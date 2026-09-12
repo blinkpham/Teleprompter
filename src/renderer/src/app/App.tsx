@@ -1,135 +1,164 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Search, Copy, Check, Images, ListFilter } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { catalog } from '../../../content/catalog';
-import { buildSearchIndex, searchCatalog } from '../../../engine';
-import type { Mode } from '../../../shared/catalog-types';
-import type { BootstrapData, DesktopResult } from '../../../shared/desktop-types';
+import { buildSearchIndex, groupCheatsheetResults, resolvePreset, searchCatalog, selectGalleryResults } from '../../../engine';
+import type { CategoryId, FamilyId, Mode, ThemePreference, Technique } from '../../../shared/catalog-types';
+import type { BootstrapData, DesktopResult, PersistenceStatus, Platform } from '../../../shared/desktop-types';
+import { AppShell } from '../ui/AppShell';
+import { CheatsheetView } from '../ui/CheatsheetView';
+import { type CopyOutcome } from '../ui/CopyButton';
+import { GalleryView } from '../ui/GalleryView';
+import { TechniqueSheet } from '../ui/TechniqueSheet';
 
-const index = buildSearchIndex(catalog);
+const searchIndex = buildSearchIndex(catalog);
+
+interface AppState {
+  readonly mode: Mode;
+  readonly query: string;
+  readonly galleryCategory: CategoryId | 'all';
+  readonly favoritesOnly: boolean;
+  readonly cheatsheetFamily: FamilyId | 'all';
+  readonly activeTechniqueId?: string;
+  readonly featuredTechniqueId: string;
+}
+
+const initialState: AppState = {
+  mode: 'gallery',
+  query: '',
+  galleryCategory: 'all',
+  favoritesOnly: false,
+  cheatsheetFamily: 'all',
+  featuredTechniqueId: 'surgical-edit',
+};
+
+type Action =
+  | { readonly type: 'mode'; readonly mode: Mode }
+  | { readonly type: 'query'; readonly query: string }
+  | { readonly type: 'gallery-category'; readonly category: CategoryId | 'all' }
+  | { readonly type: 'favorites-only'; readonly enabled: boolean }
+  | { readonly type: 'cheatsheet-family'; readonly family: FamilyId | 'all' }
+  | { readonly type: 'open-technique'; readonly id: string }
+  | { readonly type: 'close-technique' }
+  | { readonly type: 'feature'; readonly id: string };
+
+function reducer(state: AppState, action: Action): AppState {
+  switch (action.type) {
+    case 'mode': return { ...state, mode: action.mode, activeTechniqueId: undefined };
+    case 'query': return { ...state, query: action.query, activeTechniqueId: undefined };
+    case 'gallery-category': return { ...state, galleryCategory: action.category, activeTechniqueId: undefined };
+    case 'favorites-only': return { ...state, favoritesOnly: action.enabled, activeTechniqueId: undefined };
+    case 'cheatsheet-family': return { ...state, cheatsheetFamily: action.family };
+    case 'open-technique': return { ...state, activeTechniqueId: action.id };
+    case 'close-technique': return { ...state, activeTechniqueId: undefined };
+    case 'feature': return { ...state, featuredTechniqueId: action.id };
+    default: return state;
+  }
+}
 
 export function App() {
-  const [mode, setMode] = useState<Mode>('gallery');
-  const [query, setQuery] = useState('');
+  const [state, dispatch] = useReducer(reducer, initialState);
   const [bootstrap, setBootstrap] = useState<BootstrapData | null>(null);
-  const [copied, setCopied] = useState(false);
-  const [copyMessage, setCopyMessage] = useState('');
-  const technique = catalog.techniques[0];
-  const results = useMemo(() => searchCatalog(index, query), [query]);
+  const [platform, setPlatform] = useState<Platform>('darwin');
+  const [themePreference, setThemePreference] = useState<ThemePreference>('system');
+  const [persistenceStatus, setPersistenceStatus] = useState<PersistenceStatus>('disk');
+  const [favoriteIds, setFavoriteIds] = useState<ReadonlySet<string>>(new Set());
+  const [acknowledgedFavoriteIds, setAcknowledgedFavoriteIds] = useState<ReadonlySet<string>>(new Set());
+  const [pendingFavoriteIds, setPendingFavoriteIds] = useState<ReadonlySet<string>>(new Set());
+  const searchRef = useRef<HTMLInputElement>(null);
+  const openerRef = useRef<HTMLButtonElement | null>(null);
+  const results = useMemo(() => searchCatalog(searchIndex, state.query), [state.query]);
+  const galleryIds = useMemo(() => selectGalleryResults(results, catalog, state.galleryCategory, state.favoritesOnly, acknowledgedFavoriteIds), [results, state.galleryCategory, state.favoritesOnly, acknowledgedFavoriteIds]);
+  const galleryTechniques = useMemo(() => galleryIds.map((id) => catalog.techniqueById[id]).filter((technique): technique is Technique => Boolean(technique)), [galleryIds]);
+  const groups = useMemo(() => groupCheatsheetResults(results, catalog, state.cheatsheetFamily), [results, state.cheatsheetFamily]);
+  const activeTechnique = state.activeTechniqueId ? catalog.techniqueById[state.activeTechniqueId] : undefined;
+  const feature = catalog.techniqueById[state.featuredTechniqueId];
+  const linkedEntries = activeTechnique?.shorthandEntryIds.map((id) => catalog.entryById[id]).filter((entry): entry is (typeof catalog.entries)[number] => Boolean(entry)) ?? [];
+  const activeCautions = activeTechnique?.cautionIds.map((id) => catalog.cautions.find((caution) => caution.id === id)).filter((caution): caution is (typeof catalog.cautions)[number] => Boolean(caution)) ?? [];
 
   useEffect(() => {
     let active = true;
     const load = async () => {
       const result = await window.imageDirector?.getBootstrap();
-      if (active && result?.ok) {
-        setBootstrap(result);
-        setMode(result.preferences.lastMode);
-      }
+      if (!active || !result?.ok) return;
+      setBootstrap(result);
+      setPlatform(result.platform);
+      setThemePreference(result.preferences.themePreference);
+      setPersistenceStatus(result.persistenceStatus);
+      const restored = new Set(result.preferences.favoriteTechniqueIds);
+      setFavoriteIds(restored);
+      setAcknowledgedFavoriteIds(restored);
+      dispatch({ type: 'mode', mode: result.preferences.lastMode });
     };
     void load();
     const unsubscribe = window.imageDirector?.onCommand((command) => {
-      if (command === 'show-gallery') setMode('gallery');
-      if (command === 'show-cheatsheet') setMode('cheatsheet');
-      if (command === 'focus-search') document.querySelector<HTMLInputElement>('#search')?.focus();
+      if (command === 'focus-search') {
+        dispatch({ type: 'close-technique' });
+        searchRef.current?.focus();
+        searchRef.current?.select();
+      }
+      if (command === 'show-gallery') dispatch({ type: 'mode', mode: 'gallery' });
+      if (command === 'show-cheatsheet') dispatch({ type: 'mode', mode: 'cheatsheet' });
     });
-    return () => {
-      active = false;
-      unsubscribe?.();
-    };
+    return () => { active = false; unsubscribe?.(); };
   }, []);
 
-  const copyPrompt = async () => {
-    if (!technique) return;
-    setCopied(false);
-    setCopyMessage('');
+  const copy = useCallback(async (payload: string): Promise<CopyOutcome> => {
     const result: DesktopResult = window.imageDirector
-      ? await window.imageDirector.copyText({ text: technique.prompt })
+      ? await window.imageDirector.copyText({ text: payload })
       : { ok: false, error: { code: 'UNAVAILABLE', message: 'Open the desktop app to use native copy.' } };
-    if (result.ok) {
-      setCopied(true);
-      setCopyMessage('Copied through the desktop clipboard.');
-      window.setTimeout(() => setCopied(false), 1600);
-    } else {
-      setCopyMessage(result.error.message);
+    return result.ok ? { ok: true } : { ok: false, message: result.error.message };
+  }, []);
+
+  const changeMode = (mode: Mode) => {
+    dispatch({ type: 'mode', mode });
+    void window.imageDirector?.setLastMode({ mode }).then((result) => {
+      if (result?.ok) setPersistenceStatus(result.persistenceStatus);
+    });
+  };
+
+  const changeTheme = (theme: ThemePreference) => {
+    const previous = themePreference;
+    setThemePreference(theme);
+    void window.imageDirector?.setThemePreference({ themePreference: theme }).then((result) => {
+      if (result?.ok) setPersistenceStatus(result.persistenceStatus);
+      else setThemePreference(previous);
+    });
+  };
+
+  const toggleFavorite = (technique: Technique) => {
+    if (pendingFavoriteIds.has(technique.id)) return;
+    const favorited = !favoriteIds.has(technique.id);
+    setFavoriteIds((previous) => {
+      const next = new Set(previous);
+      if (favorited) next.add(technique.id); else next.delete(technique.id);
+      return next;
+    });
+    setPendingFavoriteIds((previous) => new Set(previous).add(technique.id));
+    const request = window.imageDirector?.setFavorite({ techniqueId: technique.id, favorited });
+    if (!request) {
+      setPendingFavoriteIds((previous) => { const next = new Set(previous); next.delete(technique.id); return next; });
+      setFavoriteIds((previous) => { const next = new Set(previous); if (favorited) next.delete(technique.id); else next.add(technique.id); return next; });
+      return;
     }
+    void request.then((result) => {
+      setPendingFavoriteIds((previous) => { const next = new Set(previous); next.delete(technique.id); return next; });
+      if (result.ok) {
+        setAcknowledgedFavoriteIds((previous) => { const next = new Set(previous); if (result.favorited) next.add(technique.id); else next.delete(technique.id); return next; });
+        setPersistenceStatus(result.persistenceStatus);
+      } else {
+        setFavoriteIds((previous) => { const next = new Set(previous); if (favorited) next.delete(technique.id); else next.add(technique.id); return next; });
+      }
+    });
   };
 
-  const changeMode = (nextMode: Mode) => {
-    setMode(nextMode);
-    void window.imageDirector?.setLastMode({ mode: nextMode });
-  };
-
-  return (
-    <main className="app-shell">
-      <aside className="rail" aria-label="Primary navigation">
-        <div className="brand-mark" aria-label="Image Director">ID</div>
-        <div className="mode-tabs" role="tablist" aria-label="View mode">
-          <button className={mode === 'gallery' ? 'mode-tab selected' : 'mode-tab'} role="tab" aria-selected={mode === 'gallery'} onClick={() => changeMode('gallery')}>
-            <Images size={20} />
-            <span>Gallery</span>
-          </button>
-          <button className={mode === 'cheatsheet' ? 'mode-tab selected' : 'mode-tab'} role="tab" aria-selected={mode === 'cheatsheet'} onClick={() => changeMode('cheatsheet')}>
-            <ListFilter size={20} />
-            <span>Cheatsheet</span>
-          </button>
-        </div>
-        <div className="rail-note">Offline<br />prompt library</div>
-      </aside>
-
-      <section className="workspace">
-        <header className="workspace-header">
-          <div>
-            <p className="eyebrow">Image Director</p>
-            <h1>{mode === 'gallery' ? 'Gallery' : 'Cheatsheet'}</h1>
-            <p className="subheading">{mode === 'gallery' ? 'Reusable prompts for precise image edits.' : 'Production shorthand, meanings, and source direction.'}</p>
-          </div>
-          <label className="search-field" htmlFor="search">
-            <Search size={17} aria-hidden="true" />
-            <input id="search" value={query} onChange={(event) => setQuery(event.target.value.slice(0, 200))} placeholder="Search prompts and shorthand" />
-            {query && <button type="button" aria-label="Clear search" onClick={() => setQuery('')}>×</button>}
-          </label>
-        </header>
-
-        <div className="content-area">
-          <div className="status-row" aria-live="polite">
-            <span>{query ? `${results.techniqueCount} Gallery · ${results.entryCount} Cheatsheet matches` : 'Slice A seed catalog'}</span>
-            {bootstrap && <span className="persistence-status">Preferences: {bootstrap.preferences.themePreference} · {bootstrap.persistenceStatus}</span>}
-          </div>
-
-          {mode === 'gallery' ? (
-            <article className="seed-card">
-              <div className="seed-preview" aria-hidden="true"><span>Diagram</span><div className="target-corner" /></div>
-              <div className="seed-copy">
-                <p className="eyebrow">{technique?.categoryId.replace('-', ' ')}</p>
-                <h2>{technique?.title}</h2>
-                <p className="summary">{technique?.summary}</p>
-                <div className="prompt-block">
-                  <p className="prompt-label">Full prompt</p>
-                  <p className="prompt-text">{technique?.prompt}</p>
-                </div>
-                <div className="action-row">
-                  <button className="primary-button" type="button" onClick={() => void copyPrompt()}>{copied ? <Check size={17} /> : <Copy size={17} />} {copied ? 'Copied' : 'Copy prompt'}</button>
-                  <code>{technique?.shorthandTemplate}</code>
-                </div>
-                <p className={copyMessage ? 'copy-message visible' : 'copy-message'}>{copyMessage}</p>
-              </div>
-            </article>
-          ) : (
-            <article className="cheatsheet-seed">
-              <p className="eyebrow">Reference row</p>
-              <div className="token-row"><code>fix:</code><span>Make one precise local correction.</span><button type="button" onClick={() => void copyText('fix:')}><Copy size={16} /> Copy token</button></div>
-              <div className="token-row"><code>hq</code><span>Request a quality-restoration pass.</span><button type="button" onClick={() => void copyText('hq')}><Copy size={16} /> Copy token</button></div>
-              <div className="token-row"><code>cam:wide35</code><span>Use a versatile environmental advertising feel.</span><button type="button" onClick={() => void copyText('cam:wide35')}><Copy size={16} /> Copy token</button></div>
-            </article>
-          )}
-        </div>
-      </section>
-    </main>
-  );
-
-  async function copyText(text: string) {
-    const result: DesktopResult = window.imageDirector
-      ? await window.imageDirector.copyText({ text })
-      : { ok: false, error: { code: 'UNAVAILABLE', message: 'Open the desktop app to use native copy.' } };
-    setCopyMessage(result.ok ? `Copied “${text}”.` : result.error.message);
-  }
+  return <AppShell platform={platform} mode={state.mode} query={state.query} queryCounts={{ gallery: results.techniqueCount, cheatsheet: results.entryCount }} themePreference={themePreference} persistenceStatus={persistenceStatus} appVersion={bootstrap?.appVersion ?? '0.1.0'} searchRef={searchRef} onModeChange={changeMode} onQueryChange={(query) => dispatch({ type: 'query', query })} onThemeChange={changeTheme}>
+    <div className="mode-panel" hidden={state.mode !== 'gallery'}>
+      <div className="panel-intro"><div><p className="panel-kicker">Source-backed recipes</p><h2>Find a precise change</h2></div><p className="panel-description">Open a technique for the full prompt, linked shorthand, and preservation notes.</p></div>
+      <GalleryView techniques={galleryTechniques} categories={catalog.categories} category={state.galleryCategory} favoritesOnly={state.favoritesOnly} favoriteIds={favoriteIds} pendingFavoriteIds={pendingFavoriteIds} hasQuery={!results.isEmptyQuery} feature={feature} shownCount={galleryTechniques.length} copy={copy} onCategoryChange={(category) => dispatch({ type: 'gallery-category', category })} onFavoritesChange={(enabled) => dispatch({ type: 'favorites-only', enabled })} onFeatureChange={(technique) => dispatch({ type: 'feature', id: technique.id })} onOpen={(technique) => { openerRef.current = document.activeElement instanceof HTMLButtonElement ? document.activeElement : null; dispatch({ type: 'open-technique', id: technique.id }); }} onFavorite={toggleFavorite} />
+    </div>
+    <div className="mode-panel" hidden={state.mode !== 'cheatsheet'}>
+      <div className="panel-intro"><div><p className="panel-kicker">104 source-derived rows</p><h2>Keep the shorthand close</h2></div><p className="panel-description">Search a token, inspect its direction, and copy exactly the form the source defines.</p></div>
+      <CheatsheetView groups={groups} families={catalog.families} entriesById={catalog.entryById} cautions={catalog.cautions} resolutionExamples={catalog.resolutionExamples} activeFamily={state.cheatsheetFamily} shownCount={groups.reduce((total, group) => total + group.entryIds.length, 0)} copy={copy} resolvePreset={(id) => resolvePreset(id, catalog)} onFamilyChange={(family) => dispatch({ type: 'cheatsheet-family', family })} />
+    </div>
+    <TechniqueSheet technique={activeTechnique} linkedEntries={linkedEntries} cautions={activeCautions} isFavorite={activeTechnique ? favoriteIds.has(activeTechnique.id) : false} copy={copy} onClose={() => { dispatch({ type: 'close-technique' }); window.setTimeout(() => openerRef.current?.focus(), 0); }} onFavorite={toggleFavorite} />
+  </AppShell>;
 }

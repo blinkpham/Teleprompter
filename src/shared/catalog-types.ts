@@ -129,10 +129,20 @@ export interface SearchResults {
   readonly entryCount: number;
 }
 
+export interface SearchFields {
+  readonly exactTokens: readonly string[];
+  readonly looseTokens: readonly string[];
+  readonly title: string;
+  readonly label: string;
+  readonly summary: string;
+  readonly body: string;
+  readonly order: number;
+}
+
 export interface SearchIndex {
   readonly catalog: Catalog;
-  readonly techniques: Readonly<Record<string, string>>;
-  readonly entries: Readonly<Record<string, string>>;
+  readonly techniques: Readonly<Record<string, SearchFields>>;
+  readonly entries: Readonly<Record<string, SearchFields>>;
 }
 
 export interface ResolvedPreset {

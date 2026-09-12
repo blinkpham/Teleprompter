@@ -1,15 +1,22 @@
-import type {
-  Catalog,
-  Category,
-  Caution,
-  CheatsheetEntry,
-  Family,
-  ResolutionExample,
-  ShorthandEntry,
-  Technique,
-} from '../shared/catalog-types';
+import type { Catalog, Category, Caution, Family, ResolutionExample } from '../shared/catalog-types';
+import { techniques } from './techniques';
+import { entries } from './shorthand';
 
-const sourceFile = 'image-director/assets/quick-snippets.md';
+export { techniques } from './techniques';
+export {
+  angleEntries,
+  cameraEntries,
+  compositionEntries,
+  depthFocusEntries,
+  entries,
+  lightingEntries,
+  lookEntries,
+  patternEntries,
+  presetEntries,
+  renderEntries,
+  routeEntries,
+  shorthandEntries,
+} from './shorthand';
 
 export const categories: readonly Category[] = [
   { id: 'local-edits', label: 'Local edits', order: 1 },
@@ -29,80 +36,28 @@ export const families: readonly Family[] = [
   { id: 'looks', label: 'Looks', order: 7, introCautionIds: [] },
   { id: 'depth-focus', label: 'Depth & focus', order: 8, introCautionIds: ['camera-cues'] },
   { id: 'presets', label: 'Combined presets', order: 9, introCautionIds: ['reference-roles'] },
-  { id: 'reference-patterns', label: 'Reference patterns', order: 10, introCautionIds: ['reference-roles'] },
+  { id: 'reference-patterns', label: 'Reference & markup patterns', order: 10, introCautionIds: ['reference-roles'] },
 ];
 
 export const cautions: readonly Caution[] = [
-  { id: 'preservation', text: 'Preserve the base image and change only the named subject or region.' },
-  { id: 'reference-roles', text: 'Give each reference one role and transfer only that role unless the source says otherwise.' },
-  { id: 'camera-cues', text: 'Treat camera and focal-length terms as visual cues, not guaranteed physical measurements.' },
-  { id: 'render-size', text: 'Exact pixels apply only when the active backend exposes explicit size controls.' },
-  { id: 'restoration', text: 'Restoration should clean the same image without redesigning, restyling, or recomposing it.' },
+  { id: 'preservation', text: 'Prompting can request preservation, but it cannot guarantee identical pixels. Use a local mask or composite the edited area when unchanged pixels must stay exact.' },
+  { id: 'reference-roles', text: 'Use the first image as the base unless you specify otherwise. Give each reference one role and transfer only that role. Existing reference constraints take priority over preset defaults.' },
+  { id: 'camera-cues', text: 'Focal-length names describe a visual look. They do not guarantee a physically simulated lens or camera.' },
+  { id: 'render-size', text: 'Exact dimensions depend on the image backend. If it does not expose pixel controls, 2k and 4k are quality targets. Check the returned image before claiming its size.' },
+  { id: 'restoration', text: "Restore the same image's quality. Keep identity, content, framing, geometry, and lighting; do not redesign or invent detail." },
 ];
 
-export const resolutionExamples: readonly ResolutionExample[] = [];
-
-export const techniques: readonly Technique[] = [
-  {
-    id: 'surgical-edit',
-    title: 'Surgical edit',
-    categoryId: 'local-edits',
-    summary: 'Correct one exact detail while preserving the whole image around it.',
-    prompt: 'Change only [thing]. Preserve the subject identity, pose, camera, framing, lens feel, perspective, lighting, colors, scene layout, and all unaffected objects. Keep the edit local and reconstruct surrounding pixels naturally. Do not redesign or reinterpret anything else.',
-    shorthandTemplate: 'fix: [exact thing]. Lock everything else.',
-    shorthandEntryIds: ['route-fix'],
-    tags: ['local edit', 'preservation', 'repair'],
-    searchTerms: ['surgical', 'correction', 'exact detail', 'fix'],
-    cautionIds: ['preservation'],
-    previewId: 'surgical-edit',
-    order: 1,
-    sources: [{ file: sourceFile, heading: '## 1. Surgical edit' }],
-  },
+export const resolutionExamples: readonly ResolutionExample[] = [
+  { renderEntryId: 'render-2k', aspectRatioLabel: '1:1', pixelsText: '2048x2048' },
+  { renderEntryId: 'render-2k', aspectRatioLabel: '16:9', pixelsText: '2048x1152' },
+  { renderEntryId: 'render-2k', aspectRatioLabel: '9:16', pixelsText: '1152x2048' },
+  { renderEntryId: 'render-2k', aspectRatioLabel: '4:5', pixelsText: '1632x2048' },
+  { renderEntryId: 'render-2k', aspectRatioLabel: '5:4', pixelsText: '2048x1632' },
+  { renderEntryId: 'render-2k', aspectRatioLabel: '3:2', pixelsText: '2048x1360', note: 'or nearest supported multiple-of-16 size' },
+  { renderEntryId: 'render-2k', aspectRatioLabel: '2:3', pixelsText: '1360x2048', note: 'or nearest supported multiple-of-16 size' },
+  { renderEntryId: 'render-4k', aspectRatioLabel: '16:9', pixelsText: '3840x2160' },
+  { renderEntryId: 'render-4k', aspectRatioLabel: '9:16', pixelsText: '2160x3840' },
 ];
-
-export const entries: readonly CheatsheetEntry[] = [
-  {
-    id: 'route-fix',
-    kind: 'token',
-    familyId: 'routes',
-    token: 'fix:',
-    aliases: [],
-    meaning: 'Make one precise local correction.',
-    direction: 'Change only the named thing and preserve the subject, camera, framing, lighting, scene layout, and unaffected objects.',
-    searchTerms: ['surgical edit', 'local repair', 'correction'],
-    cautionIds: ['preservation'],
-    order: 1,
-    sources: [{ file: sourceFile, heading: '## Minimal-input vocabulary' }],
-  },
-  {
-    id: 'route-hq',
-    kind: 'token',
-    familyId: 'render',
-    token: 'hq',
-    aliases: ['hq:'],
-    meaning: 'Request a quality-restoration pass.',
-    direction: 'Clean the same image without redesigning, restyling, recomposing, changing content, or inventing detail.',
-    searchTerms: ['high quality', 'restoration', 'anti-degradation'],
-    cautionIds: ['preservation', 'restoration', 'render-size'],
-    order: 1,
-    sources: [{ file: sourceFile, heading: '## 13. HIGH-QUALITY RESTORATION / ANTI-DEGRADATION' }],
-  },
-  {
-    id: 'camera-wide35',
-    kind: 'token',
-    familyId: 'camera',
-    token: 'cam:wide35',
-    aliases: [],
-    meaning: 'Use a versatile environmental advertising feel.',
-    direction: 'Use a 35mm-class visual cue with energetic but natural perspective for advertising or social imagery.',
-    searchTerms: ['35mm', 'environmental portrait', 'advertising'],
-    cautionIds: ['camera-cues'],
-    order: 1,
-    sources: [{ file: sourceFile, heading: '## Camera / focal-length presets' }],
-  },
-];
-
-export const shorthandEntries = entries.filter((entry): entry is ShorthandEntry => entry.kind !== 'preset');
 
 const byId = <T extends { readonly id: string }>(items: readonly T[]): Readonly<Record<string, T>> =>
   Object.fromEntries(items.map((item) => [item.id, item])) as Readonly<Record<string, T>>;

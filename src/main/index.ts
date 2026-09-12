@@ -1,4 +1,4 @@
-import { app, BrowserWindow, clipboard, Menu, ipcMain, nativeTheme } from 'electron';
+import { app, BrowserWindow, clipboard, Menu, ipcMain, nativeTheme, protocol } from 'electron';
 import { promises as fs } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -6,6 +6,11 @@ import type { Mode, ThemePreference } from '../shared/catalog-types';
 import type { DesktopResult, UICommand } from '../shared/desktop-types';
 import { techniqueIds } from '../content/catalog';
 import { DEFAULT_PREFERENCES, type PreferencesDocument, mergePreferences, validatePreferences } from './preferences';
+
+protocol.registerSchemesAsPrivileged([{
+  scheme: 'image-director',
+  privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: false },
+}]);
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const validTechniqueIds = new Set(techniqueIds);
@@ -16,6 +21,34 @@ let writeQueue = Promise.resolve();
 let handlersRegistered = false;
 
 const preferencesPath = (): string => join(app.getPath('userData'), 'preferences.json');
+
+const registerLocalProtocol = (): void => {
+  const rendererRoot = join(__dirname, '../renderer');
+  protocol.handle('image-director', async (request) => {
+    try {
+      if (request.method !== 'GET' && request.method !== 'HEAD') return new Response('Method Not Allowed', { status: 405 });
+      const url = new URL(request.url);
+      if (url.host !== 'app' || url.username || url.password || url.port) return new Response('Not Found', { status: 404 });
+      const decodedPath = decodeURIComponent(url.pathname);
+      if (decodedPath.includes('\\') || decodedPath.split('/').includes('..')) return new Response('Bad Request', { status: 400 });
+      const relativePath = decodedPath === '/' || decodedPath === '/index.html' ? 'index.html' : decodedPath.replace(/^\//, '');
+      const filePath = join(rendererRoot, relativePath);
+      if (!filePath.startsWith(`${rendererRoot}/`)) return new Response('Forbidden', { status: 403 });
+      const body = await fs.readFile(filePath);
+      const contentType = filePath.endsWith('.html') ? 'text/html; charset=utf-8'
+        : filePath.endsWith('.js') ? 'text/javascript; charset=utf-8'
+          : filePath.endsWith('.css') ? 'text/css; charset=utf-8'
+            : filePath.endsWith('.webp') ? 'image/webp'
+              : filePath.endsWith('.svg') ? 'image/svg+xml'
+                : filePath.endsWith('.png') ? 'image/png'
+                  : filePath.endsWith('.jpg') || filePath.endsWith('.jpeg') ? 'image/jpeg'
+                    : 'application/octet-stream';
+      return new Response(request.method === 'HEAD' ? null : body, { status: 200, headers: { 'content-type': contentType, 'cache-control': 'no-store' } });
+    } catch {
+      return new Response('Not Found', { status: 404 });
+    }
+  });
+};
 
 const failure = (code: 'INVALID_INPUT' | 'UNAVAILABLE' | 'CLIPBOARD_FAILED' | 'INTERNAL', message: string): DesktopResult => ({ ok: false, error: { code, message } });
 
@@ -141,7 +174,7 @@ const createWindow = (): void => {
   if (rendererUrl) {
     void mainWindow.loadURL(rendererUrl);
   } else {
-    void mainWindow.loadFile(join(__dirname, '../renderer/index.html'));
+    void mainWindow.loadURL('image-director://app/index.html');
   }
 };
 
@@ -149,6 +182,7 @@ void app.whenReady().then(async () => {
   app.setName('Image Director');
   await loadPreferences();
   nativeTheme.themeSource = preferences.themePreference;
+  registerLocalProtocol();
   registerHandlers();
   createMenu();
   createWindow();
