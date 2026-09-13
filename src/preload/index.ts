@@ -1,17 +1,67 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type { ImageDirectorBridge, UICommand } from '../shared/desktop-types';
+import type {
+  BridgeResult,
+  CommandResult,
+  CopyCompiledDraftRequest,
+  CopyResult,
+  CueSnapshot,
+  DesktopCommand,
+  DraftChangedEvent,
+  DraftCommandEnvelope,
+  LibraryCopyTextRequest,
+  TeleprompterBootstrap,
+  TeleprompterBridge,
+} from '../shared/teleprompter-types';
 
-const bridge: ImageDirectorBridge = {
+type BootstrapWithClient = TeleprompterBootstrap & { readonly clientId?: string };
+let assignedClientId: string | undefined;
+
+const teleprompter: TeleprompterBridge = {
+  getBootstrap: async () => {
+    const result = await ipcRenderer.invoke('get-bootstrap') as BridgeResult<BootstrapWithClient>;
+    if (result.ok && result.clientId) assignedClientId = result.clientId;
+    return result;
+  },
+  submitDraftCommand: (request: DraftCommandEnvelope): Promise<CommandResult> => ipcRenderer.invoke('submit-draft-command', {
+    ...request,
+    ...(assignedClientId === undefined ? {} : { clientId: assignedClientId }),
+  }),
+  onDraftChanged: (callback: (event: DraftChangedEvent) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, event: DraftChangedEvent) => callback(event);
+    ipcRenderer.on('teleprompter:draft-changed', listener);
+    return () => ipcRenderer.removeListener('teleprompter:draft-changed', listener);
+  },
+  copyCompiledDraft: (request: CopyCompiledDraftRequest) => ipcRenderer.invoke('copy-compiled-draft', request),
+  copyLibraryText: (request: LibraryCopyTextRequest) => ipcRenderer.invoke('copy-library-text', request),
+  setFavorite: (request) => ipcRenderer.invoke('set-favorite', request),
+  setShortcut: (request) => ipcRenderer.invoke('set-shortcut', request),
+  showMain: () => ipcRenderer.invoke('show-main'),
+  hideSpotlight: () => ipcRenderer.invoke('hide-spotlight'),
+  onCommand: (callback: (command: DesktopCommand) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, command: DesktopCommand) => callback(command);
+    ipcRenderer.on('teleprompter:command', listener);
+    return () => ipcRenderer.removeListener('teleprompter:command', listener);
+  },
+};
+
+const legacy: ImageDirectorBridge = {
   getBootstrap: () => ipcRenderer.invoke('get-bootstrap'),
   copyText: (request) => ipcRenderer.invoke('copy-text', request),
   setFavorite: (request) => ipcRenderer.invoke('set-favorite', request),
   setThemePreference: (request) => ipcRenderer.invoke('set-theme-preference', request),
   setLastMode: (request) => ipcRenderer.invoke('set-last-mode', request),
-  onCommand: (callback) => {
+  onCommand: (callback: (command: UICommand) => void) => {
     const listener = (_event: Electron.IpcRendererEvent, command: UICommand) => callback(command);
     ipcRenderer.on('ui-command', listener);
     return () => ipcRenderer.removeListener('ui-command', listener);
   },
 };
 
-contextBridge.exposeInMainWorld('imageDirector', bridge);
+contextBridge.exposeInMainWorld('teleprompter', teleprompter);
+contextBridge.exposeInMainWorld('imageDirector', legacy);
+
+// The renderer surface contract intentionally keeps size state enumerated.
+contextBridge.exposeInMainWorld('teleprompterDesktop', {
+  requestSize: (size: 'compact' | 'expanded'): Promise<BridgeResult<{ readonly size: 'compact' | 'expanded' }>> => ipcRenderer.invoke('set-spotlight-size', { size }),
+});

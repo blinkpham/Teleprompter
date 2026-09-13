@@ -1,0 +1,32 @@
+tree,major_id,minor_or_axis_id,covered_record_ids,gap,priority,proposed_record_ids,status
+units,Optics,camera.focal,"camera-ultrawide18;camera-wide24;camera-wide28;camera-wide35;camera-natural50;camera-portrait85;camera-tele135;camera-macro100;camera-fisheye;camera-closewide24;camera-closewide35","Eleven focal labels mix focal cue, subject distance, and specialty detail; only three focal records are seeded.",p0,"atom.camera.focal.wide35;atom.camera.focal.natural50;atom.camera.focal.portrait85",partial
+units,Optics,camera.distance,"camera-wide24;camera-closewide24;camera-wide35;camera-closewide35","Close-wide variants need a distance axis and fixed-scene evidence before they become bundles.",p0,,gap
+units,Optics,camera.depth,"dof-deep;dof-medium;dof-shallow","Depth scale needs complete atom mapping and visible scene-readability examples.",p1,"atom.camera.depth.medium",partial
+units,Optics,camera.focus,"focus-product;focus-face;focus-scene","Focus targets need to be separated from depth and linked to subject success criteria.",p1,,gap
+units,Optics,angle.elevation,"angle-eye;angle-lowhero;angle-high;angle-topdown;angle-worm","Elevation is not yet mapped; low/high/top-down need fixed-scene comparisons.",p1,,gap
+units,Optics,angle.azimuth,"angle-3q;angle-profile;angle-front;angle-over-shoulder","Three-quarter is seeded; profile/front and over-shoulder need azimuth versus composition-depth decisions.",p1,"atom.angle.azimuth.three-quarter",partial
+units,Optics,angle.roll,"angle-dutch","Roll axis exists in the contract but needs one controlled example and explicit conflict rule.",p2,,gap
+units,Stage,composition.hierarchy,"composition-hero;composition-producthero;composition-widekey","Hero is seeded; product and widekey must be decomposed without losing hierarchy/use facets.",p1,"atom.composition.hierarchy.hero",partial
+units,Stage,composition.placement,"composition-social;composition-editorial;composition-lifestyle;composition-centered;composition-thirds;composition-negative","Placement language is mixed with use and mood; split only where the visible balance rule is independent.",p1,,gap
+units,Stage,composition.crop,"composition-fashion;composition-tight;composition-widekey","Crop and environment context are entangled in several legacy rows.",p1,,gap
+units,Stage,composition.depth,"composition-foreground;composition-layered","Foreground occlusion and three-plane separation need multi-valued atom rules.",p1,,gap
+units,Stage,light.key,"lighting-highkey;lighting-softbox;lighting-beautydish;lighting-window;lighting-hardsun;lighting-hardflash;lighting-onflash;lighting-split","High-key is seeded; remaining sources need key position/size and source-placement distinctions.",p1,"atom.light.key.high-soft",partial
+units,Stage,light.contrast,"lighting-highkey;lighting-hardsun;lighting-split;lighting-neon","Contrast cues are embedded in several light descriptions and need extraction without duplicating the key.",p2,,gap
+units,Stage,light.time,"lighting-window;lighting-daybounce;lighting-overcast;lighting-golden","Ambient/time language needs a distinct axis from source type and palette.",p2,,gap
+units,Stage,light.fill,"lighting-clamshell;lighting-daybounce;lighting-backlit","Fill directions need bundle or many-valued mapping with key sources.",p2,,gap
+units,Stage,light.accent,"lighting-rim;lighting-backlit;lighting-neon","Accent sources need separate rim/backlight/neon distinctions.",p2,,gap
+units,Finish,look.base,"look-commercial;look-campaign;look-editorial;look-lifestyle;look-fashion;look-beauty;look-y2k;look-street;look-studio;look-luxury;look-tech;look-foodad;look-sport;look-ugc-polished;look-cinematic","Fifteen finish labels need visible definitions and mode/use facets; commercial is seeded.",p1,"atom.look.base.commercial",partial
+units,Finish,look.palette,"look-cleanblue;look-y2k;look-tech;look-luxury","Palette is embedded in several finish labels; clean-blue is seeded.",p1,"atom.look.palette.clean-blue",partial
+units,Finish,look.texture,"look-street;look-beauty;look-foodad;look-cinematic","Texture and grain language needs extraction without turning mood into texture.",p2,,gap
+units,Finish,look.retouched,"look-beauty;look-commercial;look-ugc-polished","Retouch level is implied but not explicit in most rows.",p2,,gap
+units,Finish,mood.tone,"look-lifestyle;look-luxury;look-sport;look-y2k","No dedicated mood atom exists; create only when a visible emotional temperature can be described.",p2,,gap
+units,Output,output.resolution,"render-draft;render-final;render-2k;render-4k;render-web-hq","Delivery terms need policy and must preserve exact-dimension limitations.",p1,,decision-needed
+presets,Directed studio,preset.directed-studio,"preset-commercial;preset-cleanblue;preset-product;preset-luxury","Four-family placement and complete atom decomposition are not accepted; commercial seed is proposed.",p0,"preset.directed-studio.commercial",partial
+presets,Directed location,preset.directed-location,"preset-social-ad;preset-editorial;preset-lifestyle;preset-fashion;preset-dynamic;preset-y2k","Need a visible approach rule distinguishing directed location from observational and directed studio.",p1,,gap
+presets,Observational,preset.observational,"preset-lifestyle;look-street;look-ugc-polished","Legacy labels imply candidness but do not prove source intent; keep placement pending.",p2,,gap
+edits,Local correction,recipe,"route-fix;surgical-edit","Recipe seed exists; marked regions and specialized local edits need follow-up mapping.",p0,"edit.local.surgical-correction",partial
+edits,Object removal,recipe,"route-remove;remove-one-thing;route-clean;clean-environment","Single target and broad cleanup must remain separate recipes.",p0,"edit.background.object-removal",partial
+edits,Reference style transfer,recipe,"route-style;route-tone;style-tone-transfer","Style and tone scope decision remains open.",p1,"edit.reference-style.tone-transfer",partial
+edits,Quality restoration,recipe,"route-hq;quality-restoration","Recipe seed exists; validate masking/compositing and exact-preservation wording.",p1,"edit.quality-restoration",partial
+edits,Reference composite,recipe,"route-swap;route-face;route-pose;route-product;multi-reference-composite","Reference role, identity, pose, and product recipes remain unmodeled.",p1,,gap
+edits,Geometry,recipe,"route-perspective;route-camera-lock;route-reframe;pattern-marked-area;perspective-correction;camera-lock;reframe;markup-directed-edit","Geometry, camera lock, reframe, and markup need independent domains and conflicts.",p1,,gap

@@ -1,0 +1,24 @@
+{
+  "batchSchemaVersion": 1,
+  "targetLibrarySchemaVersion": 2,
+  "batchId": "2026-09-13-001",
+  "baseContentVersion": "legacy-5e21875",
+  "objective": "Inventory all 104 legacy rows and 15 techniques, record duplication and provenance decisions, propose the canonical taxonomy, and seed a small reviewable V2 mapping.",
+  "status": "accepted",
+  "files": {
+    "records": "records.json",
+    "taxa": "taxa.json",
+    "axes": "axes.json",
+    "cautions": "cautions.json",
+    "sources": "sources.jsonl",
+    "changes": "changes.json",
+    "legacyMap": "legacy-map.json",
+    "assetRequests": "asset-requests.jsonl"
+  },
+  "requiresContractDecision": false,
+  "questions": [
+    "Should render terms remain OUTPUT records or become delivery metadata outside the visual atom catalog?",
+    "Should camera-closewide24 and camera-closewide35 keep separate distance atoms after practical comparison, or remain reference-only bundles?",
+    "Should route-style and route-tone remain separate edit recipes with different scopes, or should the narrower tone route become an alias?"
+  ]
+}

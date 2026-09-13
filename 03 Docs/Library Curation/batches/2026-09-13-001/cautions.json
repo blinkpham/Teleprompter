@@ -1,0 +1,7 @@
+[
+  {"id":"preservation","text":"Prompting can request preservation, but it cannot guarantee identical pixels. Use a local mask or composite the edited area when unchanged pixels must stay exact."},
+  {"id":"reference-roles","text":"Use the first image as the base unless you specify otherwise. Give each reference one role and transfer only that role. Existing reference constraints take priority over preset defaults."},
+  {"id":"camera-cues","text":"Focal-length names describe a visual look. They do not guarantee a physically simulated lens or camera."},
+  {"id":"render-size","text":"Exact dimensions depend on the image backend. If it does not expose pixel controls, 2k and 4k are quality targets. Check the returned image before claiming its size."},
+  {"id":"restoration","text":"Restore the same image's quality. Keep identity, content, framing, geometry, and lighting; do not redesign or invent detail."}
+]
