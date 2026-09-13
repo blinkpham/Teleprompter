@@ -27,6 +27,8 @@ Updated: 2026-09-13
 - The stack is fixed: Electron + React + TypeScript + electron-vite, with context isolation and sandboxing enabled.
 - The implementation is integrated: 15 source-backed Gallery techniques, 104 Cheatsheet rows, deterministic search, aliases, preset resolution, favorites, appearance, native copy, persisted preferences, and an offline local photo credit are wired into Electron.
 - Native built-preview acceptance now covers Teleprompter identity, Create/Edit Cue, accepted `cam:natural50` selection, `cam:50` Cue search, Library preset expansion, Tokens (9 accepted directions), and compiled prompt copy acknowledged through the native clipboard bridge. `pbpaste` confirmed the copied WHAT/CAM/ANGLE content.
+- Native menu acceptance now opened a separate `Teleprompter Cue` spotlight surface at `localhost:5173/?surface=spotlight`; the dark renderer was visible and blur dismissal was observed. The global shortcut delivery still lacks a separate witness, so registration is not treated as behavior proof.
+- Artwork Wave A industrial identity is integrated as four manifest-backed raster assets (icon plus Optics, Stage, and Finish group objects). Practical examples remain model-gated until an exact `gpt-image-2.5-flare` route can be selected and evidenced.
 - Focused verification passes: `npm run typecheck`, `npm run test:logic` (8 files, 30 tests), `npm run build`, `git diff --check`, and the impeccable detector (`[]`).
 - The scaffold was committed as `e7f0400`; the integrated implementation was committed as `5e21875` and was the clean baseline for the 2026-09-13 audit.
 
@@ -43,6 +45,6 @@ Updated: 2026-09-13
 
 ## Next
 
-1. Obtain a separate native spotlight witness and record shortcut, focus, cursor placement, resize, and dismissal results when that surface is inspectable.
-2. Keep practical illustration blocked until the GPT Image 2.5 Flare route is explicitly evidenced; then consume only curator-accepted AssetRequests.
+1. Obtain an independent global-shortcut witness and stable bounds/resize evidence for the spotlight; retain the menu fallback as accepted behavior.
+2. Keep practical illustration blocked until the exact GPT Image 2.5 Flare route is explicitly evidenced; then consume only the six curator-accepted AssetRequests.
 3. Preserve the 14-record runtime boundary while later curation resolves the 101 reference-only legacy rows.

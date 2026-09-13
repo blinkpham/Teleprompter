@@ -2,6 +2,9 @@ import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from 'motion/r
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import type { Axis, AxisChoice, CueCommand, CueDraft, Field, LibraryChoiceView, Mode, CopyFormat } from '../../../shared/teleprompter';
 import type { CueSurfaceProps } from '../../../shared/ui-types';
+import finishGroupUrl from '../assets/teleprompter/runtime/group-finish-v1.png';
+import opticsGroupUrl from '../assets/teleprompter/runtime/group-optics-v1.png';
+import stageGroupUrl from '../assets/teleprompter/runtime/group-stage-v1.png';
 import {
   ArrowsClockwise,
   Check,
@@ -23,6 +26,12 @@ export interface CueSurfaceExtraProps extends CueSurfaceProps {
 
 type PickerKind = 'group' | 'constraints' | 'output' | 'preset' | 'recipes' | null;
 type GroupKey = 'optics' | 'stage' | 'finish';
+
+const GROUP_ART: Readonly<Record<GroupKey, string>> = {
+  optics: opticsGroupUrl,
+  stage: stageGroupUrl,
+  finish: finishGroupUrl,
+};
 
 const GROUPS: readonly { key: GroupKey; title: string; fields: readonly Field[]; summary: string }[] = [
   { key: 'optics', title: 'Optics', fields: ['cam', 'angle'], summary: 'Lens, viewpoint, depth and focus' },
@@ -265,7 +274,7 @@ function CornersIcon() {
 
 function ParameterTile({ group, axes, draft, choiceMap, onOpen }: { readonly group: typeof GROUPS[number]; readonly axes: readonly Axis[]; readonly draft: CueDraft; readonly choiceMap: ReadonlyMap<string, LibraryChoiceView>; readonly onOpen: (event: import('react').MouseEvent<HTMLButtonElement>) => void }) {
   const values = axes.flatMap((axis) => labelsForChoice(axis, draft, choiceMap));
-  return <motion.button type="button" className="tp-parameter-tile" layoutId={`tp-tile-${group.key}`} onClick={onOpen} aria-haspopup="dialog"><span className={`tp-tile-object tp-tile-object--${group.key}`} aria-hidden="true"><span /></span><span className="tp-tile-copy"><strong>{group.title}</strong><span>{compactSummary(values)}</span><small>{group.summary}</small></span><CornersIcon /></motion.button>;
+  return <motion.button type="button" className="tp-parameter-tile" layoutId={`tp-tile-${group.key}`} onClick={onOpen} aria-haspopup="dialog"><span className={`tp-tile-object tp-tile-object--${group.key}`} aria-hidden="true"><img src={GROUP_ART[group.key]} alt="" /><span /></span><span className="tp-tile-copy"><strong>{group.title}</strong><span>{compactSummary(values)}</span><small>{group.summary}</small></span><CornersIcon /></motion.button>;
 }
 
 function EditRecipeBar({ draft, library, choiceMap, dispatch, onOpen }: { readonly draft: CueDraft; readonly library: CueSurfaceProps['library']; readonly choiceMap: ReadonlyMap<string, LibraryChoiceView>; readonly dispatch: CueSurfaceProps['dispatch']; readonly onOpen: (event: import('react').MouseEvent<HTMLButtonElement>) => void }) {
