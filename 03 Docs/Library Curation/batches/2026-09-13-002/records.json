@@ -1,0 +1,118 @@
+[
+  {
+    "id": "atom.camera.focal.wide24",
+    "kind": "atom",
+    "label": "24mm-class wide environmental perspective",
+    "shorthand": "cam:wide24",
+    "aliases": [],
+    "summary": "A wide perspective cue that opens the field of view and increases the apparent separation between near and far elements for energetic environmental work.",
+    "primaryTaxonId": "units.optics.camera",
+    "facets": {
+      "medium": ["photography"],
+      "subject": ["person", "product", "environment"],
+      "genre": ["advertising", "social", "environmental portrait"],
+      "sourceTerms": ["24mm", "wide", "environmental"]
+    },
+    "sourceIds": [
+      "local.skill.camera",
+      "web.adobe.focal-length",
+      "web.adobe.camera-shots",
+      "web.canon.perspective",
+      "web.openai.image-prompting",
+      "curator.batch-2"
+    ],
+    "cautionIds": ["camera-cues", "camera-distance"],
+    "order": 2,
+    "status": "active",
+    "axisId": "camera.focal",
+    "expansion": "Use a wide 24mm-class perspective cue with pronounced foreground/background scale and enough environment to read the setting.",
+    "excludes": [],
+    "requires": [],
+    "applicability": ["create", "edit"]
+  },
+  {
+    "id": "atom.camera.distance.close",
+    "kind": "atom",
+    "label": "Physically close camera position",
+    "shorthand": "cam:close",
+    "aliases": ["close distance", "near camera"],
+    "summary": "Place the camera close to the subject so nearby features grow relative to the background; this is a distance cue, not a crop or focus target.",
+    "primaryTaxonId": "units.optics.camera",
+    "facets": {
+      "medium": ["photography"],
+      "subject": ["person", "product"],
+      "genre": ["advertising", "social", "editorial"],
+      "sourceTerms": ["close-wide", "close distance", "physical perspective"]
+    },
+    "sourceIds": [
+      "local.skill.camera",
+      "web.adobe.perspective",
+      "web.adobe.depth-of-field",
+      "web.canon.perspective",
+      "web.openai.image-prompting",
+      "curator.batch-2"
+    ],
+    "cautionIds": ["camera-cues", "camera-distance"],
+    "order": 1,
+    "status": "active",
+    "axisId": "camera.distance",
+    "expansion": "Place the camera physically close to the subject so nearby features appear larger relative to the background; keep the chosen focal cue explicit and do not treat this as a crop-only change.",
+    "excludes": [],
+    "requires": [],
+    "applicability": ["create", "edit"]
+  },
+  {
+    "id": "bundle.camera.closewide24",
+    "kind": "bundle",
+    "label": "Close-wide 24mm perspective",
+    "shorthand": "cam:closewide24",
+    "aliases": [],
+    "summary": "A 24mm-class wide cue combined with a physically close camera position, making nearby hands or products feel larger while the setting remains visible.",
+    "primaryTaxonId": "units.optics.camera",
+    "facets": {
+      "medium": ["photography"],
+      "subject": ["person", "product"],
+      "genre": ["advertising", "social ad"],
+      "sourceTerms": ["close-wide", "24mm"]
+    },
+    "sourceIds": [
+      "local.skill.camera",
+      "web.adobe.focal-length",
+      "web.adobe.perspective",
+      "web.adobe.camera-shots",
+      "web.canon.perspective",
+      "curator.batch-2"
+    ],
+    "cautionIds": ["camera-cues", "camera-distance"],
+    "order": 1,
+    "status": "active",
+    "atomIds": ["atom.camera.focal.wide24", "atom.camera.distance.close"]
+  },
+  {
+    "id": "bundle.camera.closewide35",
+    "kind": "bundle",
+    "label": "Close-wide 35mm perspective",
+    "shorthand": "cam:closewide35",
+    "aliases": [],
+    "summary": "A 35mm-class environmental cue combined with a close camera position, keeping dimensional foreground scale without the stronger 24mm exaggeration.",
+    "primaryTaxonId": "units.optics.camera",
+    "facets": {
+      "medium": ["photography"],
+      "subject": ["person", "product"],
+      "genre": ["advertising", "commercial portrait"],
+      "sourceTerms": ["close-wide", "35mm"]
+    },
+    "sourceIds": [
+      "local.skill.camera",
+      "web.adobe.focal-length",
+      "web.adobe.perspective",
+      "web.adobe.camera-shots",
+      "web.canon.perspective",
+      "curator.batch-2"
+    ],
+    "cautionIds": ["camera-cues", "camera-distance"],
+    "order": 2,
+    "status": "active",
+    "atomIds": ["atom.camera.focal.wide35", "atom.camera.distance.close"]
+  }
+]

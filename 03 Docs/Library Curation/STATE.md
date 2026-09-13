@@ -1,11 +1,11 @@
 # Library Curation State
 
-Status: accepted seed with open coverage · 2026-09-13
+Status: Batch 002 proposed; accepted seed preserved with open coverage · 2026-09-13
 
 ## Current checkpoint
 
 - Accepted V2 content version: `legacy-5e21875 + batch 2026-09-13-001` for the 14-record seed only. The remaining 101 legacy rows remain reference-only until covered by later batches.
-- Active batch: `2026-09-13-001` — complete legacy inventory, duplication audit, and a small accepted-ready seed for review.
+- Active batch: `2026-09-13-002` — camera distance plus focal-perspective comparison and decomposable close-wide bundles.
 - Product source: Teleprompter contracts in `03 Docs/Teleprompter Plan/`.
 - Ownership: this folder only. No application source, original prompt source, or generated artwork was changed.
 
@@ -37,6 +37,9 @@ The live catalog was loaded from `src/content/catalog.ts` and recounts to 104 Ch
 6. Issued six practical-example requests for the seed records. Practical imagery is reserved for an authorized GPT Image 2.5 Flare route; no image was generated here.
 7. Logged current public research and access limits in the batch source ledger. MeiGen was used as a discovery reference only; no third-party prompt corpus or images were copied.
 
+8. Proposed four camera records in Batch 002: the 24mm-class focal atom, one close-distance atom, and flat bundles for the legacy `closewide24` and `closewide35` shorthands. The accepted `wide35` atom is reused; no runtime seed record was changed.
+9. Added four fixed-scene comparison requests covering focal change at neutral distance, distance change at 24mm-class and 35mm-class cues, and focal change with close distance held constant. These are proposals for the lead/illustrator; no generation was authorized here.
+
 ## Unresolved decisions
 
 - The remaining 101 legacy rows are explicitly `reference-only` and require field/axis or edit-recipe decomposition before they can become selectable V2 records. The affected groups are listed in `batches/2026-09-13-001/coverage.csv`.
@@ -46,7 +49,8 @@ The live catalog was loaded from `src/content/catalog.ts` and recounts to 104 Ch
 - A lead must audit draft/favorite references locally before accepting any migration. The curator cannot inspect private user state.
 - Practical examples are request-ready but not generated or approved. Record the requested/resolved model separately when the illustrator runs the authorized route.
 - Sol consultation was attempted through ChatGPT Web, but Core could not mount this local project; no Sol review of these files is claimed.
+- Sol/Core returned a bounded review through the existing in-app conversation: the axis split and flat-bundle model are sound, but both close-wide distinctions remain pending until matched comparisons show repeatable near-feature scale differences without crop, height, pose, lighting, or composition drift.
 
 ## Next concrete task
 
-Lead has accepted the seed and dispatched Illustration from the six AssetRequests. The next curation batch remains camera distance plus focal-perspective comparisons because it resolves the closest duplicate pairs (`camera-wide24`/`camera-closewide24` and `camera-wide35`/`camera-closewide35`).
+Lead review Batch 002's four records and comparison requests, then accept or revise the close-distance semantics. If accepted, the illustrator may consume only these four lead-approved requests; if not, keep the legacy close-wide rows reference-only and revise through Batch 003.

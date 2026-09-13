@@ -33,6 +33,18 @@ This taxonomy is for Teleprompter's current photographic prompting scope. It giv
 
 Every unit may carry `medium`, `subject`, `genre`, `era`, `palette`, `mood`, `audience/use`, and `source terms`. Facets improve search but never change canonical placement.
 
+### Camera-axis decision — Batch `2026-09-13-002`
+
+The camera axis now separates three meanings that were previously mixed in the legacy close-wide labels:
+
+| Axis | Include | Exclude | Current decision |
+|---|---|---|---|
+| `camera.focal` | A requested focal-perspective cue such as 24mm-class wide spatial expansion or 35mm-class environmental versatility. | A measured camera-to-subject distance, crop, or focus target. | Add `atom.camera.focal.wide24`; retain `atom.camera.focal.wide35` from Batch 0. |
+| `camera.distance` | A requested near/far camera position whose visible test is relative scale between near features and the background. | A tight crop, digital zoom, depth-of-field setting, or a promise of a measured physical distance. | Add the reviewable `atom.camera.distance.close`. |
+| focal + distance bundle | A legacy shorthand that intentionally combines one focal cue with one distance cue. | An opaque expansion that cannot be adjusted by axis. | Retain `cam:closewide24` and `cam:closewide35` as flat bundles. |
+
+`cam:wide24` is therefore a focal atom, while `cam:closewide24` expands to `cam:wide24 + cam:close`. The same rule applies to `cam:wide35` and `cam:closewide35`. The distinction is semantically defensible from the source descriptions and manufacturer/photography guidance, but the fixed-scene visual comparison remains a lead acceptance check. `close` must not be used as an alias for `comp:tight` or `focus:*`.
+
 ## Presets tree
 
 The four major families are fixed for the current scope.
@@ -63,7 +75,7 @@ Edit facets: reference requirement, masking/markup, preservation sensitivity, su
 ## Sibling tie-breakers
 
 - Same word in different fields stays namespaced: `composition.editorial`, `look.editorial`, and an editorial preset are distinct records.
-- Same focal cue at different subject distance stays distinct only when the distance changes the visible scale relationship. The `wide24`/`closewide24` and `wide35`/`closewide35` pairs are pending practical proof.
+- Same focal cue at different subject distance stays distinct only when the distance changes the visible scale relationship. Batch `2026-09-13-002` models `wide24`/`closewide24` and `wide35`/`closewide35` as atom-plus-bundle pairs; practical proof is still pending before runtime acceptance.
 - `hero` means subject hierarchy; `widekey` means environmental context. Retain both until a comparison shows otherwise.
 - `social` means fast mobile read with copy-safe space; `tight` means an immediate cropped read. They are not aliases by default.
 - `hardflash` describes a broad hard-flash lighting character; `onflash` describes the recognizable on-camera placement and falloff. Keep separate pending examples.

@@ -1,0 +1,23 @@
+{
+  "batchSchemaVersion": 1,
+  "targetLibrarySchemaVersion": 2,
+  "batchId": "2026-09-13-002",
+  "baseContentVersion": "legacy-5e21875 + batch 2026-09-13-001",
+  "objective": "Separate focal cue from subject distance for the 24mm and 35mm close-wide comparisons, map the legacy close-wide records to decomposable bundles, and issue fixed-scene comparison requests.",
+  "status": "proposed",
+  "files": {
+    "records": "records.json",
+    "taxa": "taxa.json",
+    "axes": "axes.json",
+    "cautions": "cautions.json",
+    "sources": "sources.jsonl",
+    "changes": "changes.json",
+    "legacyMap": "legacy-map.json",
+    "assetRequests": "asset-requests.jsonl"
+  },
+  "requiresContractDecision": false,
+  "questions": [
+    "Should the lead accept camera.distance.close as a general selectable atom after checking the fixed-scene comparisons?",
+    "Do the close-wide bundles produce a visibly different near-feature scale relationship from their plain focal atoms without becoming a crop-only alias?"
+  ]
+}

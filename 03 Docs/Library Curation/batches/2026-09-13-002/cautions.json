@@ -1,0 +1,6 @@
+[
+  {
+    "id": "camera-distance",
+    "text": "Subject-distance words describe a requested spatial relationship and visible scale cue; they do not guarantee a measured camera-to-subject distance, a physically simulated lens, or a crop-independent result from an image backend."
+  }
+]

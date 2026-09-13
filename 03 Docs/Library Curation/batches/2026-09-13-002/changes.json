@@ -1,0 +1,42 @@
+[
+  {
+    "op": "add",
+    "id": "atom.camera.focal.wide24",
+    "replaces": ["camera-wide24"],
+    "reason": "Promote the legacy 24mm-class wide cue to camera.focal while preserving its environmental scale qualifier and visual-cue caution.",
+    "affectedDraftIds": [],
+    "affectedFavoriteIds": [],
+    "migration": "retain",
+    "impactAuditRequired": true
+  },
+  {
+    "op": "add",
+    "id": "atom.camera.distance.close",
+    "replaces": [],
+    "reason": "Add the independently selectable close subject-distance direction needed to decompose the legacy close-wide composites. The atom is reviewable but requires fixed-scene practical confirmation before runtime acceptance.",
+    "affectedDraftIds": [],
+    "affectedFavoriteIds": [],
+    "migration": "retain",
+    "impactAuditRequired": true
+  },
+  {
+    "op": "add",
+    "id": "bundle.camera.closewide24",
+    "replaces": ["camera-closewide24"],
+    "reason": "Preserve the legacy close-wide shorthand as a flat bundle of the new 24mm-class focal cue and close-distance atom; do not hide the distance distinction in a single opaque expansion.",
+    "affectedDraftIds": [],
+    "affectedFavoriteIds": [],
+    "migration": "split",
+    "impactAuditRequired": true
+  },
+  {
+    "op": "add",
+    "id": "bundle.camera.closewide35",
+    "replaces": ["camera-closewide35"],
+    "reason": "Preserve the legacy close-wide shorthand as a flat bundle of the accepted 35mm-class focal cue and close-distance atom; retain the less extreme 35mm qualifier.",
+    "affectedDraftIds": [],
+    "affectedFavoriteIds": [],
+    "migration": "split",
+    "impactAuditRequired": true
+  }
+]

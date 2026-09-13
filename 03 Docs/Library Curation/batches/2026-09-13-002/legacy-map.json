@@ -1,0 +1,30 @@
+[
+  {
+    "oldId": "camera-wide24",
+    "oldToken": "cam:wide24",
+    "disposition": "retained",
+    "targetIds": ["atom.camera.focal.wide24"],
+    "reason": "The plain wide24 record is the focal cue without the close-distance qualifier; promote it to camera.focal and preserve its environmental perspective wording."
+  },
+  {
+    "oldId": "camera-closewide24",
+    "oldToken": "cam:closewide24",
+    "disposition": "split",
+    "targetIds": ["bundle.camera.closewide24"],
+    "reason": "The legacy composite is retained as a bundle whose flat expansion exposes wide24 focal perspective plus the new close-distance atom."
+  },
+  {
+    "oldId": "camera-wide35",
+    "oldToken": "cam:wide35",
+    "disposition": "retained",
+    "targetIds": ["atom.camera.focal.wide35"],
+    "reason": "The accepted Batch 0 focal atom is the plain comparison partner for the new closewide35 bundle; no new runtime meaning is introduced."
+  },
+  {
+    "oldId": "camera-closewide35",
+    "oldToken": "cam:closewide35",
+    "disposition": "split",
+    "targetIds": ["bundle.camera.closewide35"],
+    "reason": "The legacy composite is retained as a bundle whose flat expansion exposes the accepted wide35 focal cue plus the new close-distance atom."
+  }
+]
