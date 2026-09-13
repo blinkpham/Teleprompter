@@ -104,7 +104,7 @@ export function CueSurface({ surface, snapshot, library, dispatch, copy, request
   }, [picker, previewOpen, requestSize]);
 
   useEffect(() => {
-    if (!picker && !previewOpen) return undefined;
+    if (surface !== 'spotlight' && !picker && !previewOpen) return undefined;
     const handleKeyDown = (event: globalThis.KeyboardEvent) => {
       if (event.isComposing) return;
       if (event.key !== 'Escape') return;
@@ -116,11 +116,15 @@ export function CueSurface({ surface, snapshot, library, dispatch, copy, request
       setPicker(null);
       setPreviewOpen(false);
       event.preventDefault();
+      if (surface === 'spotlight' && !picker && !previewOpen) {
+        dismiss?.();
+        return;
+      }
       window.setTimeout(() => openerRef.current?.focus(), reducedMotion ? 0 : 180);
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [picker, previewOpen, search, reducedMotion]);
+  }, [dismiss, picker, previewOpen, search, reducedMotion, surface]);
 
   useEffect(() => {
     const focusSearch = () => {
