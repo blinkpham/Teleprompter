@@ -3,6 +3,13 @@
 Goal: Implement the Teleprompter upgrade: dark-only Cue Create/Edit, shortcut spotlight, redesigned library, generated artwork, and structured long-term curation.
 Updated: 2026-09-14
 
+## Current execution — native macOS/Liquid Glass route
+
+- User decision on 2026-09-14: the new Teleprompter implementation moves to a native macOS host/surface, not Electron. Liquid Glass is a first-class requirement. Electron remains compatibility evidence and a migration seam only; no Electron deletion or whole-app rewrite is accepted before a buildable native seam and direct runtime evidence exist.
+- The existing offline store/compiler, shared contracts, 14-record runtime boundary, exact `gpt-image-2.5-flare` gate, Curator-before-Illustration order, and all five grievance blockers B01–B05 remain in force.
+- Native implementation worker missions are dispatched for a bounded SwiftUI/AppKit Cue spike and a documentation-only Liquid Glass architecture decision. Their worktrees remain isolated until the lead reviews changed files, official Apple source evidence, and native build/runtime results.
+- Astra was updated in its owner session with this architecture override and the unresolved B01–B05 grievance bundle. No readable Astra plan response has been returned yet; do not treat the update as a completed planner decision.
+
 ## Current execution — 2026-09-14 post-worker checkpoint
 
 - Lead integration commits `8e5d3d6`, `6834f3d`, and `674e1df` add engine-owned atomic quick add, measured spotlight layout requests, exact Preview and Library/Tokens read paths, Create-only default handling, compact image-led Cue controls, caret-safe slash/@ suggestions, the Teleprompter skill package metadata/icon, and the local reference lifecycle. Worker commit `ad381db` was reviewed as an independent input; its projection/test improvements were incorporated selectively without replacing the lead's native focus fixes.
@@ -75,8 +82,8 @@ Updated: 2026-09-14
 
 ## Next
 
-1. Re-run native quick-add keyboard acceptance and recovery/default witnesses, then record N16/N27/N28–N30 separately from local checks.
-2. Verify cancellation focus, missing-file state, and stable Image N numbering through the native manager; keep the worker worktree isolated unless it offers a verified delta.
-3. Run the Electron comparison for B01–B05, adaptive N09/N20–N25, and the shortcut/reference seams; close only directly witnessed cases.
+1. Review the native SwiftUI/AppKit worker and Liquid Glass decision worker; accept only a buildable seam with direct native evidence.
+2. Port the Cue contracts and grievance acceptance cases B01–B05/N01–N30 to the native surface, then run native keyboard, focus, bounds, reduced-transparency, and clipboard witnesses.
+3. Preserve Electron comparison evidence for regression only; do not use it to close native Liquid Glass acceptance.
 4. Keep practical illustration blocked until the exact GPT Image 2.5 Flare route is explicitly evidenced; then consume only the six curator-accepted AssetRequests.
 5. Preserve the 14-record runtime boundary while later curation resolves the 101 reference-only legacy rows.
