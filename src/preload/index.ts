@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import type { ImageDirectorBridge, UICommand } from '../shared/desktop-types';
+import type { LegacyTeleprompterBridge, UICommand } from '../shared/desktop-types';
 import type {
   BridgeResult,
   CommandResult,
@@ -45,7 +45,7 @@ const teleprompter: TeleprompterBridge = {
   },
 };
 
-const legacy: ImageDirectorBridge = {
+const legacy: LegacyTeleprompterBridge = {
   getBootstrap: () => ipcRenderer.invoke('get-bootstrap'),
   copyText: (request) => ipcRenderer.invoke('copy-text', request),
   setFavorite: (request) => ipcRenderer.invoke('set-favorite', request),
@@ -59,7 +59,7 @@ const legacy: ImageDirectorBridge = {
 };
 
 contextBridge.exposeInMainWorld('teleprompter', teleprompter);
-contextBridge.exposeInMainWorld('imageDirector', legacy);
+contextBridge.exposeInMainWorld('teleprompterLegacy', legacy);
 
 // The renderer surface contract intentionally keeps size state enumerated.
 contextBridge.exposeInMainWorld('teleprompterDesktop', {

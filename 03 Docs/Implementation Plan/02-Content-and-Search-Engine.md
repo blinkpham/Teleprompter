@@ -1,18 +1,18 @@
 # Part 02: Content conversion and search engine
 
-Owner: Luna content/engine worker. Read [Start Here](</Users/blinblon/Claude/Projects/Image Director/03 Docs/Implementation Plan/00-Start-Here.md>) and the data/engine contracts in [Part 01](</Users/blinblon/Claude/Projects/Image Director/03 Docs/Implementation Plan/01-Architecture-and-Contracts.md>) first.
+Owner: Luna content/engine worker. Read [Start Here](</Users/blinblon/Claude/Projects/Teleprompter/03 Docs/Implementation Plan/00-Start-Here.md>) and the data/engine contracts in [Part 01](</Users/blinblon/Claude/Projects/Teleprompter/03 Docs/Implementation Plan/01-Architecture-and-Contracts.md>) first.
 
-The task is to convert the existing source into a complete typed catalog and implement a few pure functions around it. The Image Director skill already defines the vocabulary. This app does not need a shorthand parser or an image-generation engine.
+The task is to convert the existing source into a complete typed catalog and implement a few pure functions around it. The Teleprompter skill already defines the vocabulary. This app does not need a shorthand parser or an image-generation engine.
 
 ## 1. Source precedence and conversion method
 
 | Content being authored | Authority | Conversion |
 |---|---|---|
-| Gallery full prompts and short forms | The 15 numbered sections in [quick-snippets.md](</Users/blinblon/Claude/Projects/Image Director/image-director/assets/quick-snippets.md>) | Copy the full Expanded/Full snippet body and source short form into typed data. Remove only Markdown presentation syntax. |
-| Canonical tokens and production direction | Family lists in [SKILL.md](</Users/blinblon/Claude/Projects/Image Director/image-director/SKILL.md>) | One entry per canonical item; concise meanings can be edited, substantive direction stays faithful. |
+| Gallery full prompts and short forms | The 15 numbered sections in [quick-snippets.md](</Users/blinblon/Claude/Projects/Teleprompter/teleprompter/assets/quick-snippets.md>) | Copy the full Expanded/Full snippet body and source short form into typed data. Remove only Markdown presentation syntax. |
+| Canonical tokens and production direction | Family lists in [SKILL.md](</Users/blinblon/Claude/Projects/Teleprompter/teleprompter/SKILL.md>) | One entry per canonical item; concise meanings can be edited, substantive direction stays faithful. |
 | Camera lock and reference patterns | Quick snippets sections 3, 8, and 15 | Add the source forms absent from the main minimal-input list. |
 | Preset components | SKILL.md, “Fast professional combinations” | Reference component IDs in order; apply the two explicit camera alias corrections below. |
-| Contextual limits | SKILL.md and [prompting-strategy.md](</Users/blinblon/Claude/Projects/Image Director/image-director/references/prompting-strategy.md>) | Add the specific relevant note and preserve conditions in copied expanded directions. |
+| Contextual limits | SKILL.md and [prompting-strategy.md](</Users/blinblon/Claude/Projects/Teleprompter/teleprompter/references/prompting-strategy.md>) | Add the specific relevant note and preserve conditions in copied expanded directions. |
 
 Do this conversion once, by reading the source and authoring static TypeScript records. A short read-only inventory helper can aid counting, but no Markdown-ingestion pipeline, parser package, watch process, or source-file reader ships in the app. Future content edits are manual updates to these typed records with the source nearby.
 

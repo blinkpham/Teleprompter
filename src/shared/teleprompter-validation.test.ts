@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest';
+import { CREATE_OUTPUT_DEFAULT_TEXT, newDraftDefaults } from './teleprompter-types';
 import type { CueDraft, DraftCommandEnvelope, LibraryV2 } from './teleprompter-types';
 import {
   validateCopyCompiledDraftRequest,
   validateCueDraft,
   validateDraftCommand,
+  validateQuickAddCommand,
+  validateReferenceBindingEnvelope,
+  validateSurfaceLayoutRequest,
   validateLibrary,
 } from './teleprompter-validation';
 
@@ -79,5 +83,77 @@ describe('Teleprompter shared runtime contracts', () => {
   it('validates copy requests before they reach the native bridge', () => {
     expect(validateCopyCompiledDraftRequest({ draftId: 'edit', expectedRevision: 2, format: 'shorthand' }).ok).toBe(true);
     expect(validateCopyCompiledDraftRequest({ draftId: 'create', expectedRevision: -1, format: 'expanded' }).ok).toBe(false);
+  });
+
+  it('keeps the new Create output policy literal and mode-scoped', () => {
+    expect(CREATE_OUTPUT_DEFAULT_TEXT).toBe('4:5 aspect ratio; 2K resolution target');
+    expect(newDraftDefaults('create')).toEqual({ mode: 'create', customText: { output: CREATE_OUTPUT_DEFAULT_TEXT } });
+    expect(newDraftDefaults('edit')).toEqual({ mode: 'edit', customText: {} });
+  });
+
+  it('validates measured layout requests without accepting arbitrary coordinates or dimensions', () => {
+    expect(validateSurfaceLayoutRequest({
+      surfaceSessionId: 'session-1',
+      layoutId: 3,
+      preferredWidth: 540,
+      intrinsicHeight: 208,
+      accessory: 'preview',
+      transition: 'expand',
+    }).ok).toBe(true);
+    expect(validateSurfaceLayoutRequest({
+      surfaceSessionId: 'session-1',
+      layoutId: 3,
+      preferredWidth: Number.POSITIVE_INFINITY,
+      intrinsicHeight: 208,
+      accessory: 'preview',
+      transition: 'expand',
+    }).ok).toBe(false);
+  });
+
+  it('validates atomic quick-add and opaque reference-binding envelopes', () => {
+    expect(validateQuickAddCommand({
+      commandId: 'quick-1',
+      clientId: 'client-1',
+      draftId: 'create',
+      expectedFieldRevisions: { what: 0, preset: 0 },
+      command: {
+        type: 'accept-quick-add',
+        acceptance: {
+          target: { kind: 'preset', recordId: 'preset.editorial' },
+          queryRange: { start: 12, end: 21 },
+          queryText: '/preset',
+          expectedWhat: 'A portrait /preset',
+          expectedContentVersion: library.contentVersion,
+        },
+      },
+    }).ok).toBe(true);
+    expect(validateQuickAddCommand({
+      commandId: 'quick-1',
+      clientId: 'client-1',
+      draftId: 'create',
+      expectedFieldRevisions: { what: 0 },
+      command: {
+        type: 'accept-quick-add',
+        acceptance: {
+          target: { kind: 'snippet', recordId: 'snippet.unknown' },
+          queryRange: { start: 8, end: 2 },
+          queryText: '/snippet',
+          expectedWhat: 'A portrait',
+          expectedContentVersion: library.contentVersion,
+        },
+      },
+    }).ok).toBe(false);
+    expect(validateReferenceBindingEnvelope({
+      draftId: 'create',
+      expectedVersion: 0,
+      operation: 'upsert',
+      binding: { bindingId: 'binding-1', draftId: 'create', imageNumber: 2, label: 'Black bottle', thumbnailHandle: 'thumb-2' },
+    }).ok).toBe(true);
+    expect(validateReferenceBindingEnvelope({
+      draftId: 'create',
+      expectedVersion: 0,
+      operation: 'upsert',
+      binding: { bindingId: 'binding-1', draftId: 'create', imageNumber: 2, label: 'Black bottle', thumbnailHandle: '/tmp/bottle.png' },
+    }).ok).toBe(false);
   });
 });

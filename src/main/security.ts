@@ -10,7 +10,7 @@ export const isPathInside = (root: string, candidate: string): boolean => {
 export const isPermittedRendererUrl = (value: string, developmentOrigin?: string): boolean => {
   try {
     const url = new URL(value);
-    if (url.protocol === 'image-director:' && url.host === 'app' && !url.username && !url.password && !url.port) {
+    if (url.protocol === 'teleprompter:' && url.host === 'app' && !url.username && !url.password && !url.port) {
       return (url.pathname === '/' || url.pathname === '/index.html')
         && [...url.searchParams.keys()].every((key) => key === 'surface')
         && (url.searchParams.get('surface') === null || url.searchParams.get('surface') === 'main' || url.searchParams.get('surface') === 'spotlight');

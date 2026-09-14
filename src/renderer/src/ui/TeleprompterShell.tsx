@@ -1,7 +1,7 @@
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from 'motion/react';
 import type { ReactNode } from 'react';
 import type { PersistenceStatus, View } from '../../../shared/teleprompter';
-import { ImageSquare, MagnifyingGlass, SlidersHorizontal, Sparkle, TerminalWindow } from './icons';
+import { ImageSquare, MagnifyingGlass, SlidersHorizontal, TerminalWindow } from './icons';
 
 interface TeleprompterShellProps {
   readonly view: View;
@@ -29,8 +29,7 @@ export function TeleprompterShell({ view, persistenceStatus, children, onViewCha
   const reducedMotion = useReducedMotion();
   return (
     <div className={spotlight ? 'tp-app tp-app--spotlight' : 'tp-app'} data-motion={reducedMotion ? 'reduced' : 'full'}>
-      <header className="tp-top-strip" aria-label="Window controls">
-        <div className="tp-brand-mark" aria-label="Teleprompter"><Sparkle size={15} weight="duotone" /><span>Teleprompter</span></div>
+      <header className="tp-top-strip" aria-label="Window title bar">
         {persistenceStatus === 'session' && <span className="tp-save-status" role="status">Session only</span>}
       </header>
       <div className="tp-shell-body">

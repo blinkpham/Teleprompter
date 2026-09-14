@@ -60,6 +60,66 @@
       "alt": "An isolated brushed-metal finishing puck with dark glass, a frosted ring, and a warm inner glow.",
       "provenanceId": "generation.identity.group-finish.v1",
       "status": "approved"
+    },
+    {
+      "id": "identity.teleprompter-icon.v2",
+      "kind": "app-icon",
+      "recordIds": [],
+      "path": "runtime/teleprompter-icon-v2.png",
+      "masterPath": "masters/teleprompter-icon-v2.png",
+      "width": 512,
+      "height": 512,
+      "hasAlpha": false,
+      "fit": "contain",
+      "focalPoint": [0.5, 0.5],
+      "alt": "A centered circular optical prompt device with an inclined frosted display, brushed aluminum housing, and a warm light below the glass on a charcoal field.",
+      "provenanceId": "generation.identity.teleprompter-icon.v2",
+      "status": "approved"
+    },
+    {
+      "id": "identity.group-optics.v2",
+      "kind": "group-object",
+      "recordIds": [],
+      "path": "runtime/group-optics-v2.png",
+      "masterPath": "masters/group-optics-v2.png",
+      "width": 512,
+      "height": 512,
+      "hasAlpha": true,
+      "fit": "contain",
+      "focalPoint": [0.5, 0.5],
+      "alt": "An isolated circular machined optical assembly with nested dark glass, a frosted focus ring, and a restrained amber inner glow.",
+      "provenanceId": "generation.identity.group-optics.v2",
+      "status": "approved"
+    },
+    {
+      "id": "identity.group-stage.v2",
+      "kind": "group-object",
+      "recordIds": [],
+      "path": "runtime/group-stage-v2.png",
+      "masterPath": "masters/group-stage-v2.png",
+      "width": 512,
+      "height": 512,
+      "hasAlpha": true,
+      "fit": "contain",
+      "focalPoint": [0.5, 0.5],
+      "alt": "An isolated shallow brushed-aluminum stage frame holding a frosted plane with a precise warm edge light.",
+      "provenanceId": "generation.identity.group-stage.v2",
+      "status": "approved"
+    },
+    {
+      "id": "identity.group-finish.v2",
+      "kind": "group-object",
+      "recordIds": [],
+      "path": "runtime/group-finish-v2.png",
+      "masterPath": "masters/group-finish-v2.png",
+      "width": 512,
+      "height": 512,
+      "hasAlpha": true,
+      "fit": "contain",
+      "focalPoint": [0.5, 0.5],
+      "alt": "An isolated low circular brushed-aluminum finishing puck with dark glass, a frosted ring, and a restrained amber inner light.",
+      "provenanceId": "generation.identity.group-finish.v2",
+      "status": "approved"
     }
   ]
 }

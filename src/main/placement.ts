@@ -13,11 +13,15 @@ export interface WorkArea {
 export interface SpotlightBounds extends WorkArea {}
 export type SpotlightSize = 'compact' | 'expanded';
 
+export const MAIN_WINDOW_TARGET = Object.freeze({ width: 1180, height: 820 });
+export const MAIN_WINDOW_MINIMUM = Object.freeze({ width: 720, height: 560 });
 export const SPOTLIGHT_MARGIN = 16;
 export const SPOTLIGHT_MIN_WIDTH = 400;
-export const SPOTLIGHT_TARGET: Readonly<Record<SpotlightSize, { readonly width: number; readonly height: number }>> = {
-  compact: { width: 660, height: 364 },
-  expanded: { width: 660, height: 620 },
+export const SPOTLIGHT_COMPACT_BOUNDS = Object.freeze({ width: 660, height: 364 });
+export const SPOTLIGHT_EXPANDED_BOUNDS = Object.freeze({ width: 660, height: 620 });
+export const SPOTLIGHT_BOUNDS: Readonly<Record<SpotlightSize, { readonly width: number; readonly height: number }>> = {
+  compact: SPOTLIGHT_COMPACT_BOUNDS,
+  expanded: SPOTLIGHT_EXPANDED_BOUNDS,
 };
 
 const clamp = (value: number, minimum: number, maximum: number): number => {
@@ -25,7 +29,10 @@ const clamp = (value: number, minimum: number, maximum: number): number => {
   return Math.min(Math.max(value, minimum), maximum);
 };
 
-const fit = (target: number, available: number): number => Math.max(1, Math.min(target, Math.max(1, available)));
+const fit = (target: number, available: number, minimum = 1): number => {
+  const safeAvailable = Math.max(1, available);
+  return Math.max(Math.min(minimum, safeAvailable), Math.min(target, safeAvailable));
+};
 
 /**
  * Places a spotlight using DIP coordinates. Electron's screen API already
@@ -38,8 +45,8 @@ export const placeSpotlight = (
 ): SpotlightBounds => {
   const availableWidth = Math.max(1, workArea.width - SPOTLIGHT_MARGIN * 2);
   const availableHeight = Math.max(1, workArea.height - SPOTLIGHT_MARGIN * 2);
-  const target = SPOTLIGHT_TARGET[size];
-  const width = fit(target.width, availableWidth);
+  const target = SPOTLIGHT_BOUNDS[size];
+  const width = fit(target.width, availableWidth, SPOTLIGHT_MIN_WIDTH);
   const height = fit(target.height, availableHeight);
   const minX = workArea.x + SPOTLIGHT_MARGIN;
   const maxX = workArea.x + workArea.width - SPOTLIGHT_MARGIN - width;
@@ -66,7 +73,7 @@ export const resizeSpotlight = (
 export const clampMainBounds = (
   bounds: { readonly width: number; readonly height: number; readonly x?: number; readonly y?: number; readonly isMaximized?: boolean },
   workArea: WorkArea,
-  minimum = { width: 720, height: 560 },
+  minimum = MAIN_WINDOW_MINIMUM,
 ): { width: number; height: number; x: number; y: number; isMaximized: boolean } => {
   const usableMinimumWidth = Math.min(minimum.width, workArea.width);
   const usableMinimumHeight = Math.min(minimum.height, workArea.height);
@@ -84,3 +91,8 @@ export const clampMainBounds = (
     isMaximized: bounds.isMaximized === true,
   };
 };
+
+export const shouldDismissSpotlightOnBlur = (
+  state: { readonly visible: boolean; readonly focused: boolean; readonly transitionUntil: number },
+  now: number,
+): boolean => state.visible && !state.focused && now >= state.transitionUntil;

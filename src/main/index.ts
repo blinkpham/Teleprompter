@@ -47,7 +47,15 @@ import {
   type PreferencesDocument,
   withShortcutResult,
 } from './preferences';
-import { clampMainBounds, placeSpotlight, resizeSpotlight, type SpotlightSize } from './placement';
+import {
+  clampMainBounds,
+  MAIN_WINDOW_MINIMUM,
+  placeSpotlight,
+  resizeSpotlight,
+  shouldDismissSpotlightOnBlur,
+  SPOTLIGHT_BOUNDS,
+  type SpotlightSize,
+} from './placement';
 import {
   createDraftStoreDocument,
   DraftStore,
@@ -61,12 +69,12 @@ import {
 import { isPathInside, isPermittedRendererUrl, rendererContentSecurityPolicy } from './security';
 
 /** Keep the internal profile and protocol stable while visible identity changes. */
-app.setPath('userData', join(app.getPath('appData'), 'image-director'));
+app.setPath('userData', join(app.getPath('appData'), 'teleprompter'));
 app.setName('Teleprompter');
 nativeTheme.themeSource = 'dark';
 
 protocol.registerSchemesAsPrivileged([{
-  scheme: 'image-director',
+  scheme: 'teleprompter',
   privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: false },
 }]);
 
@@ -139,6 +147,7 @@ let spotlightReady = false;
 let spotlightSize: SpotlightSize = 'compact';
 let spotlightAnchor: { x: number; y: number } | null = null;
 let spotlightTransitionUntil = 0;
+let spotlightBlurTimer: ReturnType<typeof setTimeout> | undefined;
 let isQuitting = false;
 let handlersRegistered = false;
 let protocolRegistered = false;
@@ -265,7 +274,7 @@ const registerLocalProtocol = (): void => {
   if (protocolRegistered) return;
   protocolRegistered = true;
   const rendererRoot = resolve(join(__dirname, '../renderer'));
-  protocol.handle('image-director', async (request) => {
+  protocol.handle('teleprompter', async (request) => {
     try {
       if (request.method !== 'GET' && request.method !== 'HEAD') return new Response('Method Not Allowed', { status: 405 });
       const url = new URL(request.url);
@@ -462,6 +471,30 @@ const sendDesktopCommand = (command: DesktopCommand): void => {
   }
 };
 
+const clearSpotlightBlurTimer = (): void => {
+  if (spotlightBlurTimer) clearTimeout(spotlightBlurTimer);
+  spotlightBlurTimer = undefined;
+};
+
+const scheduleSpotlightBlurDismissal = (): void => {
+  clearSpotlightBlurTimer();
+  const check = (): void => {
+    spotlightBlurTimer = undefined;
+    if (!spotlightWindow || spotlightWindow.isDestroyed()) return;
+    const now = Date.now();
+    if (now < spotlightTransitionUntil) {
+      spotlightBlurTimer = setTimeout(check, spotlightTransitionUntil - now);
+      return;
+    }
+    if (shouldDismissSpotlightOnBlur({
+      visible: spotlightWindow.isVisible(),
+      focused: spotlightWindow.isFocused(),
+      transitionUntil: spotlightTransitionUntil,
+    }, now)) hideSpotlight('blur');
+  };
+  spotlightBlurTimer = setTimeout(check, 0);
+};
+
 const showMain = (): void => {
   if (!mainWindow || mainWindow.isDestroyed()) {
     void createMainWindow();
@@ -486,11 +519,13 @@ const reflowVisibleSpotlight = (): void => {
 };
 
 const hideSpotlight = (reason: 'shortcut' | 'blur' | 'menu' = 'menu'): void => {
+  clearSpotlightBlurTimer();
   if (!spotlightWindow || spotlightWindow.isDestroyed()) return;
+  const wasVisible = spotlightWindow.isVisible();
   spotlightWindow.hide();
   spotlightAnchor = null;
   spotlightSize = 'compact';
-  sendDesktopCommand({ type: 'hide-spotlight', reason });
+  if (wasVisible) sendDesktopCommand({ type: 'hide-spotlight', reason });
 };
 
 const showSpotlight = (): void => {
@@ -645,10 +680,11 @@ const createMainWindow = async (): Promise<void> => {
   const point = screen.getCursorScreenPoint();
   const display = screen.getDisplayNearestPoint(point);
   const restored = clampMainBounds(preferences.window, display.workArea);
+  const { isMaximized: restoreMaximized, ...restoredBounds } = restored;
   mainWindow = new BrowserWindow({
-    ...restored,
-    minWidth: Math.min(720, display.workArea.width),
-    minHeight: Math.min(560, display.workArea.height),
+    ...restoredBounds,
+    minWidth: Math.min(MAIN_WINDOW_MINIMUM.width, display.workArea.width),
+    minHeight: Math.min(MAIN_WINDOW_MINIMUM.height, display.workArea.height),
     show: false,
     backgroundColor: '#101112',
     title: 'Teleprompter',
@@ -667,11 +703,14 @@ const createMainWindow = async (): Promise<void> => {
   mainWindow.on('page-title-updated', (event) => { event.preventDefault(); mainWindow?.setTitle('Teleprompter'); });
   mainWindow.once('ready-to-show', () => {
     mainReady = true;
+    if (restoreMaximized && mainWindow && !mainWindow.isMaximized()) mainWindow.maximize();
     mainWindow?.show();
   });
   const saveBounds = (): void => {
-    if (!mainWindow || mainWindow.isDestroyed() || mainWindow.isMaximized()) return;
-    preferences = mergePreferences(preferences, { window: { ...mainWindow.getNormalBounds(), isMaximized: false } });
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+    preferences = mergePreferences(preferences, {
+      window: { ...mainWindow.getNormalBounds(), isMaximized: mainWindow.isMaximized() },
+    });
     void persistPreferences();
   };
   let boundsTimer: ReturnType<typeof setTimeout> | undefined;
@@ -681,24 +720,29 @@ const createMainWindow = async (): Promise<void> => {
   };
   mainWindow.on('move', scheduleBoundsSave);
   mainWindow.on('resize', scheduleBoundsSave);
-  mainWindow.on('maximize', () => { preferences = mergePreferences(preferences, { window: { ...preferences.window, isMaximized: true } }); void persistPreferences(); });
+  mainWindow.on('maximize', saveBounds);
   mainWindow.on('unmaximize', scheduleBoundsSave);
+  mainWindow.on('close', () => {
+    if (boundsTimer) clearTimeout(boundsTimer);
+    boundsTimer = undefined;
+    saveBounds();
+  });
   mainWindow.on('closed', () => { mainReady = false; mainWindow = null; });
-  const url = process.env.ELECTRON_RENDERER_URL ? (() => { const value = new URL(process.env.ELECTRON_RENDERER_URL); value.searchParams.set('surface', 'main'); return value.toString(); })() : 'image-director://app/index.html?surface=main';
+  const url = process.env.ELECTRON_RENDERER_URL ? (() => { const value = new URL(process.env.ELECTRON_RENDERER_URL); value.searchParams.set('surface', 'main'); return value.toString(); })() : 'teleprompter://app/index.html?surface=main';
   await mainWindow.loadURL(url);
 };
 
 const createSpotlightWindow = async (): Promise<void> => {
   if (spotlightWindow && !spotlightWindow.isDestroyed()) return;
   spotlightWindow = new BrowserWindow({
-    width: 660,
-    height: 364,
+    ...SPOTLIGHT_BOUNDS.compact,
     show: false,
     frame: false,
     transparent: true,
     resizable: false,
     movable: false,
     focusable: true,
+    hasShadow: false,
     skipTaskbar: true,
     alwaysOnTop: true,
     ...(process.platform === 'darwin' ? { type: 'panel' as const, level: 'floating' as const } : {}),
@@ -717,15 +761,16 @@ const createSpotlightWindow = async (): Promise<void> => {
   registerRenderer(spotlightWindow, 'spotlight');
   spotlightWindow.on('page-title-updated', (event) => { event.preventDefault(); spotlightWindow?.setTitle('Teleprompter Cue'); });
   if (process.platform === 'darwin') spotlightWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
-  spotlightWindow.on('blur', () => {
-    setTimeout(() => {
-      if (spotlightWindow && !spotlightWindow.isDestroyed() && spotlightWindow.isVisible() && !spotlightWindow.isFocused()) hideSpotlight('blur');
-    }, 0);
+  spotlightWindow.on('focus', clearSpotlightBlurTimer);
+  spotlightWindow.on('blur', scheduleSpotlightBlurDismissal);
+  spotlightWindow.on('closed', () => {
+    clearSpotlightBlurTimer();
+    spotlightReady = false;
+    spotlightWindow = null;
   });
-  spotlightWindow.on('closed', () => { spotlightReady = false; spotlightWindow = null; });
   spotlightWindow.once('ready-to-show', () => { spotlightReady = true; });
   spotlightWindow.webContents.once('did-finish-load', () => { spotlightReady = true; });
-  const url = process.env.ELECTRON_RENDERER_URL ? (() => { const value = new URL(process.env.ELECTRON_RENDERER_URL); value.searchParams.set('surface', 'spotlight'); return value.toString(); })() : 'image-director://app/index.html?surface=spotlight';
+  const url = process.env.ELECTRON_RENDERER_URL ? (() => { const value = new URL(process.env.ELECTRON_RENDERER_URL); value.searchParams.set('surface', 'spotlight'); return value.toString(); })() : 'teleprompter://app/index.html?surface=spotlight';
   await spotlightWindow.loadURL(url);
   // loadURL resolves after the document has loaded even when transparent
   // windows do not emit ready-to-show on a particular compositor.

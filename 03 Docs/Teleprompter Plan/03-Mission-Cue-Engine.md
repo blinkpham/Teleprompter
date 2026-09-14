@@ -2,7 +2,7 @@
 
 ## Dispatch prompt
 
-> Implement the deterministic Cue engine for Teleprompter. Read AGENTS.md and MAP.md, then `03 Docs/Teleprompter Plan/00-Start-Here.md` for the explicit scope update, `02-Cue-and-Library-Contracts.md`, and this mission. You own `src/engine/`, `src/content/`, and their focused tests. You are not alone in the codebase: preserve other workers' edits and adapt to the shared contracts supplied by the lead. Do not change shared types, renderer files, desktop code, root configuration, or original `image-director/` source files. Deliver a working pure engine, an explicit legacy adapter, and focused proof of prompt composition. Ask the lead to resolve a shared-contract change; continue independent engine work. Do not conduct the long-term Internet curation mission or add runtime model calls.
+> Implement the deterministic Cue engine for Teleprompter. Read AGENTS.md and MAP.md, then `03 Docs/Teleprompter Plan/00-Start-Here.md` for the explicit scope update, `02-Cue-and-Library-Contracts.md`, and this mission. You own `src/engine/`, `src/content/`, and their focused tests. You are not alone in the codebase: preserve other workers' edits and adapt to the shared contracts supplied by the lead. Do not change shared types, renderer files, desktop code, root configuration, or original `teleprompter/` source files. Deliver a working pure engine, an explicit legacy adapter, and focused proof of prompt composition. Ask the lead to resolve a shared-contract change; continue independent engine work. Do not conduct the long-term Internet curation mission or add runtime model calls.
 
 ## Outcome
 

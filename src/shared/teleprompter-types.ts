@@ -2,7 +2,7 @@
  * Shared contracts for the Teleprompter upgrade.
  *
  * These types are deliberately independent of Electron, React, filesystem
- * state, and the legacy Image Director catalog. The engine owns semantics;
+ * state, and the retained legacy catalog. The engine owns semantics;
  * desktop owns revisions and persistence; renderers consume projections.
  */
 
@@ -18,6 +18,24 @@ export type SourceId = string;
 export type PersistenceStatus = 'disk' | 'session' | 'recovery';
 export type CopyFormat = 'expanded' | 'shorthand';
 export type RecordCopyFormat = CopyFormat | 'original';
+export type SurfaceAccessory = 'none' | 'parameters' | 'suggestions' | 'references' | 'preview';
+export type SurfaceLayoutTransition = 'immediate' | 'expand' | 'collapse';
+export type QuickAddTrigger = 'slash' | 'mention';
+export type QuickAddRecordKind = 'preset' | 'token' | 'edit' | 'snippet';
+
+/** The one product-authored output request used when a genuinely new Create draft is made. */
+export const CREATE_OUTPUT_DEFAULT_TEXT = '4:5 aspect ratio; 2K resolution target' as const;
+
+export interface NewDraftDefaults {
+  readonly mode: Mode;
+  readonly customText: Partial<Readonly<Record<Field, string>>>;
+}
+
+/** Apply only at new-draft creation time; reset, restore, and Edit remain untouched. */
+export const newDraftDefaults = (mode: Mode): NewDraftDefaults => ({
+  mode,
+  customText: mode === 'create' ? { output: CREATE_OUTPUT_DEFAULT_TEXT } : {},
+});
 
 export interface Taxon {
   readonly id: Id;
@@ -145,6 +163,88 @@ export interface ReferenceRole {
     | 'lighting' | 'background' | 'geometry' | 'custom';
   readonly note: string;
 }
+
+export interface TextRange {
+  readonly start: number;
+  readonly end: number;
+}
+
+export type QuickAddTarget =
+  | { readonly kind: QuickAddRecordKind; readonly recordId: Id }
+  | { readonly kind: 'reference'; readonly imageNumber: number };
+
+export interface QuickAddAcceptance {
+  readonly target: QuickAddTarget;
+  readonly queryRange: TextRange;
+  readonly queryText: string;
+  readonly expectedWhat: string;
+  readonly expectedContentVersion: string;
+}
+
+/** Future compound authoring operation; kept separate until the engine owner consumes it. */
+export interface AcceptQuickAddCommand {
+  readonly type: 'accept-quick-add';
+  readonly acceptance: QuickAddAcceptance;
+}
+
+export interface QuickAddCommandEnvelope extends Omit<DraftCommandEnvelope, 'command'> {
+  readonly command: AcceptQuickAddCommand;
+}
+
+export interface QuickAddResultView {
+  readonly target: QuickAddTarget;
+  readonly title: string;
+  readonly actionLabel: string;
+  readonly secondary?: string;
+  readonly previewAssetId?: Id;
+}
+
+export interface QuickAddSession {
+  readonly sessionId: string;
+  readonly trigger: QuickAddTrigger;
+  readonly draftId: Mode;
+  readonly query: string;
+  readonly queryRange: TextRange;
+  readonly expectedWhat: string;
+  readonly expectedRevision: number;
+  readonly contentVersion: string;
+  readonly results: readonly QuickAddResultView[];
+}
+
+/** Presentation-only local binding; the thumbnail handle is opaque and never a filesystem path. */
+export interface ReferenceBinding {
+  readonly bindingId: string;
+  readonly draftId: Mode;
+  readonly imageNumber: number;
+  readonly label: string;
+  readonly thumbnailHandle?: string;
+}
+
+export interface ReferenceBindingsSnapshot {
+  readonly draftId: Mode;
+  readonly version: number;
+  readonly bindings: readonly ReferenceBinding[];
+}
+
+export interface ReferenceBindingsRequest {
+  readonly draftId: Mode;
+  readonly expectedDraftRevision: number;
+}
+
+export type ReferenceBindingEnvelope =
+  | {
+      readonly draftId: Mode;
+      readonly expectedVersion: number;
+      readonly operation: 'upsert';
+      readonly binding: ReferenceBinding;
+    }
+  | {
+      readonly draftId: Mode;
+      readonly expectedVersion: number;
+      readonly operation: 'remove';
+      readonly bindingId: string;
+      readonly imageNumber: number;
+    };
 
 export interface CueDraft {
   readonly schemaVersion: 1;
@@ -303,10 +403,61 @@ export interface CopyCompiledDraftRequest {
   readonly format: CopyFormat;
 }
 
+export interface PreviewRequest extends CopyCompiledDraftRequest {
+  readonly requestId: string;
+  readonly expectedContentVersion: string;
+}
+
+export type PreviewIntent = Omit<PreviewRequest, 'requestId'>;
+
+/** Exact compiler output returned by the read-only preview seam. */
+export interface CompiledDraftPreview extends CompileResult {
+  readonly draftId: Mode;
+  readonly format: CopyFormat;
+  readonly contentVersion: string;
+}
+
 export interface LibraryCopyTextRequest {
   readonly recordId: Id;
   readonly format: RecordCopyFormat;
   readonly expectedContentVersion: string;
+}
+
+/** Exact record text returned without touching the clipboard. */
+export interface LibraryTextResult {
+  readonly recordId: Id;
+  readonly format: RecordCopyFormat;
+  readonly contentVersion: string;
+  readonly text: string;
+}
+
+export interface SurfaceLayoutRequest {
+  readonly surfaceSessionId: string;
+  readonly layoutId: number;
+  readonly preferredWidth: number;
+  readonly intrinsicHeight: number;
+  readonly accessory: SurfaceAccessory;
+  readonly transition: SurfaceLayoutTransition;
+}
+
+export interface SurfaceBounds {
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+}
+
+export interface SurfaceInteriorSize {
+  readonly width: number;
+  readonly height: number;
+}
+
+export interface SurfaceLayoutResult {
+  readonly appliedBounds: SurfaceBounds;
+  readonly interiorSize: SurfaceInteriorSize;
+  readonly constrained: Readonly<{ width: boolean; height: boolean }>;
+  readonly surfaceSessionId: string;
+  readonly layoutId: number;
 }
 
 export interface CopyResult {
@@ -314,6 +465,15 @@ export interface CopyResult {
   readonly format: CopyFormat | RecordCopyFormat;
   readonly revision?: number;
   readonly bytes: number;
+}
+
+export type SettingsSaveState = 'idle' | 'saving' | 'saved' | 'error';
+
+export interface SettingsState {
+  readonly shortcut: ShortcutState;
+  readonly persistenceStatus: PersistenceStatus;
+  readonly saveState: SettingsSaveState;
+  readonly error?: string;
 }
 
 export type BridgeErrorCode = 'INVALID_INPUT' | 'UNAVAILABLE' | 'CONFLICT'
@@ -334,6 +494,12 @@ export interface TeleprompterBridge {
   readonly onDraftChanged: (callback: (event: DraftChangedEvent) => void) => () => void;
   readonly copyCompiledDraft: (request: CopyCompiledDraftRequest) => Promise<BridgeResult<CopyResult>>;
   readonly copyLibraryText: (request: LibraryCopyTextRequest) => Promise<BridgeResult<CopyResult>>;
+  /** Added for the exact read-only preview seam; optional until desktop consumes it. */
+  readonly getCompiledDraft?: (request: CopyCompiledDraftRequest) => Promise<BridgeResult<CompiledDraftPreview>>;
+  /** Added for exact Library/Tokens text; it never writes the clipboard. */
+  readonly getLibraryText?: (request: LibraryCopyTextRequest) => Promise<BridgeResult<LibraryTextResult>>;
+  readonly getReferenceBindings?: (request: ReferenceBindingsRequest) => Promise<BridgeResult<ReferenceBindingsSnapshot>>;
+  readonly setReferenceBinding?: (request: ReferenceBindingEnvelope) => Promise<BridgeResult<ReferenceBindingsSnapshot>>;
   readonly setFavorite: (request: { readonly recordId: Id; readonly favorited: boolean }) => Promise<BridgeResult<{ readonly recordId: Id; readonly favorited: boolean; readonly persistenceStatus: PersistenceStatus }>>;
   readonly setShortcut: (request: { readonly accelerator: string }) => Promise<BridgeResult<{ readonly shortcut: ShortcutState; readonly persistenceStatus: PersistenceStatus }>>;
   readonly showMain: () => Promise<BridgeResult>;
@@ -342,7 +508,10 @@ export interface TeleprompterBridge {
 }
 
 export interface TeleprompterDesktopBridge {
-  readonly requestSize: (size: 'compact' | 'expanded') => Promise<BridgeResult<{ readonly size: 'compact' | 'expanded' }>>;
+  /** Measured adaptive surface protocol. The renderer supplies content measurements only. */
+  readonly requestSurfaceLayout?: (request: SurfaceLayoutRequest) => Promise<BridgeResult<SurfaceLayoutResult>>;
+  /** Compatibility seam for the already-dirty desktop/UI slice; do not use for the reset path. */
+  readonly requestSize?: (size: 'compact' | 'expanded') => Promise<BridgeResult<{ readonly size: 'compact' | 'expanded' }>>;
 }
 
 export type DesktopCommand =

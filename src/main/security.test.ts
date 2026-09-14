@@ -9,8 +9,8 @@ describe('desktop security guards', () => {
   });
 
   it('accepts the compatibility protocol and configured development origin only', () => {
-    expect(isPermittedRendererUrl('image-director://app/index.html?surface=spotlight')).toBe(true);
-    expect(isPermittedRendererUrl('image-director://app/index.html?path=../secret')).toBe(false);
+    expect(isPermittedRendererUrl('teleprompter://app/index.html?surface=spotlight')).toBe(true);
+    expect(isPermittedRendererUrl('teleprompter://app/index.html?path=../secret')).toBe(false);
     expect(isPermittedRendererUrl('http://127.0.0.1:5173/?surface=main', 'http://127.0.0.1:5173')).toBe(true);
     expect(isPermittedRendererUrl('https://example.com/', 'http://127.0.0.1:5173')).toBe(false);
   });

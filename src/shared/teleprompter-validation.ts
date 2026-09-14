@@ -12,6 +12,10 @@ import type {
   LibraryV2,
   Mode,
   Preset,
+  ReferenceBindingEnvelope,
+  ReferenceBindingsRequest,
+  QuickAddCommandEnvelope,
+  SurfaceLayoutRequest,
   ReferenceRole,
   Source,
   Taxon,
@@ -32,6 +36,10 @@ const DOMAINS: readonly Domain[] = ['identity', 'pose', 'wardrobe', 'camera', 'c
 const ID_PATTERN = /^[a-z0-9]+(?:[._-][a-z0-9]+)*$/;
 const CONTENT_VERSION_PATTERN = /^\d{4}-\d{2}-\d{2}\.\d+$/;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const SURFACE_SESSION_PATTERN = /^[A-Za-z0-9._:-]{1,128}$/;
+const OPAQUE_HANDLE_PATTERN = /^[A-Za-z0-9._:-]{1,512}$/;
+const SURFACE_LAYOUT_MAX_DIMENSION = 2000;
+const TEXT_RANGE_MAX = 10000;
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value);
 const isString = (value: unknown): value is string => typeof value === 'string';
@@ -181,6 +189,56 @@ const validateReferenceRole = (value: unknown, path: string): readonly Validatio
   if (!isInteger(value.imageNumber) || value.imageNumber < 1 || value.imageNumber > 20) errors.push(issue(`${path}.imageNumber`, 'Image number must be between 1 and 20.'));
   if (!includes(['base', 'identity', 'pose', 'product', 'style', 'palette', 'lighting', 'background', 'geometry', 'custom'], value.role)) errors.push(issue(`${path}.role`, 'Reference role is invalid.'));
   if (!isString(value.note)) errors.push(issue(`${path}.note`, 'Reference note must be text.'));
+  return errors;
+};
+
+const validateTextRange = (value: unknown, path: string): readonly ValidationIssue[] => {
+  if (!isRecord(value)) return [issue(path, 'Expected a text range object.')];
+  const errors: ValidationIssue[] = [];
+  if (!hasOnlyKeys(value, ['start', 'end'])) errors.push(issue(path, 'Unknown text range property.'));
+  if (!isInteger(value.start) || value.start < 0 || value.start > TEXT_RANGE_MAX) errors.push(issue(`${path}.start`, 'Range start must be a bounded non-negative integer.'));
+  if (!isInteger(value.end) || value.end < 0 || value.end > TEXT_RANGE_MAX) errors.push(issue(`${path}.end`, 'Range end must be a bounded non-negative integer.'));
+  if (isInteger(value.start) && isInteger(value.end) && value.end < value.start) errors.push(issue(path, 'Range end must not precede range start.'));
+  return errors;
+};
+
+const validateQuickAddTarget = (value: unknown, path: string): readonly ValidationIssue[] => {
+  if (!isRecord(value)) return [issue(path, 'Expected a quick-add target object.')];
+  const errors: ValidationIssue[] = [];
+  if (value.kind === 'reference') {
+    if (!hasOnlyKeys(value, ['kind', 'imageNumber'])) errors.push(issue(path, 'Unknown reference quick-add target property.'));
+    if (!isInteger(value.imageNumber) || value.imageNumber < 1 || value.imageNumber > 20) errors.push(issue(`${path}.imageNumber`, 'Image number must be between 1 and 20.'));
+    return errors;
+  }
+  if (!includes(['preset', 'token', 'edit', 'snippet'], value.kind)) {
+    errors.push(issue(`${path}.kind`, 'Quick-add target kind is invalid.'));
+  }
+  if (!hasOnlyKeys(value, ['kind', 'recordId'])) errors.push(issue(path, 'Unknown quick-add target property.'));
+  if (!isId(value.recordId)) errors.push(issue(`${path}.recordId`, 'Quick-add record ID is invalid.'));
+  return errors;
+};
+
+const validateQuickAddAcceptance = (value: unknown, path: string): readonly ValidationIssue[] => {
+  if (!isRecord(value)) return [issue(path, 'Expected a quick-add acceptance object.')];
+  const errors: ValidationIssue[] = [];
+  if (!hasOnlyKeys(value, ['target', 'queryRange', 'queryText', 'expectedWhat', 'expectedContentVersion'])) errors.push(issue(path, 'Unknown quick-add acceptance property.'));
+  errors.push(...validateQuickAddTarget(value.target, `${path}.target`));
+  errors.push(...validateTextRange(value.queryRange, `${path}.queryRange`));
+  if (!isString(value.queryText) || value.queryText.length > 120) errors.push(issue(`${path}.queryText`, 'Quick-add query must be text of at most 120 characters.'));
+  if (!isString(value.expectedWhat) || value.expectedWhat.length > TEXT_RANGE_MAX) errors.push(issue(`${path}.expectedWhat`, 'Expected WHAT must be bounded text.'));
+  if (!isString(value.expectedContentVersion) || !CONTENT_VERSION_PATTERN.test(value.expectedContentVersion)) errors.push(issue(`${path}.expectedContentVersion`, 'Content version is invalid.'));
+  return errors;
+};
+
+const validateReferenceBinding = (value: unknown, path: string): readonly ValidationIssue[] => {
+  if (!isRecord(value)) return [issue(path, 'Expected a reference binding object.')];
+  const errors: ValidationIssue[] = [];
+  if (!hasOnlyKeys(value, ['bindingId', 'draftId', 'imageNumber', 'label', 'thumbnailHandle'])) errors.push(issue(path, 'Unknown reference binding property.'));
+  if (!isNonEmptyString(value.bindingId) || value.bindingId.length > 128) errors.push(issue(`${path}.bindingId`, 'Binding ID must be bounded non-empty text.'));
+  if (!includes(MODES, value.draftId)) errors.push(issue(`${path}.draftId`, 'Binding draft ID is invalid.'));
+  if (!isInteger(value.imageNumber) || value.imageNumber < 1 || value.imageNumber > 20) errors.push(issue(`${path}.imageNumber`, 'Image number must be between 1 and 20.'));
+  if (!isNonEmptyString(value.label) || value.label.length > 200) errors.push(issue(`${path}.label`, 'Binding label must be bounded non-empty text.'));
+  if (value.thumbnailHandle !== undefined && (!isString(value.thumbnailHandle) || !OPAQUE_HANDLE_PATTERN.test(value.thumbnailHandle))) errors.push(issue(`${path}.thumbnailHandle`, 'Thumbnail handle must be an opaque handle, not a path.'));
   return errors;
 };
 
@@ -461,6 +519,31 @@ export function validateDraftCommand(input: unknown): ValidationResult<DraftComm
   return errors.length === 0 ? ok(input as unknown as DraftCommandEnvelope) : { ok: false, errors };
 }
 
+/** Validates the future compound command without widening the current engine command union. */
+export function validateQuickAddCommand(input: unknown): ValidationResult<QuickAddCommandEnvelope> {
+  if (!isRecord(input)) return fail('quickAddCommand', 'Expected a quick-add command envelope.');
+  const errors: ValidationIssue[] = [];
+  if (!hasOnlyKeys(input, ['commandId', 'clientId', 'draftId', 'expectedFieldRevisions', 'command'])) errors.push(issue('quickAddCommand', 'Unknown command envelope property.'));
+  if (!isNonEmptyString(input.commandId)) errors.push(issue('quickAddCommand.commandId', 'Command ID must be non-empty text.'));
+  if (!isNonEmptyString(input.clientId)) errors.push(issue('quickAddCommand.clientId', 'Client ID must be non-empty text.'));
+  if (!includes(MODES, input.draftId)) errors.push(issue('quickAddCommand.draftId', 'Draft ID is invalid.'));
+  if (!isRecord(input.expectedFieldRevisions)) errors.push(issue('quickAddCommand.expectedFieldRevisions', 'Expected field revisions must be an object.'));
+  else {
+    Object.entries(input.expectedFieldRevisions).forEach(([path, revision]) => {
+      if (!isDraftFieldPath(path)) errors.push(issue(`quickAddCommand.expectedFieldRevisions.${path}`, 'Field revision path is invalid.'));
+      if (!isNonNegativeInteger(revision)) errors.push(issue(`quickAddCommand.expectedFieldRevisions.${path}`, 'Revision must be a non-negative integer.'));
+    });
+    if (!('what' in input.expectedFieldRevisions)) errors.push(issue('quickAddCommand.expectedFieldRevisions.what', 'WHAT revision is required for quick add.'));
+  }
+  if (!isRecord(input.command)) errors.push(issue('quickAddCommand.command', 'Expected the accept-quick-add command.'));
+  else {
+    if (!hasOnlyKeys(input.command, ['type', 'acceptance'])) errors.push(issue('quickAddCommand.command', 'Unknown quick-add command property.'));
+    if (input.command.type !== 'accept-quick-add') errors.push(issue('quickAddCommand.command.type', 'Command must be accept-quick-add.'));
+    errors.push(...validateQuickAddAcceptance(input.command.acceptance, 'quickAddCommand.command.acceptance'));
+  }
+  return errors.length === 0 ? ok(input as unknown as QuickAddCommandEnvelope) : { ok: false, errors };
+}
+
 const isDraftFieldPath = (path: string): path is `axis:${string}` | `custom:${Field}` | `recipe:${string}` | 'draft' | 'what' | 'references' | 'manualUnlocks' | 'preset' | 'format' => path === 'draft' || path === 'what' || path === 'references' || path === 'manualUnlocks' || path === 'preset' || path === 'format' || /^axis:[a-z0-9]+(?:[._-][a-z0-9]+)*$/.test(path) || /^custom:(cam|angle|comp|light|look|mood|important|avoid|output)$/.test(path) || /^recipe:[a-z0-9]+(?:[._-][a-z0-9]+)*$/.test(path);
 
 export function validateCopyCompiledDraftRequest(input: unknown): ValidationResult<{ readonly draftId: Mode; readonly expectedRevision: number; readonly format: 'expanded' | 'shorthand' }> {
@@ -481,6 +564,50 @@ export function validateLibraryCopyTextRequest(input: unknown): ValidationResult
   if (!includes(['expanded', 'shorthand', 'original'], input.format)) errors.push(issue('libraryCopy.format', 'Record copy format is invalid.'));
   if (!isString(input.expectedContentVersion) || !CONTENT_VERSION_PATTERN.test(input.expectedContentVersion)) errors.push(issue('libraryCopy.expectedContentVersion', 'Content version is invalid.'));
   return errors.length === 0 ? ok(input as { readonly recordId: string; readonly format: 'expanded' | 'shorthand' | 'original'; readonly expectedContentVersion: string }) : { ok: false, errors };
+}
+
+export const validateGetCompiledDraftRequest = validateCopyCompiledDraftRequest;
+export const validateLibraryTextRequest = validateLibraryCopyTextRequest;
+
+export function validateSurfaceLayoutRequest(input: unknown): ValidationResult<SurfaceLayoutRequest> {
+  if (!isRecord(input)) return fail('layout', 'Expected a surface layout request.');
+  const errors: ValidationIssue[] = [];
+  if (!hasOnlyKeys(input, ['surfaceSessionId', 'layoutId', 'preferredWidth', 'intrinsicHeight', 'accessory', 'transition'])) errors.push(issue('layout', 'Unknown surface layout property.'));
+  if (!isString(input.surfaceSessionId) || !SURFACE_SESSION_PATTERN.test(input.surfaceSessionId)) errors.push(issue('layout.surfaceSessionId', 'Surface session ID is invalid.'));
+  if (!isNonNegativeInteger(input.layoutId)) errors.push(issue('layout.layoutId', 'Layout ID must be a non-negative integer.'));
+  if (typeof input.preferredWidth !== 'number' || !Number.isFinite(input.preferredWidth) || input.preferredWidth <= 0 || input.preferredWidth > SURFACE_LAYOUT_MAX_DIMENSION) errors.push(issue('layout.preferredWidth', 'Preferred width must be finite and bounded.'));
+  if (typeof input.intrinsicHeight !== 'number' || !Number.isFinite(input.intrinsicHeight) || input.intrinsicHeight <= 0 || input.intrinsicHeight > SURFACE_LAYOUT_MAX_DIMENSION) errors.push(issue('layout.intrinsicHeight', 'Intrinsic height must be finite and bounded.'));
+  if (!includes(['none', 'parameters', 'suggestions', 'references', 'preview'], input.accessory)) errors.push(issue('layout.accessory', 'Surface accessory is invalid.'));
+  if (!includes(['immediate', 'expand', 'collapse'], input.transition)) errors.push(issue('layout.transition', 'Surface layout transition is invalid.'));
+  return errors.length === 0 ? ok(input as unknown as SurfaceLayoutRequest) : { ok: false, errors };
+}
+
+export function validateReferenceBindingsRequest(input: unknown): ValidationResult<ReferenceBindingsRequest> {
+  if (!isRecord(input)) return fail('referenceBindings', 'Expected a reference bindings request.');
+  const errors: ValidationIssue[] = [];
+  if (!hasOnlyKeys(input, ['draftId', 'expectedDraftRevision'])) errors.push(issue('referenceBindings', 'Unknown reference bindings property.'));
+  if (!includes(MODES, input.draftId)) errors.push(issue('referenceBindings.draftId', 'Draft ID is invalid.'));
+  if (!isNonNegativeInteger(input.expectedDraftRevision)) errors.push(issue('referenceBindings.expectedDraftRevision', 'Expected draft revision must be a non-negative integer.'));
+  return errors.length === 0 ? ok(input as unknown as ReferenceBindingsRequest) : { ok: false, errors };
+}
+
+export function validateReferenceBindingEnvelope(input: unknown): ValidationResult<ReferenceBindingEnvelope> {
+  if (!isRecord(input)) return fail('referenceBinding', 'Expected a reference binding envelope.');
+  const errors: ValidationIssue[] = [];
+  if (input.operation === 'upsert') {
+    if (!hasOnlyKeys(input, ['draftId', 'expectedVersion', 'operation', 'binding'])) errors.push(issue('referenceBinding', 'Unknown upsert binding property.'));
+    errors.push(...validateReferenceBinding(input.binding, 'referenceBinding.binding'));
+    if (isRecord(input.binding) && input.binding.draftId !== input.draftId) errors.push(issue('referenceBinding.binding.draftId', 'Binding draft ID must match the envelope.'));
+  } else if (input.operation === 'remove') {
+    if (!hasOnlyKeys(input, ['draftId', 'expectedVersion', 'operation', 'bindingId', 'imageNumber'])) errors.push(issue('referenceBinding', 'Unknown remove binding property.'));
+    if (!isNonEmptyString(input.bindingId) || input.bindingId.length > 128) errors.push(issue('referenceBinding.bindingId', 'Binding ID must be bounded non-empty text.'));
+    if (!isInteger(input.imageNumber) || input.imageNumber < 1 || input.imageNumber > 20) errors.push(issue('referenceBinding.imageNumber', 'Image number must be between 1 and 20.'));
+  } else {
+    errors.push(issue('referenceBinding.operation', 'Binding operation is invalid.'));
+  }
+  if (!includes(MODES, input.draftId)) errors.push(issue('referenceBinding.draftId', 'Draft ID is invalid.'));
+  if (!isNonNegativeInteger(input.expectedVersion)) errors.push(issue('referenceBinding.expectedVersion', 'Expected binding version must be a non-negative integer.'));
+  return errors.length === 0 ? ok(input as ReferenceBindingEnvelope) : { ok: false, errors };
 }
 
 export function validationErrorToBridgeError(errors: readonly ValidationIssue[]): BridgeError {

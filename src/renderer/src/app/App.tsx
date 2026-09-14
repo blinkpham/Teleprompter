@@ -77,7 +77,7 @@ export function App() {
   useEffect(() => {
     let active = true;
     const load = async () => {
-      const result = await window.imageDirector?.getBootstrap();
+      const result = await window.teleprompterLegacy?.getBootstrap();
       if (!active || !result?.ok) return;
       setBootstrap(result);
       setPlatform(result.platform);
@@ -89,7 +89,7 @@ export function App() {
       dispatch({ type: 'mode', mode: result.preferences.lastMode });
     };
     void load();
-    const unsubscribe = window.imageDirector?.onCommand((command) => {
+    const unsubscribe = window.teleprompterLegacy?.onCommand((command) => {
       if (command === 'focus-search') {
         dispatch({ type: 'close-technique' });
         searchRef.current?.focus();
@@ -102,15 +102,15 @@ export function App() {
   }, []);
 
   const copy = useCallback(async (payload: string): Promise<CopyOutcome> => {
-    const result: DesktopResult = window.imageDirector
-      ? await window.imageDirector.copyText({ text: payload })
+    const result: DesktopResult = window.teleprompterLegacy
+      ? await window.teleprompterLegacy.copyText({ text: payload })
       : { ok: false, error: { code: 'UNAVAILABLE', message: 'Open the desktop app to use native copy.' } };
     return result.ok ? { ok: true } : { ok: false, message: result.error.message };
   }, []);
 
   const changeMode = (mode: Mode) => {
     dispatch({ type: 'mode', mode });
-    void window.imageDirector?.setLastMode({ mode }).then((result) => {
+    void window.teleprompterLegacy?.setLastMode({ mode }).then((result) => {
       if (result?.ok) setPersistenceStatus(result.persistenceStatus);
     });
   };
@@ -118,7 +118,7 @@ export function App() {
   const changeTheme = (theme: ThemePreference) => {
     const previous = themePreference;
     setThemePreference(theme);
-    void window.imageDirector?.setThemePreference({ themePreference: theme }).then((result) => {
+    void window.teleprompterLegacy?.setThemePreference({ themePreference: theme }).then((result) => {
       if (result?.ok) setPersistenceStatus(result.persistenceStatus);
       else setThemePreference(previous);
     });
@@ -133,7 +133,7 @@ export function App() {
       return next;
     });
     setPendingFavoriteIds((previous) => new Set(previous).add(technique.id));
-    const request = window.imageDirector?.setFavorite({ techniqueId: technique.id, favorited });
+    const request = window.teleprompterLegacy?.setFavorite({ techniqueId: technique.id, favorited });
     if (!request) {
       setPendingFavoriteIds((previous) => { const next = new Set(previous); next.delete(technique.id); return next; });
       setFavoriteIds((previous) => { const next = new Set(previous); if (favorited) next.delete(technique.id); else next.add(technique.id); return next; });

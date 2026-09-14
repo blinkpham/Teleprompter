@@ -1,6 +1,6 @@
 import type { Technique } from '../shared/catalog-types';
 
-const sourceFile = 'image-director/assets/quick-snippets.md';
+const sourceFile = 'teleprompter/assets/quick-snippets.md';
 
 export const techniques: readonly Technique[] = [
   {

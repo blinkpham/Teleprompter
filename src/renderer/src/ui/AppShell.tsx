@@ -87,7 +87,7 @@ function AppearancePopover({ themePreference, persistenceStatus, appVersion, onT
   return <div className="appearance-popover" role="dialog" aria-label="Appearance settings">
     <div className="popover-heading"><strong>Appearance</strong><button type="button" aria-label="Close appearance" onClick={onClose}><X size={15} /></button></div>
     <fieldset><legend className="sr-only">Theme</legend>{(['system', 'light', 'dark'] as ThemePreference[]).map((theme) => <label key={theme} className="radio-row"><input type="radio" name="theme" checked={themePreference === theme} onChange={() => onThemeChange(theme)} /><span>{theme.charAt(0).toUpperCase() + theme.slice(1)}</span></label>)}</fieldset>
-    <p className="popover-credit">Photo: Komet Flicker / Pexels<br />Image Director {appVersion}</p>
+    <p className="popover-credit">Photo: Komet Flicker / Pexels<br />Teleprompter {appVersion}</p>
     {persistenceStatus === 'session' && <p className="session-warning">Changes are saved for this session only.</p>}
   </div>;
 }

@@ -60,9 +60,9 @@ const source = (id: string, title: string, locator: string, basis: Source['basis
 });
 
 export const adapterSources: readonly Source[] = [
-  source('source.local.skill', 'Image Director source skill', 'image-director/SKILL.md', 'source-description', 'The legacy catalog is authored from this preserved local skill and its headings.', 'paraphrase-only'),
-  source('source.local.snippets', 'Quick Image Prompt Snippets', 'image-director/assets/quick-snippets.md', 'source-prompt', 'The legacy route and gallery directions retain their original snippet provenance.', 'paraphrase-only'),
-  source('source.local.strategy', 'Prompting Strategy Reference', 'image-director/references/prompting-strategy.md', 'source-description', 'The local reference records role-limited references, geometry-sensitive prompting, and preservation boundaries.', 'paraphrase-only'),
+  source('source.local.skill', 'Teleprompter source skill', 'teleprompter/SKILL.md', 'source-description', 'The legacy catalog is authored from this preserved local skill and its headings.', 'paraphrase-only'),
+  source('source.local.snippets', 'Quick Image Prompt Snippets', 'teleprompter/assets/quick-snippets.md', 'source-prompt', 'The legacy route and gallery directions retain their original snippet provenance.', 'paraphrase-only'),
+  source('source.local.strategy', 'Prompting Strategy Reference', 'teleprompter/references/prompting-strategy.md', 'source-description', 'The local reference records role-limited references, geometry-sensitive prompting, and preservation boundaries.', 'paraphrase-only'),
   source('source.user.teleprompter', 'Teleprompter contract additions', '03 Docs/Teleprompter Plan/02-Cue-and-Library-Contracts.md', 'user-source', 'Mood, constraint, aspect-ratio, and one-kilopixel target records are requested product additions, not external research claims.', 'user-provided'),
 ];
 

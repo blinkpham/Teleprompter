@@ -1,6 +1,6 @@
 # Current app audit
 
-Audited 2026-09-13 against commit `5e21875`, starting with a clean tracked tree. Evidence combines targeted source inspection and the actual Electron built preview at `image-director://app/index.html`. `npm run preview` rebuilt its generated output before launch. No implementation code was edited.
+Audited 2026-09-13 against commit `5e21875`, starting with a clean tracked tree. Evidence combines targeted source inspection and the actual Electron built preview at `teleprompter://app/index.html`. `npm run preview` rebuilt its generated output before launch. No implementation code was edited.
 
 ## Decision
 
@@ -32,7 +32,7 @@ These are code findings, not newly demonstrated runtime failures.
 | System appearance | AppShell deletes `data-theme` for system mode; CSS defaults to light and has no `prefers-color-scheme` dark branch. | Remove appearance modes entirely; force dark in renderer and native theme. |
 | Copy lifecycle | [CopyButton](../../src/renderer/src/ui/CopyButton.tsx) lines 28–39 has no rejected-promise catch, request identity, or payload-change reset. Old success timers are not cleared on repeat. | Tie success/error to the actual request and payload; clear timers; handle bridge failure. |
 | Shortcut state | Menu mode commands dispatch directly while click navigation also persists lastMode; App lines 98–99 vs. 111–115. | Centralize commands. New launches always open Cue, so legacy lastMode is no longer authoritative. |
-| Desktop identity | [Main](../../src/main/index.ts) line 182 sets Image Director after ready; this host's preferences live under `Application Support/image-director`. | Rename visible identity while explicitly preserving the existing data directory. |
+| Desktop identity | [Main](../../src/main/index.ts) line 182 sets Teleprompter after ready; this host's preferences live under `Application Support/teleprompter`. | Rename visible identity while explicitly preserving the existing data directory. |
 | Two-window IPC | Main line 57 authorizes only one webContents/top frame. | Register known windows, validate frame URL and message payload, and expose narrow methods to both surfaces. |
 | Navigation containment | No window-open denial, will-navigate guard, or permission-denial handlers found in main. Renderer dev URL is accepted from the environment without a loopback check. | Close these boundaries before a second window and externally researched content are introduced. |
 | Durability | Preferences use a serialized temp-write/rename path; failed writes become session-only. Load failures silently default. Schema version is not rejected by the validator; close-time flush and bounds updates are absent. | Preserve the useful writer pattern; add version-aware migration, recovery copy, bounded shutdown flush, and bounds persistence. |

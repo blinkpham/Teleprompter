@@ -34,7 +34,7 @@ export type DesktopResult<T extends object = Record<string, never>> =
   | ({ readonly ok: true } & T)
   | { readonly ok: false; readonly error: DesktopError };
 
-export interface ImageDirectorBridge {
+export interface LegacyTeleprompterBridge {
   readonly getBootstrap: () => Promise<DesktopResult<BootstrapData>>;
   readonly copyText: (request: { readonly text: string }) => Promise<DesktopResult>;
   readonly setFavorite: (request: { readonly techniqueId: string; readonly favorited: boolean }) => Promise<DesktopResult<{ readonly techniqueId: string; readonly favorited: boolean; readonly persistenceStatus: PersistenceStatus }>>;
@@ -45,6 +45,6 @@ export interface ImageDirectorBridge {
 
 declare global {
   interface Window {
-    readonly imageDirector?: ImageDirectorBridge;
+    readonly teleprompterLegacy?: LegacyTeleprompterBridge;
   }
 }

@@ -22,7 +22,7 @@ The legacy `catalog-types.ts`, content, renderer, main process, and historical p
 
 - Practical image-generation work uses GPT Image 2.5 Flare as the requested route. Exact model access still requires execution evidence; generic image generation is not proof.
 - No UI dependencies, runtime model connection, network request, native shortcut, popup, or artwork was added in Slice 1.
-- The existing `image-director://app` local protocol and v1 catalog remain compatibility source material until an integration slice changes them.
+- The existing `teleprompter://app` local protocol and v1 catalog remain compatibility source material until an integration slice changes them.
 
 ## Focused verification
 

@@ -14,18 +14,18 @@ The live catalog was recounted from `src/content/catalog.ts` and its source modu
 
 | Source set | Count | Provenance |
 |---|---:|---|
-| Edit routes | 15 | `image-director/SKILL.md` minimal-input vocabulary plus camera lock / HQ source snippets |
-| Render and resolution | 5 | `image-director/SKILL.md` resolution and render routing |
-| Camera | 11 | `image-director/SKILL.md` camera / focal-length presets |
-| Angles | 10 | `image-director/SKILL.md` angle presets |
-| Composition | 13 | `image-director/SKILL.md` composition presets |
-| Lighting | 16 | `image-director/SKILL.md` lighting presets |
-| Looks | 16 | `image-director/SKILL.md` look / production-style presets |
-| Depth and focus | 6 | `image-director/SKILL.md` depth-of-field / focus presets |
-| Reference and markup patterns | 2 | `image-director/assets/quick-snippets.md`, sections 3 and 15 |
-| Combined presets | 10 | `image-director/SKILL.md`, Fast all-in-one presets |
+| Edit routes | 15 | `teleprompter/SKILL.md` minimal-input vocabulary plus camera lock / HQ source snippets |
+| Render and resolution | 5 | `teleprompter/SKILL.md` resolution and render routing |
+| Camera | 11 | `teleprompter/SKILL.md` camera / focal-length presets |
+| Angles | 10 | `teleprompter/SKILL.md` angle presets |
+| Composition | 13 | `teleprompter/SKILL.md` composition presets |
+| Lighting | 16 | `teleprompter/SKILL.md` lighting presets |
+| Looks | 16 | `teleprompter/SKILL.md` look / production-style presets |
+| Depth and focus | 6 | `teleprompter/SKILL.md` depth-of-field / focus presets |
+| Reference and markup patterns | 2 | `teleprompter/assets/quick-snippets.md`, sections 3 and 15 |
+| Combined presets | 10 | `teleprompter/SKILL.md`, Fast all-in-one presets |
 | **Cheatsheet total** | **104** | |
-| **Gallery techniques** | **15** | `image-director/assets/quick-snippets.md`, numbered sections 1–15 |
+| **Gallery techniques** | **15** | `teleprompter/assets/quick-snippets.md`, numbered sections 1–15 |
 
 The legacy map contains 119 rows: 104 Cheatsheet entries plus 15 techniques. Each row carries the original ID and token/template, a disposition, target IDs when a seed mapping is defensible, and a reason for any pending status.
 
@@ -33,9 +33,9 @@ The legacy map contains 119 rows: 104 Cheatsheet entries plus 15 techniques. Eac
 
 The original sources remain unchanged. Runtime source references in the baseline are represented as local source records in `sources.jsonl`; new V2 expansions are authored separately in `records.json` and never presented as verbatim third-party material.
 
-- `image-director/SKILL.md` is the source of the minimal-input vocabulary, camera, angle, composition, lighting, look, depth/focus, render, and ten preset definitions.
-- `image-director/assets/quick-snippets.md` is the source of the 15 numbered techniques, full edit wording, multi-reference role pattern, camera-lock wording, restoration wording, and marked-area pattern.
-- `image-director/references/prompting-strategy.md` is a local reference for role-limited references, visible attributes, geometry sensitivity, and pixel-preservation limits.
+- `teleprompter/SKILL.md` is the source of the minimal-input vocabulary, camera, angle, composition, lighting, look, depth/focus, render, and ten preset definitions.
+- `teleprompter/assets/quick-snippets.md` is the source of the 15 numbered techniques, full edit wording, multi-reference role pattern, camera-lock wording, restoration wording, and marked-area pattern.
+- `teleprompter/references/prompting-strategy.md` is a local reference for role-limited references, visible attributes, geometry sensitivity, and pixel-preservation limits.
 - The V2 seed uses paraphrase-only external evidence from OpenAI, Adobe, and MeiGen. MeiGen was accessible at its public documentation and prompt pages; individual community prompts/images were not redistributed or treated as proof of a photographic mechanism.
 
 ## Duplication audit

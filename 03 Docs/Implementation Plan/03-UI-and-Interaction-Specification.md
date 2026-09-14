@@ -1,6 +1,6 @@
 # Part 03: UI, artwork, and interaction specification
 
-Owner: Luna UI worker. Read [Start Here](</Users/blinblon/Claude/Projects/Image Director/03 Docs/Implementation Plan/00-Start-Here.md>) and the renderer/component contracts in [Part 01](</Users/blinblon/Claude/Projects/Image Director/03 Docs/Implementation Plan/01-Architecture-and-Contracts.md>) first. Use the manifest in [Part 02](</Users/blinblon/Claude/Projects/Image Director/03 Docs/Implementation Plan/02-Content-and-Search-Engine.md>) for content identity and copy rules.
+Owner: Luna UI worker. Read [Start Here](</Users/blinblon/Claude/Projects/Teleprompter/03 Docs/Implementation Plan/00-Start-Here.md>) and the renderer/component contracts in [Part 01](</Users/blinblon/Claude/Projects/Teleprompter/03 Docs/Implementation Plan/01-Architecture-and-Contracts.md>) first. Use the manifest in [Part 02](</Users/blinblon/Claude/Projects/Teleprompter/03 Docs/Implementation Plan/02-Content-and-Search-Engine.md>) for content identity and copy rules.
 
 The UI is a visual prompt library with a compact reference mode. Implement the dimensions and relationships below before adding any decorative interpretation. The useful task is finding and copying the right instruction.
 
@@ -12,13 +12,13 @@ The reference places an almost-white application canvas inside a light gray surr
 
 Preserve those relationships. Use the photograph and a rounded mode capsule as the strongest recognisable elements. Apply the reference's large curves to the hero, Gallery cards, and detail sheet; use smaller radii on working controls. The app window itself uses native OS treatment, so there is no fake desktop background or another giant rounded box inside the native frame.
 
-Do not transplant the reference's travel identity, greetings, itinerary widgets, chat assistant, avatar, logout button, or destination copy. Use the Image Director recipes as the content. No decorative AI orb is required.
+Do not transplant the reference's travel identity, greetings, itinerary widgets, chat assistant, avatar, logout button, or destination copy. Use the Teleprompter recipes as the content. No decorative AI orb is required.
 
 ### Fixed visual decisions
 
 | Element | Decision |
 |---|---|
-| Identity | Text “Image Director”; a small four-corner crop-frame mark, not a travel logo |
+| Identity | Text “Teleprompter”; a small four-corner crop-frame mark, not a travel logo |
 | Main palette | Near-white canvas, cool pale surfaces, restrained teal accent, dark neutral text |
 | Typography | Native system sans; system monospace only for tokens and short templates |
 | Large surfaces | 28–32 px corner radii; few visible dividers; no heavy card shadow |
@@ -381,7 +381,7 @@ Every copy control has a specific accessible name, such as “Copy prompt: Surgi
 
 | State | Exact or intended copy | Controls / layout |
 |---|---|---|
-| Startup | “Opening Image Director…” only if initialization is visibly delayed | Show the themed shell; no marketing onboarding or artificial spinner delay |
+| Startup | “Opening Teleprompter…” only if initialization is visibly delayed | Show the themed shell; no marketing onboarding or artificial spinner delay |
 | Search has no matches anywhere | “No matches for ‘[query]’.” / “Try a technique, token, or word from a prompt.” | Clear search; keep mode control and search visible |
 | Gallery filters hide all query matches | “No techniques match these filters.” | Reset filters; if other mode has matches, show “View N Cheatsheet matches” |
 | Favorites-only with no saved techniques | “Your favorites will appear here.” / “Use the heart on a technique to save it.” | Show all techniques |
@@ -438,4 +438,4 @@ At 1280 × 900 the visual hierarchy reads as identity/navigation, photographic f
 
 The detail sheet opens without changing the underlying grid, exposes real prompt text immediately, and returns focus/scroll correctly when dismissed. Cheatsheet remains denser than Gallery while full directions and preset components are easily reachable. The long restoration prompt, long reference pattern, and longest camera token remain legible in both themes.
 
-Inspect the actual Electron UI with the reference beside it. Correct concrete differences in palette, hierarchy, spacing, rounding, typography, and control usability. Functional content and copy take priority over another round of decorative polish. The final live-app gate is in [Part 04](</Users/blinblon/Claude/Projects/Image Director/03 Docs/Implementation Plan/04-Execution-and-Acceptance.md>).
+Inspect the actual Electron UI with the reference beside it. Correct concrete differences in palette, hierarchy, spacing, rounding, typography, and control usability. Functional content and copy take priority over another round of decorative polish. The final live-app gate is in [Part 04](</Users/blinblon/Claude/Projects/Teleprompter/03 Docs/Implementation Plan/04-Execution-and-Acceptance.md>).

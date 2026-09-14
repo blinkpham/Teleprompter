@@ -1,4 +1,5 @@
 import type { PersistenceStatus, ShortcutState } from '../shared/teleprompter-types';
+import { MAIN_WINDOW_TARGET } from './placement';
 
 export interface MainWindowBounds {
   readonly width: number;
@@ -26,8 +27,8 @@ export interface PreferencesLoadResult {
 export const PREFERENCES_SCHEMA_VERSION = 2 as const;
 export const DEFAULT_ACCELERATOR = 'CommandOrControl+Shift+Space';
 export const DEFAULT_WINDOW: MainWindowBounds = {
-  width: 1180,
-  height: 820,
+  width: MAIN_WINDOW_TARGET.width,
+  height: MAIN_WINDOW_TARGET.height,
   isMaximized: false,
 };
 

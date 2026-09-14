@@ -1,10 +1,10 @@
 {
-  "name": "image-director",
+  "name": "teleprompter",
   "version": "0.1.0",
   "description": "Offline prompt library and shorthand reference",
   "type": "module",
   "main": "out/main/index.js",
-  "author": "Image Director",
+  "author": "Teleprompter",
   "license": "UNLICENSED",
   "scripts": {
     "dev": "electron-vite dev",

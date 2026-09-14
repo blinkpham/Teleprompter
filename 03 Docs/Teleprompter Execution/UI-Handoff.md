@@ -1,6 +1,6 @@
 # Teleprompter UI handoff
 
-Status: renderer surface primitives complete; lead integration and native acceptance remain. Updated 2026-09-13.
+Status: renderer surface primitives and lead integration complete; native acceptance remains bounded by the project gate. Updated 2026-09-13.
 
 ## Owned files
 
@@ -29,20 +29,20 @@ The renderer consumes `CueSurfaceProps`, `CueSnapshot`, `LibraryView`, `CueComma
 
 The surface follows the approved Teleprompter direction: `#101112` canvas, charcoal raised surfaces, recessed wells, brushed-silver material cues, warm orange active light, system sans-serif, 44px minimum controls, and 48px dock targets. Geometry and interaction hierarchy were adapted from the retained references in `03 Docs/Teleprompter Plan/References/01-Fluid-Composer.png` through `04-Industrial-Materials.png`. The component choices follow the settled SmoothUI references in `04-Mission-UI-and-Motion.md`; no remote assets or runtime network calls were added.
 
-The current group/card art is a non-content CSS material placeholder. It intentionally avoids broken images and hand-drawn SVG illustrations while the illustration worker supplies approved raster assets and the lead wires their manifest.
+The Cue group controls now use the approved v2 Optics, Stage, and Finish raster assets as image-led horizontal capsules with short label/value stacks and selected outlines. Practical example art remains separately model-gated; no model claim is made here.
 
 ## Focused checks
 
 | Check | Result |
 |---|---|
-| `npm run typecheck` | passed after the Motion/Phosphor dependency install |
-| `npm run build` | passed; Electron main, preload, and renderer bundles built |
-| `node /Users/blinblon/.codex/skills/impeccable/scripts/detect.mjs --json src/renderer/src/ui src/renderer/src/styles/global.css` | passed with `[]` |
+| `npm run typecheck` | passed after the image-led capsule refinement |
+| `npm run test:logic` | passed; 8 files, 33 tests |
+| `npm run build` | passed; Electron main, preload, and renderer bundles built with v2 group assets |
+| `node /Users/blinblon/.codex/skills/impeccable/scripts/detect.mjs --json src/renderer/src/ui/CueSurface.tsx src/renderer/src/styles/global.css` | passed with `[]` |
 
 ## Remaining evidence
 
-- These components are not yet wired into the lead's renderer app state, engine compiler, or desktop bridge in this lane.
-- Native Electron evidence is still required for main/spotlight sizing, shortcut behavior, clipboard acknowledgement, cross-window draft sync, and focus return.
-- Approved raster artwork is still required for parameter tiles and library examples; the UI keeps missing assets explicit.
+- Native Electron evidence is still required for the remaining global-shortcut and independently chosen cursor-location gates; the menu fallback, picker resize, clipboard acknowledgement, click-away, and focus return are accepted separately.
+- Practical example artwork remains blocked until an authorized route can explicitly select or report GPT Image 2.5 Flare.
 
-Next action: lead wires `TeleprompterShell`, `CueSurface`, `LibrarySurface`, and `TokensSurface` to the shared engine/desktop projections, then drives the native Cue and spotlight acceptance flows.
+Next action: lead keeps the 14-record runtime boundary and the two remaining native/artwork gates explicit while finishing acceptance.

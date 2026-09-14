@@ -2,7 +2,7 @@
 
 This part is for the subsequent authorized implementation run. It does not authorize or start implementation during the planning task.
 
-Read [Start Here](</Users/blinblon/Claude/Projects/Image Director/03 Docs/Implementation Plan/00-Start-Here.md>) first. The lead owns integration and the final conclusion. Workers deliver verified inputs in their assigned files. The existing `image-director/` skill is source material and remains unchanged.
+Read [Start Here](</Users/blinblon/Claude/Projects/Teleprompter/03 Docs/Implementation Plan/00-Start-Here.md>) first. The lead owns integration and the final conclusion. Workers deliver verified inputs in their assigned files. The existing `teleprompter/` skill is source material and remains unchanged.
 
 ## 1. Execution rules
 
@@ -187,7 +187,7 @@ These are dispatch text for the subsequent implementation lead. Replace only the
 
 ### Lead brief
 
-Implement Image Director from `/Users/blinblon/Claude/Projects/Image Director/03 Docs/Implementation Plan/00-Start-Here.md`. Complete Slice A before assigning the three owned workstreams in Part 04. You own shared contracts, root configuration, renderer orchestration, integration, and final native acceptance. Read current project instructions if they now exist. Preserve the original `image-director/` skill. You are working alongside other agents; keep edits inside your ownership and coordinate before changing an active worker's file. Use the real Electron app for acceptance and continue until the five-item gate is met. No additional Astra interpretation is required.
+Implement Teleprompter from `/Users/blinblon/Claude/Projects/Teleprompter/03 Docs/Implementation Plan/00-Start-Here.md`. Complete Slice A before assigning the three owned workstreams in Part 04. You own shared contracts, root configuration, renderer orchestration, integration, and final native acceptance. Read current project instructions if they now exist. Preserve the original `teleprompter/` skill. You are working alongside other agents; keep edits inside your ownership and coordinate before changing an active worker's file. Use the real Electron app for acceptance and continue until the five-item gate is met. No additional Astra interpretation is required.
 
 ### Desktop brief
 
@@ -203,7 +203,7 @@ Implement Slice B3 in Part 04. Read Start Here, Part 01 UI contracts, Part 03, a
 
 ### Sol review brief
 
-Review the current Image Director implementation against its five-part plan, beginning at Start Here. The lead will specify whether this is the contract or integrated-UI checkpoint and provide only the relevant files/screenshots. Preserve the chosen product, source semantics, and screenshot-derived direction. Find concrete contract breaks, content/copy errors, focus/state defects, and visible usability/fidelity defects. Return actionable findings with exact locations and corrections, and distinguish blockers from optional taste refinements. Do not add features, reopen stack selection, require broad test infrastructure, or route ordinary implementation back to Astra.
+Review the current Teleprompter implementation against its five-part plan, beginning at Start Here. The lead will specify whether this is the contract or integrated-UI checkpoint and provide only the relevant files/screenshots. Preserve the chosen product, source semantics, and screenshot-derived direction. Find concrete contract breaks, content/copy errors, focus/state defects, and visible usability/fidelity defects. Return actionable findings with exact locations and corrections, and distinguish blockers from optional taste refinements. Do not add features, reopen stack selection, require broad test infrastructure, or route ordinary implementation back to Astra.
 
 ## 9. Implementation completion report
 

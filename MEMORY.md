@@ -1,4 +1,4 @@
-# MEMORY — Image Director
+# MEMORY — Teleprompter
 
 Index, not a notebook. One line per pointer.
 

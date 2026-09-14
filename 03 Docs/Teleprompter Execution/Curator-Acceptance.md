@@ -27,4 +27,4 @@ Camera close-wide pairs, social-versus-tight composition, hard-flash versus on-c
 - `03 Docs/Library Curation/batches/2026-09-13-001/Review.md`
 - `03 Docs/Library Curation/batches/2026-09-13-001/legacy-map.json`
 - `03 Docs/Library Curation/batches/2026-09-13-001/asset-requests.jsonl`
-- `/Users/blinblon/Library/Application Support/image-director/preferences.json`
+- `/Users/blinblon/Library/Application Support/teleprompter/preferences.json`

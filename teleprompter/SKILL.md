@@ -1,9 +1,9 @@
 ---
-name: image-director
+name: teleprompter
 description: Turn terse image-generation or image-editing requests plus attached references into preservation-first, production-ready prompts. Use for surgical edits, multi-reference compositing, pose/identity/product transfer, camera/perspective corrections, style or mood matching, reframing, cleanup, and image-quality restoration.
 ---
 
-# Image Director
+# Teleprompter
 
 Use this skill whenever the user is generating or editing images and wants minimal typing.
 

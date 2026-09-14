@@ -1,11 +1,22 @@
 import { describe, expect, it } from 'vitest';
-import { clampMainBounds, placeSpotlight } from './placement';
+import {
+  clampMainBounds,
+  MAIN_WINDOW_TARGET,
+  placeSpotlight,
+  shouldDismissSpotlightOnBlur,
+  SPOTLIGHT_BOUNDS,
+  SPOTLIGHT_MARGIN,
+} from './placement';
 
 describe('spotlight placement', () => {
   const area = { x: 0, y: 0, width: 1440, height: 900 };
 
   it('fits the compact popup around a central cursor without scale conversion', () => {
-    expect(placeSpotlight({ x: 720, y: 400 }, area)).toEqual({ x: 390, y: 416, width: 660, height: 364 });
+    expect(placeSpotlight({ x: 720, y: 400 }, area)).toEqual({
+      x: 390,
+      y: 400 + SPOTLIGHT_MARGIN,
+      ...SPOTLIGHT_BOUNDS.compact,
+    });
   });
 
   it('uses the space above a bottom-edge cursor', () => {
@@ -26,6 +37,16 @@ describe('spotlight placement', () => {
     expect(result.width).toBe(388);
     expect(result.x).toBe(16);
   });
+
+  it('keeps the named expanded bounds inside the work area', () => {
+    const result = placeSpotlight({ x: 720, y: 400 }, area, 'expanded');
+    expect(result.width).toBe(SPOTLIGHT_BOUNDS.expanded.width);
+    expect(result.height).toBe(SPOTLIGHT_BOUNDS.expanded.height);
+    expect(result.x).toBeGreaterThanOrEqual(area.x + SPOTLIGHT_MARGIN);
+    expect(result.y).toBeGreaterThanOrEqual(area.y + SPOTLIGHT_MARGIN);
+    expect(result.x + result.width).toBeLessThanOrEqual(area.x + area.width - SPOTLIGHT_MARGIN);
+    expect(result.y + result.height).toBeLessThanOrEqual(area.y + area.height - SPOTLIGHT_MARGIN);
+  });
 });
 
 describe('main window restoration', () => {
@@ -37,5 +58,22 @@ describe('main window restoration', () => {
       y: 0,
       isMaximized: false,
     });
+  });
+
+  it('preserves the saved maximized state while clamping normal bounds', () => {
+    expect(clampMainBounds({ ...MAIN_WINDOW_TARGET, x: 40, y: 60, isMaximized: true }, { x: 0, y: 0, width: 1440, height: 900 })).toEqual({
+      ...MAIN_WINDOW_TARGET,
+      x: 40,
+      y: 60,
+      isMaximized: true,
+    });
+  });
+});
+
+describe('spotlight focus lifecycle', () => {
+  it('does not dismiss a blur during the show or hide transition', () => {
+    expect(shouldDismissSpotlightOnBlur({ visible: true, focused: false, transitionUntil: 250 }, 100)).toBe(false);
+    expect(shouldDismissSpotlightOnBlur({ visible: true, focused: false, transitionUntil: 250 }, 250)).toBe(true);
+    expect(shouldDismissSpotlightOnBlur({ visible: true, focused: true, transitionUntil: 0 }, 300)).toBe(false);
   });
 });

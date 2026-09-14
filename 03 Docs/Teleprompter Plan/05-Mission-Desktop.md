@@ -50,9 +50,9 @@ Before `copyCompiledDraft`, flush the client queue, await acknowledgement, and e
 
 ## Persistence and rename
 
-Keep the existing `appData/image-director` userData location explicitly, set before ready and before renaming the app. This host's current preferences were observed there during the audit. Do not move or merge profile directories merely to change a display name. The directory is an internal compatibility detail; all visible labels become Teleprompter.
+Keep the existing `appData/teleprompter` userData location explicitly, set before ready and before renaming the app. This host's current preferences were observed there during the audit. Do not move or merge profile directories merely to change a display name. The directory is an internal compatibility detail; all visible labels become Teleprompter.
 
-The lead changes package name/description/title metadata and renderer bridge callers. Desktop changes `app.setName`, native menus, window titles, and About metadata. Keep the internal `image-director://app` scheme for this release and treat it as a local compatibility identifier; all user-visible naming uses Teleprompter. A later protocol change has no product benefit in this task.
+The lead changes package name/description/title metadata and renderer bridge callers. Desktop changes `app.setName`, native menus, window titles, and About metadata. Keep the internal `teleprompter://app` scheme for this release and treat it as a local compatibility identifier; all user-visible naming uses Teleprompter. A later protocol change has no product benefit in this task.
 
 Preferences schema 2 stores favorite IDs, shortcut choice/status, and main-window bounds. It no longer honors themePreference or lastMode for launch behavior. Set dark before showing either window. Create/Edit drafts live in a separate `cue-drafts.json` document containing a store schema version, both draft documents, field revisions, and library version. Pending IME text and hover/picker highlight are renderer state, not persisted prompts.
 

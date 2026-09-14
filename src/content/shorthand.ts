@@ -1,7 +1,7 @@
 import type { Preset, ShorthandEntry, SourceRef } from '../shared/catalog-types';
 
-const skillFile = 'image-director/SKILL.md';
-const snippetFile = 'image-director/assets/quick-snippets.md';
+const skillFile = 'teleprompter/SKILL.md';
+const snippetFile = 'teleprompter/assets/quick-snippets.md';
 const routeSource = '## Minimal-input vocabulary';
 
 type EntrySpec = Omit<ShorthandEntry, 'id' | 'kind' | 'familyId' | 'order' | 'sources'> & { id: string; familyId: Exclude<ShorthandEntry['familyId'], 'presets'>; order: number; sourceHeading?: string; sourceFile?: string };

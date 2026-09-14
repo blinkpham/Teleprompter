@@ -1,4 +1,4 @@
-# Image Director implementation plan
+# Teleprompter implementation plan
 
 Status: ready for implementation. Planning date: 12 September 2026.
 
@@ -11,9 +11,9 @@ This is one implementation plan in five parts. Each worker reads this entry poin
 | Assignment | Required reading | Responsibility |
 |---|---|---|
 | Lead / integration | All five parts; read Part 04 before assigning work | Shared contracts, project configuration during implementation, renderer orchestration, integration, acceptance |
-| Luna desktop worker | This file; [Part 01](</Users/blinblon/Claude/Projects/Image Director/03 Docs/Implementation Plan/01-Architecture-and-Contracts.md>); its assignment in [Part 04](</Users/blinblon/Claude/Projects/Image Director/03 Docs/Implementation Plan/04-Execution-and-Acceptance.md>) | Electron main, preload, clipboard, preferences, native menus/window |
-| Luna content / engine worker | This file; Part 01 data contracts; [Part 02](</Users/blinblon/Claude/Projects/Image Director/03 Docs/Implementation Plan/02-Content-and-Search-Engine.md>); its Part 04 assignment | Catalog conversion, aliases, preset resolution, search, filters |
-| Luna UI worker | This file; Part 01 renderer contracts; [Part 03](</Users/blinblon/Claude/Projects/Image Director/03 Docs/Implementation Plan/03-UI-and-Interaction-Specification.md>); its Part 04 assignment | All visible components, CSS, artwork, responsive behavior, interaction states |
+| Luna desktop worker | This file; [Part 01](</Users/blinblon/Claude/Projects/Teleprompter/03 Docs/Implementation Plan/01-Architecture-and-Contracts.md>); its assignment in [Part 04](</Users/blinblon/Claude/Projects/Teleprompter/03 Docs/Implementation Plan/04-Execution-and-Acceptance.md>) | Electron main, preload, clipboard, preferences, native menus/window |
+| Luna content / engine worker | This file; Part 01 data contracts; [Part 02](</Users/blinblon/Claude/Projects/Teleprompter/03 Docs/Implementation Plan/02-Content-and-Search-Engine.md>); its Part 04 assignment | Catalog conversion, aliases, preset resolution, search, filters |
+| Luna UI worker | This file; Part 01 renderer contracts; [Part 03](</Users/blinblon/Claude/Projects/Teleprompter/03 Docs/Implementation Plan/03-UI-and-Interaction-Specification.md>); its Part 04 assignment | All visible components, CSS, artwork, responsive behavior, interaction states |
 | Sol reviewer | This file; the particular contract/surface under review; Part 04 review brief | Bounded review of contract drift, content fidelity, and actual running UI |
 
 Part 01 owns type and platform contracts. Part 02 owns catalog semantics and search behavior. Part 03 owns appearance and interactions. Part 04 owns file ownership, sequencing, and acceptance. If two parts appear to disagree, use the part that owns that subject and have the lead correct the other reference before dependent implementation continues.
@@ -59,10 +59,10 @@ The source inspection found exactly these four files under the project:
 
 | Existing file | Use |
 |---|---|
-| [image-director/SKILL.md](</Users/blinblon/Claude/Projects/Image Director/image-director/SKILL.md>) | Canonical vocabulary, production direction, preservation rules, preset composition, resolution conditions |
-| [image-director/assets/quick-snippets.md](</Users/blinblon/Claude/Projects/Image Director/image-director/assets/quick-snippets.md>) | The 15 Gallery recipes, full prompt text, shorthand templates, examples |
-| [image-director/references/prompting-strategy.md](</Users/blinblon/Claude/Projects/Image Director/image-director/references/prompting-strategy.md>) | Brief rationale and semantic checks when content is ambiguous |
-| [image-director/README.md](</Users/blinblon/Claude/Projects/Image Director/image-director/README.md>) | Confirms short forms such as `hq`; product availability claims in this file are not app content |
+| [teleprompter/SKILL.md](</Users/blinblon/Claude/Projects/Teleprompter/teleprompter/SKILL.md>) | Canonical vocabulary, production direction, preservation rules, preset composition, resolution conditions |
+| [teleprompter/assets/quick-snippets.md](</Users/blinblon/Claude/Projects/Teleprompter/teleprompter/assets/quick-snippets.md>) | The 15 Gallery recipes, full prompt text, shorthand templates, examples |
+| [teleprompter/references/prompting-strategy.md](</Users/blinblon/Claude/Projects/Teleprompter/teleprompter/references/prompting-strategy.md>) | Brief rationale and semantic checks when content is ambiguous |
+| [teleprompter/README.md](</Users/blinblon/Claude/Projects/Teleprompter/teleprompter/README.md>) | Confirms short forms such as `hq`; product availability claims in this file are not app content |
 
 No local AGENTS.md, MAP.md, application source, package manifest, or Git repository was present at planning time. Files such as `image-prompt-kit.md`, project instructions, and a skill ZIP were mentioned as possible sources in the brief but were not found. Implementation does not depend on them.
 
@@ -84,4 +84,4 @@ The catalog is read-only. Bracketed placeholders are copied literally for replac
 4. Sol reviews the integrated behavior and visible reference fidelity at the bounded checkpoints in Part 04; Luna implements concrete corrections.
 5. The lead completes the five-item acceptance gate in Part 04 and reports the actual result.
 
-Start implementation with [Part 04, Slice A](</Users/blinblon/Claude/Projects/Image Director/03 Docs/Implementation Plan/04-Execution-and-Acceptance.md>).
+Start implementation with [Part 04, Slice A](</Users/blinblon/Claude/Projects/Teleprompter/03 Docs/Implementation Plan/04-Execution-and-Acceptance.md>).

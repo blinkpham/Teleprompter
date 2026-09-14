@@ -1,6 +1,6 @@
 # Part 01: Architecture and shared contracts
 
-Read [Start Here](</Users/blinblon/Claude/Projects/Image Director/03 Docs/Implementation Plan/00-Start-Here.md>) first. The lead owns these contracts and their eventual implementation in `src/shared/`. Workers consume them and propose contract changes to the lead before changing a shared interface.
+Read [Start Here](</Users/blinblon/Claude/Projects/Teleprompter/03 Docs/Implementation Plan/00-Start-Here.md>) first. The lead owns these contracts and their eventual implementation in `src/shared/`. Workers consume them and propose contract changes to the lead before changing a shared interface.
 
 ## 1. Stack and dependency decisions
 
@@ -43,7 +43,7 @@ Window lifecycle, single-instance behavior, the application menu, preferences IO
 
 ### Preload owns
 
-Expose one namespaced object, `window.imageDirector`, using `contextBridge`. Each public method maps to one allowed IPC operation. Strip Electron event objects before delivering allowed UI command values to renderer callbacks. Return an unsubscribe function for command subscriptions.
+Expose one namespaced object, `window.teleprompter`, using `contextBridge`. Each public method maps to one allowed IPC operation. Strip Electron event objects before delivering allowed UI command values to renderer callbacks. Return an unsubscribe function for command subscriptions.
 
 Bundle preload as one CommonJS `.cjs` artifact. Only Electron's allowed preload APIs remain external; bundle any local runtime helpers. Prefer type-only imports from shared types, so preload does not accidentally pull in filesystem, content, React, or asset modules. Sandboxed preload does not have a full Node environment; bundle its dependencies instead of disabling the sandbox. [electron-vite sandbox limitations](https://electron-vite.org/guide/dev#limitations-of-sandboxing)
 
@@ -191,7 +191,7 @@ Disk-write failure is a recoverable session-only preference result, not an IPC f
 
 ### Validation
 
-Check both the originating webContents and its top-level sender frame before handling a call. For production, validate the parsed protocol `image-director:`, host `app`, document path `/index.html`, and absence of credentials/port. Compare against those explicit fields; do not rely on a custom URL's `origin` string alone. For development, allow only the exact loopback HTTP origin captured when starting this window. Reject calls from subframes or other windows. Validate request shapes again in main, including enum values, a known technique ID, booleans, and a nonempty clipboard string no larger than 64 KiB in UTF-8.
+Check both the originating webContents and its top-level sender frame before handling a call. For production, validate the parsed protocol `teleprompter:`, host `app`, document path `/index.html`, and absence of credentials/port. Compare against those explicit fields; do not rely on a custom URL's `origin` string alone. For development, allow only the exact loopback HTTP origin captured when starting this window. Reject calls from subframes or other windows. Validate request shapes again in main, including enum values, a known technique ID, booleans, and a nonempty clipboard string no larger than 64 KiB in UTF-8.
 
 The catalog supplies a minimal exported technique-ID list that main can import without pulling in renderer code or images. The lead ensures this export exists before the desktop worker integrates favorite validation.
 
@@ -207,7 +207,7 @@ Copy confirmation and repeat-click timing are owned by the UI in Part 03. An uns
 
 ### File and schema
 
-Main stores `preferences.json` under `app.getPath('userData')`. Its schema contains `schemaVersion: 1`, `favoriteTechniqueIds`, `themePreference`, `lastMode`, and `window` with normal bounds and maximized state. Use Electron's application name `Image Director` before resolving userData so the location is stable. No other app state is persisted.
+Main stores `preferences.json` under `app.getPath('userData')`. Its schema contains `schemaVersion: 1`, `favoriteTechniqueIds`, `themePreference`, `lastMode`, and `window` with normal bounds and maximized state. Use Electron's application name `Teleprompter` before resolving userData so the location is stable. No other app state is persisted.
 
 Default values are empty favorites, `system`, `gallery`, and the default window dimensions in section 10. On load, validate each field independently and fill missing/invalid fields from defaults. Deduplicate favorite IDs and drop IDs absent from the bundled catalog. Do not reject all preferences because one field is invalid.
 
@@ -266,7 +266,7 @@ The lead passes the real async copy callback. UI components cannot import Electr
 
 Create one resizable window with a 1280 × 900 default content viewport and a 640 × 600 minimum content viewport. Use `useContentSize` for the initial width/height. Native minimum-size APIs describe the outer window: after creation, measure the difference between window bounds and content bounds, add that frame delta to the 640 × 600 content minimum, and set the resulting outer minimum. Use measured content dimensions when checking the responsive scenes. Keep native fullscreen, maximize, minimize, close, window shadow, and native corner treatment. [Electron window options](https://www.electronjs.org/docs/latest/api/structures/base-window-options)
 
-Set both application identity and the renderer document title to “Image Director”. Remove the starter's logos, welcome screen, framework version panels, and placeholder help links from the visible app.
+Set both application identity and the renderer document title to “Teleprompter”. Remove the starter's logos, welcome screen, framework version panels, and placeholder help links from the visible app.
 
 On macOS use `titleBarStyle: hiddenInset`, ordinary native traffic lights, and a 44 px renderer titlebar reserve. The reserved strip is draggable; all buttons, fields, and text content are outside the drag region. Reserve at least the leftmost 90 px for traffic lights. Do not replace traffic lights or make them hover-only. Electron supports hiddenInset and native traffic-light positioning. [Electron custom title bars](https://www.electronjs.org/docs/latest/tutorial/custom-title-bar)
 
@@ -292,7 +292,7 @@ Set `contextIsolation: true`, `sandbox: true`, `nodeIntegration: false`, `webSec
 
 In development, load only the electron-vite loopback origin supplied to the app by its own development launcher. Restrict the dev server to loopback. Permit its exact local HTTP/WebSocket origins for HMR in development only.
 
-For built local execution, register the standard, secure scheme `image-director` before app readiness and serve `image-director://app/index.html` through a protocol handler. Set standard/secure privileges; do not bypass CSP or enable service workers. Serve only GET/HEAD requests for the built renderer root. No arbitrary file picker or file-serving IPC exists. [Electron protocol API](https://www.electronjs.org/docs/latest/api/protocol)
+For built local execution, register the standard, secure scheme `teleprompter` before app readiness and serve `teleprompter://app/index.html` through a protocol handler. Set standard/secure privileges; do not bypass CSP or enable service workers. Serve only GET/HEAD requests for the built renderer root. No arbitrary file picker or file-serving IPC exists. [Electron protocol API](https://www.electronjs.org/docs/latest/api/protocol)
 
 The protocol handler validates host `app`, rejects malformed encoding and path separators hidden in encoded segments, resolves the URL path under the built renderer directory, and rejects a relative result that escapes that root. `/` resolves to `index.html`; unknown paths return 404. Serve correct content types and local bytes. Renderer asset imports must resolve under this origin in `preview`, without a running Vite server.
 

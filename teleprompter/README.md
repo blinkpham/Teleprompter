@@ -1,4 +1,4 @@
-# Image Director — ChatGPT / Agent Skill
+# Teleprompter — ChatGPT / Agent Skill
 
 This bundle turns terse image requests into preservation-first image-generation/edit instructions.
 

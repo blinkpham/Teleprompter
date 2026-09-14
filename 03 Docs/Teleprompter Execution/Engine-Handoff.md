@@ -46,7 +46,7 @@ The source catalog remains intact: 104 Cheatsheet rows plus 15 Gallery technique
 
 ## Verification
 
-- `npm run test:logic` — passed, 8 files / 30 tests.
+- `npm run test:logic` — passed, 8 files / 33 tests.
 - `npm run typecheck` — passed for node and web projects.
 - Focused engine/content/shared `tsc --noEmit` invocation — passed.
 - `git diff --check` on the owned tracked files — passed.
@@ -71,4 +71,3 @@ The broader `route-style` and narrower accepted `route-tone` remain separate; no
 ## Next integration action
 
 Lead should wire `legacyLibrary` → `createDraft` → `applyDraftCommand` → `compileCreate` into the shared Cue surface, then run the first native Create/copy acceptance pass against the acknowledged draft revision.
-

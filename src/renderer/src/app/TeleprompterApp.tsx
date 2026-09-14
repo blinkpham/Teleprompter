@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import type {
   BridgeResult,
   CommandResult,
@@ -9,9 +9,15 @@ import type {
   DraftFieldPath,
   DraftCommandEnvelope,
   LibraryChoiceView,
+  PreviewIntent,
+  PreviewRequest,
   Mode,
+  SettingsState,
+  SurfaceLayoutRequest,
+  SurfaceLayoutResult,
   View,
 } from '../../../shared/teleprompter';
+import type { PreviewPresentation } from '../../../shared/ui-types';
 import { CueSurface } from '../ui/CueSurface';
 import { LibrarySurface } from '../ui/LibrarySurface';
 import { TeleprompterShell } from '../ui/TeleprompterShell';
@@ -29,6 +35,18 @@ interface AppState {
 const surfaceFromLocation = (): Surface => new URLSearchParams(window.location.search).get('surface') === 'spotlight' ? 'spotlight' : 'main';
 
 const commandId = (): string => globalThis.crypto?.randomUUID?.() ?? `command-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+const settingsFromSnapshot = (snapshot: CueSnapshot, saveState: SettingsState['saveState'] = 'idle', error?: string): SettingsState => ({
+  shortcut: snapshot.shortcut,
+  persistenceStatus: snapshot.persistenceStatus,
+  saveState,
+  ...(error ? { error } : {}),
+});
+
+const unavailableBridgeError = <T extends object>(message: string): BridgeResult<T> => ({
+  ok: false,
+  error: { code: 'UNAVAILABLE', message },
+});
 
 const pathsForCommand = (command: CueCommand, state: AppState): readonly DraftFieldPath[] => {
   switch (command.type) {
@@ -64,12 +82,20 @@ export function TeleprompterApp() {
   const [view, setView] = useState<View>('cue');
   const [favoriteIds, setFavoriteIds] = useState<ReadonlySet<string>>(new Set());
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [preview, setPreview] = useState<PreviewPresentation>({ status: 'idle' });
+  const previewRequestSequence = useRef(0);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [shortcutDraft, setShortcutDraft] = useState('');
+  const [settings, setSettings] = useState<SettingsState | null>(null);
 
   const adoptSnapshot = useCallback((snapshot: CueSnapshot) => {
+    previewRequestSequence.current += 1;
+    setPreview({ status: 'idle' });
     const mode = activeModeRef.current;
     const adopted = { ...snapshot, activeMode: mode };
     snapshotRef.current = adopted;
     setState((current) => current ? { ...current, snapshot: adopted } : current);
+    setSettings((current) => current ? { ...current, shortcut: adopted.shortcut, persistenceStatus: adopted.persistenceStatus } : current);
   }, []);
 
   useEffect(() => {
@@ -94,6 +120,8 @@ export function TeleprompterApp() {
         platform: result.platform,
         appVersion: result.appVersion,
       });
+      setSettings(settingsFromSnapshot(result.snapshot));
+      setShortcutDraft(result.snapshot.shortcut.accelerator);
     });
     const unsubscribeDraft = bridge.onDraftChanged((event) => {
       if (mounted) adoptSnapshot(event.snapshot);
@@ -138,6 +166,54 @@ export function TeleprompterApp() {
     }
     return result;
   }, [adoptSnapshot, state]);
+
+  const requestPreview = useCallback(async (intent: PreviewIntent): Promise<void> => {
+    const request: PreviewRequest = { ...intent, requestId: commandId() };
+    const sequence = ++previewRequestSequence.current;
+    setPreview({ status: 'pending', request });
+    const bridge = window.teleprompter;
+    if (!bridge?.getCompiledDraft) {
+      setPreview({ status: 'error', request, error: { code: 'UNAVAILABLE', message: 'Exact preview is not available until the desktop read bridge is loaded.' } });
+      return;
+    }
+    if (state && request.expectedContentVersion !== state.library.contentVersion) {
+      setPreview({ status: 'error', request, error: { code: 'STALE_DRAFT', message: 'The library changed. Refresh the preview before continuing.' } });
+      return;
+    }
+    const result = await bridge.getCompiledDraft({
+      draftId: request.draftId,
+      expectedRevision: request.expectedRevision,
+      format: request.format,
+    });
+    if (sequence !== previewRequestSequence.current) return;
+    if (!result.ok) {
+      setPreview({ status: 'error', request, error: result.error });
+      return;
+    }
+    const currentSnapshot = snapshotRef.current;
+    const currentDraft = currentSnapshot?.drafts[request.draftId];
+    if (result.draftId !== request.draftId
+      || result.format !== request.format
+      || result.contentVersion !== request.expectedContentVersion
+      || result.revision !== request.expectedRevision
+      || currentDraft?.revision !== request.expectedRevision
+      || activeModeRef.current !== request.draftId) {
+      setPreview({ status: 'error', request, error: { code: 'STALE_DRAFT', message: 'This preview was superseded by a newer draft state.' } });
+      return;
+    }
+    setPreview({
+      status: 'ready',
+      request,
+      identity: {
+        requestId: request.requestId,
+        draftId: result.draftId,
+        revision: result.revision,
+        format: result.format,
+        contentVersion: result.contentVersion,
+      },
+      result,
+    });
+  }, [state]);
 
   const copy = useCallback(async (format: CopyFormat): Promise<CopyResult> => {
     const currentSnapshot = snapshotRef.current;
@@ -187,6 +263,41 @@ export function TeleprompterApp() {
     setFeedback(null);
   }, []);
 
+  const requestSurfaceLayout = useCallback((request: SurfaceLayoutRequest): Promise<BridgeResult<SurfaceLayoutResult>> => {
+    if (surface !== 'spotlight' || !window.teleprompterDesktop?.requestSurfaceLayout) {
+      return Promise.resolve(unavailableBridgeError<SurfaceLayoutResult>('Measured surface layout is not available on this desktop bridge.'));
+    }
+    return window.teleprompterDesktop.requestSurfaceLayout(request);
+  }, [surface]);
+
+  const openSettings = useCallback(() => {
+    const currentSnapshot = snapshotRef.current;
+    if (currentSnapshot) {
+      setShortcutDraft(currentSnapshot.shortcut.accelerator);
+      setSettings((current) => current ?? settingsFromSnapshot(currentSnapshot));
+    }
+    setSettingsOpen(true);
+  }, []);
+
+  const saveShortcut = useCallback(async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!window.teleprompter || !settings) return;
+    setSettings((current) => current ? { ...current, saveState: 'saving', error: undefined } : current);
+    const result = await window.teleprompter.setShortcut({ accelerator: shortcutDraft });
+    if (!result.ok) {
+      setSettings((current) => current ? { ...current, saveState: 'error', error: result.error.message } : current);
+      return;
+    }
+    const currentSnapshot = snapshotRef.current;
+    if (currentSnapshot) adoptSnapshot({ ...currentSnapshot, shortcut: result.shortcut, persistenceStatus: result.persistenceStatus });
+    setSettings({
+      shortcut: result.shortcut,
+      persistenceStatus: result.persistenceStatus,
+      saveState: result.shortcut.error ? 'error' : 'saved',
+      ...(result.shortcut.error ? { error: result.shortcut.error } : {}),
+    });
+  }, [adoptSnapshot, settings, shortcutDraft]);
+
   const applyChoice = useCallback((choice: LibraryChoiceView) => {
     if (choice.kind === 'preset') {
       void dispatch({ type: 'apply-preset', presetId: choice.id });
@@ -207,7 +318,7 @@ export function TeleprompterApp() {
   }, [dispatch, state]);
 
   const requestSize = useCallback((size: 'compact' | 'expanded') => {
-    if (surface === 'spotlight') void window.teleprompterDesktop?.requestSize(size);
+    if (surface === 'spotlight') void window.teleprompterDesktop?.requestSize?.(size);
   }, [surface]);
 
   if (!state) {
@@ -221,6 +332,9 @@ export function TeleprompterApp() {
     library={state.library}
     dispatch={dispatch}
     copy={copy}
+    preview={preview}
+    requestPreview={requestPreview}
+    requestSurfaceLayout={surface === 'spotlight' ? requestSurfaceLayout : undefined}
     requestSize={surface === 'spotlight' ? requestSize : undefined}
     dismiss={surface === 'spotlight' ? () => void window.teleprompter?.hideSpotlight() : undefined}
     onModeChange={changeMode}
@@ -234,11 +348,56 @@ export function TeleprompterApp() {
     persistenceStatus={snapshot.persistenceStatus}
     onViewChange={setView}
     onSearch={() => window.dispatchEvent(new CustomEvent('teleprompter:focus-search'))}
-    onSettings={() => setFeedback('Settings are intentionally compact in this slice. The Cue shortcut can be changed through the desktop bridge.')}
+    onSettings={openSettings}
   >
     {feedback && <p className="tp-feedback" role="status">{feedback}</p>}
     {view === 'cue' && cue}
-    {view === 'library' && <LibrarySurface library={state.library} mode={activeMode} favoriteIds={favoriteIds} onFavorite={(recordId, favorited) => void setFavorite(recordId, favorited)} onApply={(recordId, kind) => applyChoice({ id: recordId, kind, label: recordId, shorthand: recordId, summary: '', order: 0, status: 'active', aliases: [], cautionIds: [] })} onCopy={(recordId, format) => copyLibraryText(recordId, format)} />}
+    {view === 'library' && <LibrarySurface library={state.library} mode={activeMode} favoriteIds={favoriteIds} onFavorite={(recordId, favorited) => void setFavorite(recordId, favorited)} onApply={(recordId, kind) => {
+      const record = kind === 'preset'
+        ? state.library.presets.find((item) => item.id === recordId)
+        : state.library.editRecipes.find((item) => item.id === recordId);
+      if (!record) return;
+      applyChoice({
+        id: record.id,
+        kind: record.kind,
+        label: record.label,
+        shorthand: record.shorthand,
+        summary: record.summary,
+        order: record.order,
+        status: record.status,
+        aliases: record.aliases,
+        cautionIds: record.cautionIds,
+        previewAssetId: record.previewAssetId,
+      });
+    }} onCopy={(recordId, format) => copyLibraryText(recordId, format)} />}
     {view === 'tokens' && <TokensSurface library={state.library} onApply={applyChoice} onCopy={(choice) => copyLibraryText(choice.id, 'expanded')} />}
+    {settings && settingsOpen && <SettingsDialog settings={settings} shortcutDraft={shortcutDraft} onShortcutChange={setShortcutDraft} onSubmit={saveShortcut} onClose={() => setSettingsOpen(false)} />}
   </TeleprompterShell>;
+}
+
+function SettingsDialog({ settings, shortcutDraft, onShortcutChange, onSubmit, onClose }: {
+  readonly settings: SettingsState;
+  readonly shortcutDraft: string;
+  readonly onShortcutChange: (value: string) => void;
+  readonly onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  readonly onClose: () => void;
+}) {
+  return <dialog open className="tp-settings-dialog" aria-labelledby="tp-settings-title" onCancel={(event) => { event.preventDefault(); onClose(); }}>
+    <form method="dialog" onSubmit={onSubmit}>
+      <header>
+        <div><p className="tp-eyebrow">Teleprompter</p><h2 id="tp-settings-title">Settings</h2></div>
+        <button type="button" className="tp-icon-button" aria-label="Close settings" onClick={onClose}>×</button>
+      </header>
+      <label htmlFor="tp-shortcut-input">Cue shortcut</label>
+      <input id="tp-shortcut-input" value={shortcutDraft} onChange={(event) => onShortcutChange(event.target.value)} disabled={settings.saveState === 'saving'} autoFocus />
+      <p className="tp-settings-help">Use View → Show Cue if the shortcut is unavailable.</p>
+      {settings.shortcut.error && <p className="tp-inline-error" role="alert">{settings.shortcut.error}</p>}
+      {settings.error && <p className="tp-inline-error" role="alert">{settings.error}</p>}
+      <p className="tp-save-status" role="status">{settings.persistenceStatus === 'disk' ? 'Saved on this device.' : settings.persistenceStatus === 'session' ? 'Session only.' : 'Recovered for this session.'}</p>
+      <footer>
+        <button type="button" className="tp-secondary-action" onClick={onClose}>Cancel</button>
+        <button type="submit" className="tp-primary-action" disabled={settings.saveState === 'saving'}>{settings.saveState === 'saving' ? 'Saving…' : settings.saveState === 'saved' ? 'Saved' : 'Save shortcut'}</button>
+      </footer>
+    </form>
+  </dialog>;
 }

@@ -6,14 +6,14 @@ The user renamed the product Teleprompter and requested a replacement plan for d
 
 ## Implemented v1 baseline
 
-Image Director is an offline Electron utility for finding and copying source-faithful image prompts. The main deliverable is a working desktop app with Gallery and Cheatsheet modes.
+Teleprompter is an offline Electron utility for finding and copying source-faithful image prompts. The main deliverable is a working desktop app with Gallery and Cheatsheet modes.
 Key paths: `AGENTS.md` (project contract) · `MAP.md` (live state) · `03 Docs/Teleprompter Plan/` (current upgrade plan) · `03 Docs/Implementation Plan/` (historical v1 plan)
 Updated: 2026-09-13
 
 ## Working contract
 
 - Read `MAP.md` before implementation work and update it when a decision or next move changes.
-- Preserve `image-director/` and the five plan files as source material. Do not edit them to fit the app.
+- Preserve `teleprompter/` and the five plan files as source material. Do not edit them to fit the app.
 - The implemented v1 app is offline, local, and read-only. The Teleprompter plan adds a local prompt composer; runtime model connections, image generation, uploads, and network requests remain outside the app. Asset generation and research belong to their separately dispatched worker missions.
 - Slice 1 publishes the Teleprompter library, draft, command, snapshot, bridge, and renderer-surface contracts in `src/shared/teleprompter.ts`; downstream workers consume these types and validators instead of duplicating semantics.
 - Keep native Electron evidence separate from browser-preview evidence. A browser preview never proves native clipboard, preferences, menus, or packaged loading.

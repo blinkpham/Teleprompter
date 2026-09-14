@@ -6,9 +6,15 @@ Teleprompter becomes a dark-only desktop prompt composer. **Cue** opens by defau
 
 ## Authority
 
-This pack records the user's new scope and supersedes conflicting product, UI, and interaction decisions in `03 Docs/Implementation Plan/`, `AGENTS.md`, and `MAP.md`: the old Gallery-first, two-view, read-only, no-prompt-editor, light/system-theme boundary is obsolete for the next implementation. Preserve those historical plan files and the original `image-director/` sources. This pack does not authorize implementing anything during the planning turn.
+This pack records the user's new scope and supersedes conflicting product, UI, and interaction decisions in `03 Docs/Implementation Plan/`, `AGENTS.md`, and `MAP.md`: the old Gallery-first, two-view, read-only, no-prompt-editor, light/system-theme boundary is obsolete for the next implementation. Preserve those historical plan files and the original `teleprompter/` sources. This pack does not authorize implementing anything during the planning turn.
 
 When implementation is dispatched, the lead first updates the root instruction/state pointers to this pack. Keep the workspace directory and legacy data directory in place; the product's display name is **Teleprompter**. Research and image generation happen in worker workflows; the shipped app remains offline and has no model integration.
+
+## Current visual-reset authority
+
+The unresolved presentation work is now governed by [Visual Reset 2026-09-13](<Visual Reset 2026-09-13/00-Start-Here.md>). That nine-document extension supersedes conflicting visual, popup-geometry, and visual-acceptance claims in this original pack and in the earlier execution reset. It preserves the shared engine, draft, clipboard, persistence, and security contracts. Its adaptive popup, compact morphing-card, camera ticker/scrubber, `/preset`, and `@` reference requirements are the only authority for future visual dispatch until replaced by a newer dated brief.
+
+The extension is planning-only: 31 requirement IDs and 30 native acceptance cases are defined, and visual acceptance remains open after a live Electron re-audit found framed appended objects, clipped repeated lens artwork, and duplicated search focus. No implementation change is implied by the plan.
 
 ## Read by mission
 

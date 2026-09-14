@@ -48,7 +48,7 @@ The live catalog was loaded from `src/content/catalog.ts` and recounts to 104 Ch
 - Render terms (`draft`, `final`, `2k`, `4k`, `web-hq`) need an OUTPUT contract decision because they are delivery requests, not visual axes.
 - A lead must audit draft/favorite references locally before accepting any migration. The curator cannot inspect private user state.
 - Practical examples are request-ready but not generated or approved. Record the requested/resolved model separately when the illustrator runs the authorized route.
-- Sol consultation was attempted through ChatGPT Web, but Core could not mount this local project; no Sol review of these files is claimed.
+- The earlier Batch 001 consultation could not mount the local project; Batch 002 has a separate bounded Sol/Core review recorded in its Review.md.
 - Sol/Core returned a bounded review through the existing in-app conversation: the axis split and flat-bundle model are sound, but both close-wide distinctions remain pending until matched comparisons show repeatable near-feature scale differences without crop, height, pose, lighting, or composition drift.
 
 ## Next concrete task
