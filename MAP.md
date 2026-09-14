@@ -5,11 +5,11 @@ Updated: 2026-09-14
 
 ## Current execution — 2026-09-14 post-worker checkpoint
 
-- Lead integration commit `8e5d3d6` adds engine-owned atomic quick add, measured spotlight layout requests, exact Preview and Library/Tokens read paths, Create-only default handling, compact image-led Cue controls, caret-safe slash/@ suggestions, and the Teleprompter skill package metadata/icon.
+- Lead integration commits `8e5d3d6`, `6834f3d`, and `674e1df` add engine-owned atomic quick add, measured spotlight layout requests, exact Preview and Library/Tokens read paths, Create-only default handling, compact image-led Cue controls, caret-safe slash/@ suggestions, the Teleprompter skill package metadata/icon, and the local reference lifecycle.
 - Sol/Core's fresh read-only review found four remaining contract/runtime risks: recovery construction can still re-enter new-document defaults unless the loader preserves the parsed blank fallback; quick-add acknowledgement must serialize editing so it cannot overwrite in-flight typing; the @ reference manager/chooser/thumbnail lifecycle is still missing; and configured-state styling plus B01 geometry need native confirmation.
-- The recovery loader and quick-add acknowledgement guard are now fixed. The reference lifecycle is dispatched as a separate worker lane; it must remain outside the accepted 14-record runtime boundary and must not expose filesystem paths.
+- The recovery loader and quick-add acknowledgement guard are fixed. The lead now owns a visible Reference manager with native chooser, opaque local thumbnail handles, cancellation focus return, role/note controls in Edit, and missing-thumbnail error handling. It remains outside the accepted 14-record runtime boundary and does not expose filesystem paths.
 - Curator Batch 002 is integrated as proposed/reference-only and is ready for lead review. Illustration remains blocked until lead acceptance and direct `gpt-image-2.5-flare` route evidence; no artwork is activated from the batch.
-- Native witness: `03 Docs/Teleprompter Execution/Visual Reset 2026-09-13/Native/2026-09-14/Witness.md`. Electron visibly loads the dark Cue, one-axis Optics picker/search, and slash suggestions. Native quick-add keyboard acceptance, reference lifecycle, adaptive placement, clipboard read-back, and the full B01–B05/N01–N30 matrix remain open.
+- Native witness: `03 Docs/Teleprompter Execution/Visual Reset 2026-09-13/Native/2026-09-14/Witness.md`. Electron visibly loads the dark Cue, one-axis Optics picker/search, the References manager, native image chooser, persisted thumbnail row, Edit role controls, and @Image 1 suggestions. Native quick-add keyboard acceptance remains open pending a direct clean witness; adaptive placement, clipboard read-back, and the full B01–B05/N01–N30 matrix remain open.
 
 ## Current execution — integrated offline Cue slice
 
@@ -44,7 +44,7 @@ Updated: 2026-09-14
 ## Current verification — UI quality reset
 
 - `npm run typecheck` passes.
-- `npm run test:logic` passes: 12 files, 57 tests.
+- `npm run test:logic` passes: 13 files, 60 tests.
 - `npm run build` passes and emits the renderer with the accepted v2 Optics, Stage, and Finish assets.
 - `git diff --check` passes. The focused quick-add tests pass; native behavior remains separate from these local checks.
 - Earlier native inspection recorded image-led Cue group controls, a scoped Optics chooser, Library, and Tokens surfaces, but the latest planner re-audit contradicts visual acceptance: the controls still read as framed generic buttons, the Optics picker clips repeated artwork, and focus treatment is duplicated. Native desktop focused checks reported 15/15 placement tests passing; technical native acceptance remains separate from visual acceptance.
@@ -75,8 +75,8 @@ Updated: 2026-09-14
 
 ## Next
 
-1. Integrate and verify the reference manager/chooser worker lane; keep stable Image N numbering, cancellation focus, missing-file state, and opaque thumbnail handles explicit.
-2. Re-run native quick-add acceptance and recovery/default witnesses, then record N16/N27/N28–N30 separately from local checks.
+1. Re-run native quick-add keyboard acceptance and recovery/default witnesses, then record N16/N27/N28–N30 separately from local checks.
+2. Verify cancellation focus, missing-file state, and stable Image N numbering through the native manager; keep the worker worktree isolated unless it offers a verified delta.
 3. Run the Electron comparison for B01–B05, adaptive N09/N20–N25, and the shortcut/reference seams; close only directly witnessed cases.
 4. Keep practical illustration blocked until the exact GPT Image 2.5 Flare route is explicitly evidenced; then consume only the six curator-accepted AssetRequests.
 5. Preserve the 14-record runtime boundary while later curation resolves the 101 reference-only legacy rows.
