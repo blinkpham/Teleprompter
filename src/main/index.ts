@@ -21,6 +21,7 @@ import type {
   BridgeResult,
   CommandResult,
   CommandError,
+  CompiledDraftPreview,
   CopyResult,
   CueSnapshot,
   CueCommand,
@@ -29,6 +30,7 @@ import type {
   DraftFieldPath,
   LibraryChoiceView,
   LibraryCopyTextRequest,
+  LibraryTextResult,
   LibraryV2,
   LibraryView,
   Mode,
@@ -38,7 +40,7 @@ import type {
   DesktopCommand,
   CompileResult,
 } from '../shared/teleprompter-types';
-import { validateCopyCompiledDraftRequest, validateDraftCommand, validateLibraryCopyTextRequest, validationErrorToBridgeError } from '../shared/teleprompter-validation';
+import { validateCopyCompiledDraftRequest, validateDraftCommand, validateLibraryCopyTextRequest, validationErrorToBridgeError, validateGetCompiledDraftRequest, validateLibraryTextRequest } from '../shared/teleprompter-validation';
 import {
   DEFAULT_ACCELERATOR,
   DEFAULT_PREFERENCES,
@@ -629,7 +631,7 @@ const recordForId = (recordId: string): LibraryV2['atoms'][number] | LibraryV2['
   ...library.editRecipes,
 ].find((record) => record.id === recordId);
 
-const copyRecord = (request: LibraryCopyTextRequest): BridgeResult<CopyResult> => {
+const recordText = (request: LibraryCopyTextRequest): BridgeResult<LibraryTextResult> => {
   if (request.expectedContentVersion !== library.contentVersion) return failure('STALE_DRAFT', 'The library changed. Refresh before copying.');
   const record = recordForId(request.recordId);
   if (!record) return failure('INVALID_INPUT', 'That library record is unavailable.');
@@ -643,8 +645,7 @@ const copyRecord = (request: LibraryCopyTextRequest): BridgeResult<CopyResult> =
     const original = originals[0];
     const originalText = original?.prompt ?? original?.direction ?? original?.meaning ?? original?.token;
     if (!originalText) return failure('UNAVAILABLE', 'The original legacy text is not available for this record.');
-    const copied = copyText(originalText);
-    return copied.ok ? { ...copied, format: request.format } : copied;
+    return success({ recordId: request.recordId, format: request.format, contentVersion: library.contentVersion, text: originalText });
   }
   let text = record.shorthand;
   if (request.format === 'expanded') {
@@ -652,11 +653,10 @@ const copyRecord = (request: LibraryCopyTextRequest): BridgeResult<CopyResult> =
     else if (record.kind === 'bundle' || record.kind === 'preset') text = record.atomIds.map((id) => library.atoms.find((atom) => atom.id === id)?.expansion).filter((value): value is string => Boolean(value)).join('; ');
     else text = record.segments.map((segment) => 'text' in segment ? segment.text : segment.placeholder).join('');
   }
-  const copied = copyText(text);
-  return copied.ok ? { ...copied, format: request.format } : copied;
+  return success({ recordId: request.recordId, format: request.format, contentVersion: library.contentVersion, text });
 };
 
-const compileDraft = (mode: Mode, expectedRevision: number, format: 'expanded' | 'shorthand'): BridgeResult<CopyResult> => {
+const compileDraftResult = (mode: Mode, expectedRevision: number, format: 'expanded' | 'shorthand'): BridgeResult<CompileResult> => {
   const snapshot = draftStore.getSnapshot(preferences.shortcut, persistenceStatus);
   const draft = snapshot.drafts[mode];
   if (draft.revision !== expectedRevision) return failure('STALE_DRAFT', 'The draft changed. Refresh before copying.');
@@ -670,9 +670,28 @@ const compileDraft = (mode: Mode, expectedRevision: number, format: 'expanded' |
   }
   if (result.revision !== expectedRevision) return failure('STALE_DRAFT', 'The draft changed while it was compiling.');
   if (result.errors.length > 0) return failure('INVALID_INPUT', result.errors.map((item) => item.message).join(' '));
-  const text = format === 'expanded' ? result.text : result.text;
+  return success(result);
+};
+
+const compileDraft = (mode: Mode, expectedRevision: number, format: 'expanded' | 'shorthand'): BridgeResult<CopyResult> => {
+  const compiled = compileDraftResult(mode, expectedRevision, format);
+  if (!compiled.ok) return compiled;
+  const text = compiled.text;
   const copied = copyText(text);
   return copied.ok ? { ...copied, format, revision: expectedRevision } : copied;
+};
+
+const getCompiledDraft = (mode: Mode, expectedRevision: number, format: 'expanded' | 'shorthand'): BridgeResult<CompiledDraftPreview> => {
+  const compiled = compileDraftResult(mode, expectedRevision, format);
+  if (!compiled.ok) return compiled;
+  return success({ ...compiled, draftId: mode, format, contentVersion: library.contentVersion });
+};
+
+const copyRecord = (request: LibraryCopyTextRequest): BridgeResult<CopyResult> => {
+  const resolved = recordText(request);
+  if (!resolved.ok) return resolved;
+  const copied = copyText(resolved.text);
+  return copied.ok ? { ...copied, format: request.format } : copied;
 };
 
 const createMainWindow = async (): Promise<void> => {
@@ -813,11 +832,23 @@ const registerHandlers = (): void => {
     if (!validated.ok) return failure('INVALID_INPUT', validationErrorToBridgeError(validated.errors).message);
     return compileDraft(validated.value.draftId, validated.value.expectedRevision, validated.value.format);
   });
+  ipcMain.handle('get-compiled-draft', (event, request: unknown): BridgeResult<CompiledDraftPreview> => {
+    if (!isAllowedSender(event)) return failure('UNAVAILABLE', 'The desktop window is unavailable.');
+    const validated = validateGetCompiledDraftRequest(request);
+    if (!validated.ok) return failure('INVALID_INPUT', validationErrorToBridgeError(validated.errors).message);
+    return getCompiledDraft(validated.value.draftId, validated.value.expectedRevision, validated.value.format);
+  });
   ipcMain.handle('copy-library-text', (event, request: unknown): BridgeResult<CopyResult> => {
     if (!isAllowedSender(event)) return failure('UNAVAILABLE', 'The desktop window is unavailable.');
     const validated = validateLibraryCopyTextRequest(request);
     if (!validated.ok) return failure('INVALID_INPUT', validationErrorToBridgeError(validated.errors).message);
     return copyRecord(validated.value);
+  });
+  ipcMain.handle('get-library-text', (event, request: unknown): BridgeResult<LibraryTextResult> => {
+    if (!isAllowedSender(event)) return failure('UNAVAILABLE', 'The desktop window is unavailable.');
+    const validated = validateLibraryTextRequest(request);
+    if (!validated.ok) return failure('INVALID_INPUT', validationErrorToBridgeError(validated.errors).message);
+    return recordText(validated.value);
   });
   ipcMain.handle('set-favorite', async (event, request: unknown) => {
     if (!isAllowedSender(event) || !request || typeof request !== 'object') return failure('UNAVAILABLE', 'The desktop window is unavailable.');

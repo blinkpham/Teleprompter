@@ -73,7 +73,7 @@ function submit(dispatch: CueSurfaceProps['dispatch'], command: CueCommand): voi
   void dispatch(command);
 }
 
-export function CueSurface({ surface, snapshot, library, dispatch, copy, requestSize, dismiss, onModeChange, onOpenLibrary }: CueSurfaceExtraProps) {
+export function CueSurface({ surface, snapshot, library, dispatch, copy, preview, requestPreview, requestSize, dismiss, onModeChange, onOpenLibrary }: CueSurfaceExtraProps) {
   const reducedMotion = Boolean(useReducedMotion());
   const draft = snapshot.drafts[snapshot.activeMode];
   const [picker, setPicker] = useState<PickerKind>(null);
@@ -113,6 +113,16 @@ export function CueSurface({ surface, snapshot, library, dispatch, copy, request
     if (picker || previewOpen) requestSize?.('expanded');
     else requestSize?.('compact');
   }, [picker, previewOpen, requestSize]);
+
+  useEffect(() => {
+    if (!previewOpen || !requestPreview) return;
+    void requestPreview({
+      draftId: draft.id,
+      expectedRevision: draft.revision,
+      format: draft.outputFormat,
+      expectedContentVersion: library.contentVersion,
+    });
+  }, [draft.id, draft.outputFormat, draft.revision, library.contentVersion, previewOpen, requestPreview]);
 
   useEffect(() => {
     if (surface !== 'spotlight' && !picker && !previewOpen) return undefined;
@@ -265,7 +275,7 @@ export function CueSurface({ surface, snapshot, library, dispatch, copy, request
       <AnimatePresence initial={false}>
         {(picker || previewOpen) && <OverlayLayer reducedMotion={reducedMotion} onClose={closeOverlay}>
           {picker && <PickerPanel kind={picker} initialField={pickerField} search={search} setSearch={setSearch} draft={draft} library={library} choiceMap={choiceMap} activeChoices={activeChoices} selectedIds={selectedLabels} dispatch={dispatch} onClose={closeOverlay} onOpenLibrary={onOpenLibrary} />}
-          {previewOpen && <PreviewPanel draft={draft} library={library} choiceMap={choiceMap} onChooseFormat={(format) => submit(dispatch, { type: 'choose-format', format })} onCopy={(format) => void copyDraft(format)} copying={copying} copied={copied} />}
+          {previewOpen && <PreviewPanel draft={draft} preview={preview} onChooseFormat={(format) => submit(dispatch, { type: 'choose-format', format })} onCopy={(format) => void copyDraft(format)} copying={copying} copied={copied} />}
         </OverlayLayer>}
       </AnimatePresence>
     </section>
@@ -346,27 +356,19 @@ function AxisSlot({ axis, draft, choices, choiceMap, selectedIds, dispatch, mode
     if (event.key === 'Home') { event.preventDefault(); moveSelection(0); }
     if (event.key === 'End') { event.preventDefault(); moveSelection(orderedChoices.length - 1); }
   };
-  return <section className="tp-axis-column"><div className="tp-axis-heading"><div><strong>{axis.label}</strong><small>{axis.cardinality === 'many' ? 'Select any' : 'Choose one'}</small></div>{selected.size > 0 && <span>{selected.size}</span>}</div><div className="tp-slot-list" role="listbox" tabIndex={0} aria-label={axis.label} aria-multiselectable={axis.cardinality === 'many'} onKeyDown={handleKeyDown}>{orderedChoices.map((choice) => { const isSelected = selected.has(choice.id); return <button key={choice.id} type="button" role="option" aria-selected={isSelected} className={isSelected ? 'tp-slot is-selected' : 'tp-slot'} onClick={() => moveSelection(orderedChoices.indexOf(choice))}><span className="tp-slot-thumb" aria-hidden="true"><img src={artworkForField(axis.field) ?? GROUP_ART.finish} alt="" /></span><span className="tp-slot-label">{readableChoiceLabel(choice.label)}</span>{isSelected && <Check size={17} weight="bold" />}</button>; })}{orderedChoices.length === 0 && <EmptySearch search="" />}</div><label className="tp-custom-field"><span>Custom</span><input value={draft.customText[axis.field] ?? ''} placeholder="Add literal text" onChange={(event) => submit(dispatch, { type: 'set-custom-text', field: axis.field, text: event.target.value })} /></label><button type="button" className="tp-leave-blank" onClick={() => submit(dispatch, { type: 'clear-axis', axisId: axis.id, pinBlank: true })}>Leave blank</button></section>;
+  return <section className="tp-axis-column"><div className="tp-axis-heading"><div><strong>{axis.label}</strong><small>{axis.cardinality === 'many' ? 'Select any' : 'Choose one'}</small></div>{selected.size > 0 && <span>{selected.size}</span>}</div><div className="tp-slot-list" role="listbox" tabIndex={0} aria-label={axis.label} aria-multiselectable={axis.cardinality === 'many'} onKeyDown={handleKeyDown}>{orderedChoices.map((choice) => { const isSelected = selected.has(choice.id); return <button key={choice.id} type="button" role="option" aria-selected={isSelected} className={isSelected ? 'tp-slot is-selected' : 'tp-slot'} onClick={() => moveSelection(orderedChoices.indexOf(choice))}><span className="tp-slot-thumb" aria-hidden="true"><span /></span><span className="tp-slot-label">{readableChoiceLabel(choice.label)}</span>{isSelected && <Check size={17} weight="bold" />}</button>; })}{orderedChoices.length === 0 && <EmptySearch search="" />}</div><label className="tp-custom-field"><span>Custom</span><input value={draft.customText[axis.field] ?? ''} placeholder="Add literal text" onChange={(event) => submit(dispatch, { type: 'set-custom-text', field: axis.field, text: event.target.value })} /></label><button type="button" className="tp-leave-blank" onClick={() => submit(dispatch, { type: 'clear-axis', axisId: axis.id, pinBlank: true })}>Leave blank</button></section>;
 }
 
-function PreviewPanel({ draft, library, choiceMap, onChooseFormat, onCopy, copying, copied }: { readonly draft: CueDraft; readonly library: CueSurfaceProps['library']; readonly choiceMap: ReadonlyMap<string, LibraryChoiceView>; readonly onChooseFormat: (format: CopyFormat) => void; readonly onCopy: (format: CopyFormat) => void; readonly copying: boolean; readonly copied: boolean }) {
-  const format = draft.outputFormat;
-  const sections: readonly { label: string; value: string }[] = [
-    { label: 'What', value: draft.what || '[subject + action + scene]' },
-    ...(['cam', 'angle', 'comp', 'light', 'look', 'mood', 'important', 'avoid', 'output'] as Field[]).map((field) => ({ label: FIELD_LABELS[field], value: fieldValue(field, draft, library, choiceMap, format) })),
-  ];
-  const placeholderCount = sections.filter((section) => section.value.startsWith('[')).length;
-  return <div className="tp-preview" aria-label="Prompt preview"><header className="tp-preview-header"><h2>Prompt preview</h2><div className="tp-preview-tools"><span>{placeholderCount} placeholder{placeholderCount === 1 ? '' : 's'}</span><div className="tp-segment" role="radiogroup" aria-label="Preview format">{(['expanded', 'shorthand'] as CopyFormat[]).map((value) => <button key={value} type="button" role="radio" aria-checked={format === value} className={format === value ? 'is-active' : ''} onClick={() => onChooseFormat(value)}><span>{titleCase(value)}</span><small>{value === 'expanded' ? 'Readable' : 'Compact'}</small></button>)}</div></div></header><div className="tp-preview-copy">{sections.map((section) => <div key={section.label} className="tp-preview-section"><strong>{section.label}:</strong><span>{section.value}</span></div>)}</div><div className="tp-preview-footer"><small>Selectable text · {format === 'expanded' ? 'readable direction' : 'compact shorthand'}</small><button type="button" className="tp-primary-action" disabled={copying} onClick={() => onCopy(format)}>{copied ? <Check size={18} weight="bold" /> : <Copy size={18} weight="duotone" />}<span>{copied ? 'Copied' : 'Copy preview'}</span></button></div></div>;
-}
-
-function fieldValue(field: Field, draft: CueDraft, library: CueSurfaceProps['library'], choiceMap: ReadonlyMap<string, LibraryChoiceView>, format: CopyFormat): string {
-  const axes = library.axes.filter((axis) => axis.field === field).sort((a, b) => a.order - b.order);
-  const values = axes.flatMap((axis) => getChoice(draft.choices, axis.id)?.atomIds.map((id) => {
-    const choice = choiceMap.get(id);
-    return format === 'shorthand' ? choice?.shorthand ?? id : choice?.label ?? id;
-  }) ?? []);
-  const custom = draft.customText[field]?.trim();
-  return [...values, ...(custom ? [custom] : [])].join('; ') || `[${FIELD_LABELS[field].toLowerCase()}]`;
+function PreviewPanel({ draft, preview, onChooseFormat, onCopy, copying, copied }: { readonly draft: CueDraft; readonly preview?: CueSurfaceProps['preview']; readonly onChooseFormat: (format: CopyFormat) => void; readonly onCopy: (format: CopyFormat) => void; readonly copying: boolean; readonly copied: boolean }) {
+  const format = preview?.status === 'ready' ? preview.result.format : draft.outputFormat;
+  const isReady = preview?.status === 'ready';
+  const placeholderCount = isReady ? preview.result.placeholders.length : 0;
+  const status = preview?.status === 'pending'
+    ? 'Compiling the exact Cue output…'
+    : preview?.status === 'error'
+      ? preview.error.message
+      : undefined;
+  return <div className="tp-preview" aria-label="Prompt preview"><header className="tp-preview-header"><h2>Prompt preview</h2><div className="tp-preview-tools"><span>{isReady ? `${placeholderCount} placeholder${placeholderCount === 1 ? '' : 's'}` : status ?? 'Exact compiler output'}</span><div className="tp-segment" role="radiogroup" aria-label="Preview format">{(['expanded', 'shorthand'] as CopyFormat[]).map((value) => <button key={value} type="button" role="radio" aria-checked={format === value} className={format === value ? 'is-active' : ''} onClick={() => onChooseFormat(value)}><span>{titleCase(value)}</span><small>{value === 'expanded' ? 'Readable' : 'Compact'}</small></button>)}</div></div></header>{preview?.status === 'error' && <p className="tp-inline-error" role="alert">{preview.error.message}</p>}{isReady ? <pre className="tp-preview-copy-text" tabIndex={0}>{preview.result.text}</pre> : <div className="tp-preview-empty">{status ?? 'Open Preview to request the exact compiled text.'}</div>}<div className="tp-preview-footer"><small>Selectable text · exact output used by Copy</small><button type="button" className="tp-primary-action" disabled={copying || !isReady} onClick={() => onCopy(format)}>{copied ? <Check size={18} weight="bold" /> : <Copy size={18} weight="duotone" />}<span>{copied ? 'Copied' : 'Copy preview'}</span></button></div></div>;
 }
 
 function EmptySearch({ search }: { readonly search: string }) {

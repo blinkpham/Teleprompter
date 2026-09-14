@@ -38,3 +38,15 @@ The existing dirty `src/shared/desktop-types.ts` rename and the pre-existing `Te
 - The native witness must verify adaptive bounds, material, focus, dismissal, and the new preview/reference flows in the actual Electron app. This handoff contains no native acceptance claim.
 
 Runtime content remains unchanged at the accepted 14-record boundary. No model, network, upload, filesystem-path exposure, or generated-record path was added.
+
+## Follow-up local implementation — 2026-09-14
+
+The lead consumed the desktop, engine, and UI seams locally while native-host work was paused by the user's 09:00–20:00 restriction.
+
+- `getCompiledDraft` is now registered in main/preload and returns the exact compiler result with draft identity, format, and content version.
+- `getLibraryText` is now registered in main/preload and resolves Library/Tokens text without writing to the clipboard; Copy reuses the same resolver.
+- New Create drafts and engine resets now receive `4:5 aspect ratio; 2K resolution target`; Edit and restored documents do not receive it automatically.
+- Preview now requests and renders the exact compiler text used by Copy, with stale-response handling retained in `TeleprompterApp`.
+- Group controls now use image-led horizontal capsules; axis options use an honest neutral fallback instead of repeating family artwork as if it were a record-specific image. Search input focus is reduced to one intentional ring.
+
+Local checks after this follow-up: `npm run typecheck`, `npm run test:logic` (8 files / 37 tests), `npm run build`, `git diff --check`, and the focused Impeccable detector all pass. Electron, Adobe, Astra, browser consultation, native visual acceptance, and GitHub publication were not run in this time window.

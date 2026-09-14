@@ -1,7 +1,7 @@
 # MAP — Teleprompter
 
 Goal: Implement the Teleprompter upgrade: dark-only Cue Create/Edit, shortcut spotlight, redesigned library, generated artwork, and structured long-term curation.
-Updated: 2026-09-13
+Updated: 2026-09-14
 
 ## Current execution — integrated offline Cue slice
 
@@ -24,6 +24,8 @@ Updated: 2026-09-13
 - Native bounds/focus changes are integrated. The independent macOS witness accepts the menu-triggered spotlight lifecycle, picker resize, native copy, click-away dismissal, focus restoration, OS-level shortcut delivery/dismissal, and cursor-relative placement at two observed pointer locations after the hide-loop fix. Physical-keyboard, collision, second-display, and non-macOS coverage remain open. The delegated v2 identity packet is accepted and integrated; practical artwork remains blocked by the exact-model route gate.
 
 ## Upgrade checks still open
+
+- Local follow-up now wires the exact preview and Library/Tokens read-only seams, scopes the new Create output default, and removes misleading repeated family art from axis options. Native visual acceptance is still open because the user paused host-software use from 09:00–20:00.
 
 - The default global shortcut is accepted on this macOS host through an OS-level System Events key-event witness; the configurable menu fallback remains available, while hardware-keyboard delivery and collision handling are unverified.
 - Native panel focus/Space behavior and physical display coverage require implementation-time tests.
@@ -69,3 +71,4 @@ Updated: 2026-09-13
 2. Dispatch future visual work only from `03 Docs/Teleprompter Plan/Visual Reset 2026-09-13/00-Start-Here.md` after lead review; keep its 31 requirements and 30 native cases open until the real Electron comparison passes.
 3. Keep practical illustration blocked until the exact GPT Image 2.5 Flare route is explicitly evidenced; then consume only the six curator-accepted AssetRequests.
 4. Preserve the 14-record runtime boundary while later curation resolves the 101 reference-only legacy rows.
+5. After the restricted window, run the actual Electron comparison for the updated capsules, exact preview, adaptive surface, focus treatment, and shortcut/reference seams; only then close native acceptance gaps.

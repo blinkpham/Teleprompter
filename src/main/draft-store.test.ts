@@ -43,6 +43,8 @@ describe('draft store', () => {
     expect(restored.document.drafts.create.id).toBe('create');
     expect(restored.document.drafts.edit.id).toBe('edit');
     expect(restored.document.libraryVersion).toBe(library.contentVersion);
+    expect(restored.document.drafts.create.customText.output).toBe('4:5 aspect ratio; 2K resolution target');
+    expect(restored.document.drafts.edit.customText.output).toBeUndefined();
   });
 
   it('accepts ordered edits and rejects a stale same-field write', () => {

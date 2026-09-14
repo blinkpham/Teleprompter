@@ -17,6 +17,7 @@ import type {
   PersistenceStatus,
   ShortcutState,
 } from '../shared/teleprompter-types';
+import { newDraftDefaults } from '../shared/teleprompter-types';
 import { validateCueDraft, validateDraftCommand } from '../shared/teleprompter-validation';
 
 export interface EngineApplySuccess {
@@ -63,7 +64,7 @@ export const createEmptyDraft = (id: Mode, libraryVersion: string): CueDraft => 
   libraryVersion,
   what: '',
   choices: [],
-  customText: {},
+  customText: newDraftDefaults(id).customText,
   edits: [],
   references: [],
   manualUnlocks: [],

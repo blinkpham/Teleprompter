@@ -9,6 +9,7 @@ import type {
   Mode,
   Preset,
 } from '../../shared/teleprompter-types';
+import { newDraftDefaults } from '../../shared/teleprompter-types';
 import { validateCueDraft } from '../../shared/teleprompter-validation';
 
 export type SelectionErrorCode = 'UNKNOWN_AXIS' | 'UNKNOWN_ATOM' | 'WRONG_AXIS' | 'WRONG_MODE' | 'CARDINALITY' | 'EXCLUSION' | 'REQUIRES' | 'INVALID_DRAFT' | 'UNKNOWN_PRESET' | 'UNKNOWN_RECIPE' | 'RECIPE_CONFLICT' | 'INVALID_REFERENCE' | 'HISTORY_UNAVAILABLE';
@@ -56,7 +57,7 @@ export const createDraft = (library: LibraryV2, mode: Mode, revision = 0): CueDr
   libraryVersion: library.contentVersion,
   what: '',
   choices: [],
-  customText: {},
+  customText: newDraftDefaults(mode).customText,
   edits: [],
   references: [],
   manualUnlocks: [],

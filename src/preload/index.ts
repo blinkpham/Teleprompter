@@ -2,6 +2,7 @@ import { contextBridge, ipcRenderer } from 'electron';
 import type { LegacyTeleprompterBridge, UICommand } from '../shared/desktop-types';
 import type {
   BridgeResult,
+  CompiledDraftPreview,
   CommandResult,
   CopyCompiledDraftRequest,
   CopyResult,
@@ -10,6 +11,7 @@ import type {
   DraftChangedEvent,
   DraftCommandEnvelope,
   LibraryCopyTextRequest,
+  LibraryTextResult,
   TeleprompterBootstrap,
   TeleprompterBridge,
 } from '../shared/teleprompter-types';
@@ -34,6 +36,8 @@ const teleprompter: TeleprompterBridge = {
   },
   copyCompiledDraft: (request: CopyCompiledDraftRequest) => ipcRenderer.invoke('copy-compiled-draft', request),
   copyLibraryText: (request: LibraryCopyTextRequest) => ipcRenderer.invoke('copy-library-text', request),
+  getCompiledDraft: (request: CopyCompiledDraftRequest): Promise<BridgeResult<CompiledDraftPreview>> => ipcRenderer.invoke('get-compiled-draft', request),
+  getLibraryText: (request: LibraryCopyTextRequest): Promise<BridgeResult<LibraryTextResult>> => ipcRenderer.invoke('get-library-text', request),
   setFavorite: (request) => ipcRenderer.invoke('set-favorite', request),
   setShortcut: (request) => ipcRenderer.invoke('set-shortcut', request),
   showMain: () => ipcRenderer.invoke('show-main'),

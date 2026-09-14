@@ -21,13 +21,26 @@ describe('Teleprompter Cue engine', () => {
     expect(legacyMappingSummaryFor(legacyLibrary)).toMatchObject({ mapped: 14, referenceOnly: 101, techniqueMapped: 4 });
   });
 
-  it('compiles the blank Create template byte-for-byte', () => {
+  it('compiles a new Create template with the product-authored output default', () => {
     const draft = createDraft(legacyLibrary, 'create');
     expect(compileCreate(legacyLibrary, draft)).toMatchObject({
-      text: 'WHAT:\n[subject + action + scene]\n\nCAM:\n[camera / lens / depth / focus]\n\nANGLE:\n[camera angle]\n\nCOMP:\n[composition]\n\nLIGHT:\n[lighting]\n\nLOOK:\n[look]\n\nMOOD:\n[mood]\n\nIMPORTANT:\n[important details]\n\nAVOID:\n[things to avoid]\n\nOUTPUT:\n[aspect ratio] [resolution]\n',
+      text: 'WHAT:\n[subject + action + scene]\n\nCAM:\n[camera / lens / depth / focus]\n\nANGLE:\n[camera angle]\n\nCOMP:\n[composition]\n\nLIGHT:\n[lighting]\n\nLOOK:\n[look]\n\nMOOD:\n[mood]\n\nIMPORTANT:\n[important details]\n\nAVOID:\n[things to avoid]\n\nOUTPUT:\n4:5 aspect ratio; 2K resolution target\n',
       errors: [],
       placeholders: [],
     });
+  });
+
+  it('keeps the output default scoped to new Create and reset', () => {
+    const create = createDraft(legacyLibrary, 'create');
+    const edit = createDraft(legacyLibrary, 'edit');
+    expect(create.customText.output).toBe('4:5 aspect ratio; 2K resolution target');
+    expect(edit.customText.output).toBeUndefined();
+    const changed = applyDraftCommand(legacyLibrary, create, { type: 'set-custom-text', field: 'output', text: '16:9 custom' });
+    expect(changed.ok).toBe(true);
+    if (!changed.ok) return;
+    const reset = applyDraftCommand(legacyLibrary, changed.value.draft, { type: 'reset-draft' });
+    expect(reset.ok).toBe(true);
+    if (reset.ok) expect(reset.value.draft.customText.output).toBe('4:5 aspect ratio; 2K resolution target');
   });
 
   it('unfolds a preset, lets a manual axis override win, and stays deterministic', () => {
