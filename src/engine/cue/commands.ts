@@ -1,4 +1,5 @@
 import type {
+  AcceptQuickAddCommand,
   CueCommand,
   CueDraft,
   Domain,
@@ -6,18 +7,19 @@ import type {
   Field,
   LibraryV2,
   ReferenceRole,
-  RecipeChoice,
 } from '../../shared/teleprompter-types';
 import {
   applyPreset,
   clearAxis,
   createDraft,
   resetToPreset,
+  selectRecipe,
   selectAxis as selectAxisMutation,
   toggleAtom,
 } from './selection';
 import type { SelectionIssue } from './selection';
 import { validateCueDraft } from '../../shared/teleprompter-validation';
+import { applyQuickAddCommand, touchedPathsForQuickAddCommand } from './quick-add';
 
 export interface DraftMutation {
   readonly draft: CueDraft;
@@ -38,7 +40,10 @@ const bump = (draft: CueDraft, changes: Partial<CueDraft>): CueDraft => ({ ...dr
 const recipePath = (recipeId: string): DraftFieldPath => `recipe:${recipeId}`;
 const customPath = (field: Field): DraftFieldPath => `custom:${field}`;
 
-export const touchedPathsForCommand = (library: LibraryV2, draft: CueDraft, command: CueCommand): readonly DraftFieldPath[] => {
+export type EngineCueCommand = CueCommand | AcceptQuickAddCommand;
+
+export const touchedPathsForCommand = (library: LibraryV2, draft: CueDraft, command: EngineCueCommand): readonly DraftFieldPath[] => {
+  if (command.type === 'accept-quick-add') return touchedPathsForQuickAddCommand(library, draft, command);
   switch (command.type) {
     case 'set-what': return ['what'];
     case 'set-custom-text': return [customPath(command.field)];
@@ -54,11 +59,6 @@ export const touchedPathsForCommand = (library: LibraryV2, draft: CueDraft, comm
     case 'reset-draft': case 'undo-draft': return ['draft'];
   }
 };
-
-const recipeChoice = (recipeId: string, slotKeys: readonly string[]): RecipeChoice => ({
-  recipeId,
-  slots: Object.fromEntries(slotKeys.map((slot) => [slot, ''])),
-});
 
 const allRecipeDomains = (library: LibraryV2, draft: CueDraft): Set<Domain> => {
   const domains = new Set<Domain>();
@@ -82,11 +82,12 @@ const validateReferences = (references: readonly ReferenceRole[]): SelectionIssu
   return undefined;
 };
 
-export const applyDraftCommand = (library: LibraryV2, draft: CueDraft, command: CueCommand, history: readonly CueDraft[] = []): DraftCommandResult => {
+export const applyDraftCommand = (library: LibraryV2, draft: CueDraft, command: EngineCueCommand, history: readonly CueDraft[] = []): DraftCommandResult => {
   if (command.type !== 'reset-draft' && command.type !== 'undo-draft') {
     const invalid = validDraft(library, draft);
     if (invalid) return invalid;
   }
+  if (command.type === 'accept-quick-add') return applyQuickAddCommand(library, draft, command);
   switch (command.type) {
     case 'set-what':
       return { ok: true, value: { draft: bump(draft, { what: command.text }), touchedPaths: ['what'] } };
@@ -101,16 +102,7 @@ export const applyDraftCommand = (library: LibraryV2, draft: CueDraft, command: 
     case 'toggle-atom': return toggleAtom(library, draft, command.axisId, command.atomId);
     case 'apply-preset': return applyPreset(library, draft, command.presetId);
     case 'reset-to-preset': return resetToPreset(library, draft, command.presetId);
-    case 'select-recipe': {
-      if (draft.id !== 'edit') return issue('WRONG_MODE', 'Edit recipes are available only in the Edit draft.');
-      const recipe = library.editRecipes.find((item) => item.id === command.recipeId);
-      if (!recipe) return issue('UNKNOWN_RECIPE', `Unknown edit recipe: ${command.recipeId}.`);
-      const existing = draft.edits.map((choice) => choice.recipeId);
-      if (existing.includes(recipe.id)) return { ok: true, value: { draft, touchedPaths: [] } };
-      if (recipe.excludesRecipeIds.some((id) => existing.includes(id)) || draft.edits.some((choice) => library.editRecipes.find((item) => item.id === choice.recipeId)?.excludesRecipeIds.includes(recipe.id))) return issue('RECIPE_CONFLICT', `${recipe.label} conflicts with a selected edit recipe.`);
-      const edits = [...draft.edits, recipeChoice(recipe.id, recipe.slotKeys)];
-      return { ok: true, value: { draft: bump(draft, { edits }), touchedPaths: [recipePath(recipe.id)] } };
-    }
+    case 'select-recipe': return selectRecipe(library, draft, command.recipeId);
     case 'remove-recipe': {
       if (draft.id !== 'edit') return issue('WRONG_MODE', 'Edit recipes are available only in the Edit draft.');
       if (!draft.edits.some((choice) => choice.recipeId === command.recipeId)) return { ok: true, value: { draft, touchedPaths: [] } };

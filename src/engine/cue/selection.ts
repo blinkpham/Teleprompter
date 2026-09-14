@@ -12,10 +12,11 @@ import type {
 import { newDraftDefaults } from '../../shared/teleprompter-types';
 import { validateCueDraft } from '../../shared/teleprompter-validation';
 
-export type SelectionErrorCode = 'UNKNOWN_AXIS' | 'UNKNOWN_ATOM' | 'WRONG_AXIS' | 'WRONG_MODE' | 'CARDINALITY' | 'EXCLUSION' | 'REQUIRES' | 'INVALID_DRAFT' | 'UNKNOWN_PRESET' | 'UNKNOWN_RECIPE' | 'RECIPE_CONFLICT' | 'INVALID_REFERENCE' | 'HISTORY_UNAVAILABLE';
+export type SelectionErrorCode = 'UNKNOWN_AXIS' | 'UNKNOWN_ATOM' | 'WRONG_AXIS' | 'WRONG_MODE' | 'CARDINALITY' | 'EXCLUSION' | 'REQUIRES' | 'INVALID_DRAFT' | 'UNKNOWN_PRESET' | 'UNKNOWN_RECIPE' | 'RECIPE_CONFLICT' | 'INVALID_REFERENCE' | 'HISTORY_UNAVAILABLE' | 'STALE_CONTENT' | 'INVALID_QUERY' | 'UNKNOWN_TARGET' | 'INCOMPATIBLE_TARGET' | 'REVISION_CONFLICT';
 
 export interface SelectionIssue {
   readonly code: SelectionErrorCode;
+  readonly path?: DraftFieldPath;
   readonly axisId?: Id;
   readonly atomId?: Id;
   readonly conflictingAtomIds?: readonly Id[];
@@ -201,4 +202,22 @@ export const toggleAtom = (library: LibraryV2, draft: CueDraft, axisIdValue: Id,
   if (currentIds.includes(atomId)) return selectAxis(library, draft, axisIdValue, currentIds.filter((id) => id !== atomId), false);
   const nextIds = axis.cardinality === 'one' ? [atomId] : [...currentIds, atomId];
   return selectAxis(library, draft, axisIdValue, nextIds, false);
+};
+
+export const selectRecipe = (library: LibraryV2, draft: CueDraft, recipeId: Id): SelectionResult<SelectionMutation> => {
+  const valid = invalidDraft(draft, library);
+  if (!valid.ok) return valid;
+  if (draft.id !== 'edit') return { ok: false, issue: { code: 'WRONG_MODE', message: 'Edit recipes are available only in the Edit draft.' } };
+  const recipe = library.editRecipes.find((item) => item.id === recipeId);
+  if (!recipe) return { ok: false, issue: { code: 'UNKNOWN_RECIPE', message: `Unknown recipe: ${recipeId}.` } };
+  const existing = draft.edits.map((choice) => choice.recipeId);
+  if (existing.includes(recipe.id)) return { ok: true, value: { draft, touchedPaths: [] } };
+  if (recipe.excludesRecipeIds.some((id) => existing.includes(id)) || draft.edits.some((choice) => library.editRecipes.find((item) => item.id === choice.recipeId)?.excludesRecipeIds.includes(recipe.id))) {
+    return { ok: false, issue: { code: 'RECIPE_CONFLICT', message: `${recipe.label} conflicts with a selected edit recipe.` } };
+  }
+  const edits = [...draft.edits, {
+    recipeId: recipe.id,
+    slots: Object.fromEntries(recipe.slotKeys.map((slot) => [slot, ''])),
+  }];
+  return { ok: true, value: { draft: nextRevision(draft, { edits }), touchedPaths: [`recipe:${recipe.id}`] } };
 };
