@@ -8,6 +8,7 @@ import opticsGroupUrl from '../assets/teleprompter/runtime/group-optics-v2.png';
 import stageGroupUrl from '../assets/teleprompter/runtime/group-stage-v2.png';
 import { createCueLayoutRequest, cueAccessory, cueTransition, type CuePickerKind } from './cue-layout';
 import { findQuickAddTrigger, type QuickAddTriggerMatch } from './quick-add';
+import { ReferenceManager } from './ReferenceManager';
 import {
   ArrowsClockwise,
   Check,
@@ -107,7 +108,7 @@ function submit(dispatch: CueSurfaceProps['dispatch'], command: CueCommand): voi
   void dispatch(command);
 }
 
-export function CueSurface({ surface, snapshot, library, dispatch, copy, preview, requestPreview, requestSurfaceLayout, dismiss, onModeChange, onOpenLibrary }: CueSurfaceExtraProps) {
+export function CueSurface({ surface, snapshot, library, dispatch, copy, preview, requestPreview, requestSurfaceLayout, dismiss, onModeChange, onOpenLibrary, references }: CueSurfaceExtraProps) {
   const reducedMotion = Boolean(useReducedMotion());
   const draft = snapshot.drafts[snapshot.activeMode];
   const [picker, setPicker] = useState<CuePickerKind>(null);
@@ -517,6 +518,8 @@ export function CueSurface({ surface, snapshot, library, dispatch, copy, preview
           {snapshot.activeMode === 'edit' && <EditSlots draft={draft} library={library} choiceMap={choiceMap} dispatch={trackDispatch} />}
         </motion.div>
       </LayoutGroup>
+
+      {surface === 'main' && <ReferenceManager draft={draft} dispatch={trackDispatch} references={references} />}
 
       <AnimatePresence initial={false} mode="wait">
         {picker && <AccessoryLayer key={`picker-${picker}-${pickerField}`} reducedMotion={reducedMotion}><PickerPanel kind={picker} initialField={pickerField} search={search} setSearch={setSearch} draft={draft} library={library} choiceMap={choiceMap} activeChoices={activeChoices} dispatch={trackDispatch} onClose={closeAccessory} onOpenLibrary={onOpenLibrary} /></AccessoryLayer>}

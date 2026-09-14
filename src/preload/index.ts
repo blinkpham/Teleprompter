@@ -2,6 +2,8 @@ import { contextBridge, ipcRenderer } from 'electron';
 import type { LegacyTeleprompterBridge, UICommand } from '../shared/desktop-types';
 import type {
   BridgeResult,
+  ChooseReferenceImageRequest,
+  ChooseReferenceImageResult,
   CompiledDraftPreview,
   CommandResult,
   CopyCompiledDraftRequest,
@@ -15,6 +17,8 @@ import type {
   ReferenceBindingEnvelope,
   ReferenceBindingsRequest,
   ReferenceBindingsSnapshot,
+  ReferenceThumbnailRequest,
+  ReferenceThumbnailResult,
   SurfaceLayoutRequest,
   SurfaceLayoutResult,
   TeleprompterBootstrap,
@@ -46,6 +50,8 @@ const teleprompter: TeleprompterBridge = {
   getLibraryText: (request: LibraryCopyTextRequest): Promise<BridgeResult<LibraryTextResult>> => ipcRenderer.invoke('get-library-text', request),
   getReferenceBindings: (request: ReferenceBindingsRequest): Promise<BridgeResult<ReferenceBindingsSnapshot>> => ipcRenderer.invoke('get-reference-bindings', request),
   setReferenceBinding: (request: ReferenceBindingEnvelope): Promise<BridgeResult<ReferenceBindingsSnapshot>> => ipcRenderer.invoke('set-reference-binding', request),
+  chooseReferenceImage: (request: ChooseReferenceImageRequest): Promise<BridgeResult<ChooseReferenceImageResult>> => ipcRenderer.invoke('choose-reference-image', request),
+  getReferenceThumbnail: (request: ReferenceThumbnailRequest): Promise<BridgeResult<ReferenceThumbnailResult>> => ipcRenderer.invoke('get-reference-thumbnail', request),
   setFavorite: (request) => ipcRenderer.invoke('set-favorite', request),
   setShortcut: (request) => ipcRenderer.invoke('set-shortcut', request),
   showMain: () => ipcRenderer.invoke('show-main'),

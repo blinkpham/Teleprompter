@@ -14,6 +14,8 @@ import type {
   Preset,
   ReferenceBindingEnvelope,
   ReferenceBindingsRequest,
+  ChooseReferenceImageRequest,
+  ReferenceThumbnailRequest,
   QuickAddCommandEnvelope,
   SurfaceLayoutRequest,
   ReferenceRole,
@@ -609,6 +611,23 @@ export function validateReferenceBindingEnvelope(input: unknown): ValidationResu
   if (!includes(MODES, input.draftId)) errors.push(issue('referenceBinding.draftId', 'Draft ID is invalid.'));
   if (!isNonNegativeInteger(input.expectedVersion)) errors.push(issue('referenceBinding.expectedVersion', 'Expected binding version must be a non-negative integer.'));
   return errors.length === 0 ? ok(input as ReferenceBindingEnvelope) : { ok: false, errors };
+}
+
+export function validateChooseReferenceImageRequest(input: unknown): ValidationResult<ChooseReferenceImageRequest> {
+  if (!isRecord(input)) return fail('chooseReferenceImage', 'Expected an image chooser request.');
+  const errors: ValidationIssue[] = [];
+  if (!hasOnlyKeys(input, ['draftId', 'imageNumber'])) errors.push(issue('chooseReferenceImage', 'Unknown image chooser property.'));
+  if (!includes(MODES, input.draftId)) errors.push(issue('chooseReferenceImage.draftId', 'Draft ID is invalid.'));
+  if (!isInteger(input.imageNumber) || input.imageNumber < 1 || input.imageNumber > 20) errors.push(issue('chooseReferenceImage.imageNumber', 'Image number must be between 1 and 20.'));
+  return errors.length === 0 ? ok(input as unknown as ChooseReferenceImageRequest) : { ok: false, errors };
+}
+
+export function validateReferenceThumbnailRequest(input: unknown): ValidationResult<ReferenceThumbnailRequest> {
+  if (!isRecord(input)) return fail('referenceThumbnail', 'Expected a thumbnail request.');
+  const errors: ValidationIssue[] = [];
+  if (!hasOnlyKeys(input, ['thumbnailHandle'])) errors.push(issue('referenceThumbnail', 'Unknown thumbnail property.'));
+  if (!isString(input.thumbnailHandle) || !OPAQUE_HANDLE_PATTERN.test(input.thumbnailHandle)) errors.push(issue('referenceThumbnail.thumbnailHandle', 'Thumbnail handle must be an opaque handle, not a path.'));
+  return errors.length === 0 ? ok(input as unknown as ReferenceThumbnailRequest) : { ok: false, errors };
 }
 
 export function validationErrorToBridgeError(errors: readonly ValidationIssue[]): BridgeError {

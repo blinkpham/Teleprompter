@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import type {
   BridgeResult,
+  ChooseReferenceImageResult,
   CommandResult,
   CopyFormat,
   CopyResult,
@@ -17,9 +18,13 @@ import type {
   SettingsState,
   SurfaceLayoutRequest,
   SurfaceLayoutResult,
+  ReferenceBinding,
+  ReferenceBindingsSnapshot,
+  ReferenceThumbnailResult,
   View,
 } from '../../../shared/teleprompter';
 import type { PreviewPresentation } from '../../../shared/ui-types';
+import type { ReferenceSurfaceProps } from '../../../shared/ui-types';
 import { CueSurface } from '../ui/CueSurface';
 import { LibrarySurface } from '../ui/LibrarySurface';
 import { TeleprompterShell } from '../ui/TeleprompterShell';
@@ -102,6 +107,9 @@ export function TeleprompterApp() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [shortcutDraft, setShortcutDraft] = useState('');
   const [settings, setSettings] = useState<SettingsState | null>(null);
+  const [referenceBindings, setReferenceBindings] = useState<ReferenceBindingsSnapshot | null>(null);
+  const [referenceLoading, setReferenceLoading] = useState(false);
+  const [referenceError, setReferenceError] = useState<string | undefined>(undefined);
 
   const adoptSnapshot = useCallback((snapshot: CueSnapshot) => {
     previewRequestSequence.current += 1;
@@ -290,6 +298,73 @@ export function TeleprompterApp() {
     return window.teleprompterDesktop.requestSurfaceLayout(request);
   }, [surface]);
 
+  const refreshReferences = useCallback(async (mode: Mode = activeModeRef.current): Promise<void> => {
+    const bridge = window.teleprompter;
+    const currentSnapshot = snapshotRef.current;
+    const revision = currentSnapshot?.drafts[mode].revision;
+    if (!bridge?.getReferenceBindings || revision === undefined) {
+      setReferenceBindings(null);
+      setReferenceError('Local reference management is unavailable until the desktop bridge is loaded.');
+      return;
+    }
+    setReferenceLoading(true);
+    const result = await bridge.getReferenceBindings({ draftId: mode, expectedDraftRevision: revision });
+    setReferenceLoading(false);
+    if (!result.ok) {
+      setReferenceError(result.error.message);
+      return;
+    }
+    setReferenceError(undefined);
+    setReferenceBindings(result);
+  }, []);
+
+  const upsertReferenceBinding = useCallback(async (binding: ReferenceBinding): Promise<BridgeResult<ReferenceBindingsSnapshot>> => {
+    const bridge = window.teleprompter;
+    const current = referenceBindings;
+    if (!bridge?.setReferenceBinding || !current || current.draftId !== binding.draftId) return unavailableBridgeError<ReferenceBindingsSnapshot>('Reference bindings are unavailable until the manager is refreshed.');
+    const result = await bridge.setReferenceBinding({ draftId: binding.draftId, expectedVersion: current.version, operation: 'upsert', binding });
+    if (result.ok) {
+      setReferenceBindings(result);
+      setReferenceError(undefined);
+    } else {
+      setReferenceError(result.error.message);
+      if (result.error.code === 'CONFLICT') void refreshReferences(binding.draftId);
+    }
+    return result;
+  }, [refreshReferences, referenceBindings]);
+
+  const removeReferenceBinding = useCallback(async (binding: Pick<ReferenceBinding, 'bindingId' | 'imageNumber' | 'draftId'>): Promise<BridgeResult<ReferenceBindingsSnapshot>> => {
+    const bridge = window.teleprompter;
+    const current = referenceBindings;
+    if (!bridge?.setReferenceBinding || !current || current.draftId !== binding.draftId) return unavailableBridgeError<ReferenceBindingsSnapshot>('Reference bindings are unavailable until the manager is refreshed.');
+    const result = await bridge.setReferenceBinding({ draftId: binding.draftId, expectedVersion: current.version, operation: 'remove', bindingId: binding.bindingId, imageNumber: binding.imageNumber });
+    if (result.ok) {
+      setReferenceBindings(result);
+      setReferenceError(undefined);
+    } else {
+      setReferenceError(result.error.message);
+      if (result.error.code === 'CONFLICT') void refreshReferences(binding.draftId);
+    }
+    return result;
+  }, [refreshReferences, referenceBindings]);
+
+  const chooseReferenceImage = useCallback(async (imageNumber: number): Promise<BridgeResult<ChooseReferenceImageResult>> => {
+    const bridge = window.teleprompter;
+    if (!bridge?.chooseReferenceImage) return unavailableBridgeError<ChooseReferenceImageResult>('The native image chooser is unavailable in this session.');
+    return bridge.chooseReferenceImage({ draftId: activeModeRef.current, imageNumber });
+  }, []);
+
+  const getReferenceThumbnail = useCallback(async (thumbnailHandle: string): Promise<BridgeResult<ReferenceThumbnailResult>> => {
+    const bridge = window.teleprompter;
+    if (!bridge?.getReferenceThumbnail) return unavailableBridgeError<ReferenceThumbnailResult>('Local reference thumbnails are unavailable in this session.');
+    return bridge.getReferenceThumbnail({ thumbnailHandle });
+  }, []);
+
+  useEffect(() => {
+    if (!state) return;
+    void refreshReferences(activeMode);
+  }, [activeMode, refreshReferences, state]);
+
   const openSettings = useCallback(() => {
     const currentSnapshot = snapshotRef.current;
     if (currentSnapshot) {
@@ -346,6 +421,16 @@ export function TeleprompterApp() {
   }
 
   const snapshot = { ...state.snapshot, activeMode };
+  const referenceSurface: ReferenceSurfaceProps = {
+    snapshot: referenceBindings,
+    loading: referenceLoading,
+    ...(referenceError ? { error: referenceError } : {}),
+    refresh: () => refreshReferences(activeModeRef.current),
+    upsert: upsertReferenceBinding,
+    remove: removeReferenceBinding,
+    chooseImage: chooseReferenceImage,
+    getThumbnail: getReferenceThumbnail,
+  };
   const cue = <CueSurface
     surface={surface}
     snapshot={snapshot}
@@ -356,6 +441,7 @@ export function TeleprompterApp() {
     requestPreview={requestPreview}
     requestSurfaceLayout={surface === 'spotlight' ? requestSurfaceLayout : undefined}
     requestSize={surface === 'spotlight' ? requestSize : undefined}
+    references={referenceSurface}
     dismiss={surface === 'spotlight' ? () => void window.teleprompter?.hideSpotlight() : undefined}
     onModeChange={changeMode}
     onOpenLibrary={() => setView('library')}

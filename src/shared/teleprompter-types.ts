@@ -231,6 +231,33 @@ export interface ReferenceBindingsRequest {
   readonly expectedDraftRevision: number;
 }
 
+export interface ChooseReferenceImageRequest {
+  readonly draftId: Mode;
+  readonly imageNumber: number;
+}
+
+export interface ReferenceImageSelection {
+  readonly bindingId: string;
+  readonly draftId: Mode;
+  readonly imageNumber: number;
+  readonly suggestedLabel: string;
+  readonly thumbnailHandle: string;
+}
+
+export interface ChooseReferenceImageResult {
+  readonly cancelled: boolean;
+  readonly selection?: ReferenceImageSelection;
+}
+
+export interface ReferenceThumbnailRequest {
+  readonly thumbnailHandle: string;
+}
+
+export interface ReferenceThumbnailResult {
+  readonly thumbnailHandle: string;
+  readonly dataUrl: string;
+}
+
 export type ReferenceBindingEnvelope =
   | {
       readonly draftId: Mode;
@@ -501,6 +528,8 @@ export interface TeleprompterBridge {
   readonly getLibraryText?: (request: LibraryCopyTextRequest) => Promise<BridgeResult<LibraryTextResult>>;
   readonly getReferenceBindings?: (request: ReferenceBindingsRequest) => Promise<BridgeResult<ReferenceBindingsSnapshot>>;
   readonly setReferenceBinding?: (request: ReferenceBindingEnvelope) => Promise<BridgeResult<ReferenceBindingsSnapshot>>;
+  readonly chooseReferenceImage?: (request: ChooseReferenceImageRequest) => Promise<BridgeResult<ChooseReferenceImageResult>>;
+  readonly getReferenceThumbnail?: (request: ReferenceThumbnailRequest) => Promise<BridgeResult<ReferenceThumbnailResult>>;
   readonly setFavorite: (request: { readonly recordId: Id; readonly favorited: boolean }) => Promise<BridgeResult<{ readonly recordId: Id; readonly favorited: boolean; readonly persistenceStatus: PersistenceStatus }>>;
   readonly setShortcut: (request: { readonly accelerator: string }) => Promise<BridgeResult<{ readonly shortcut: ShortcutState; readonly persistenceStatus: PersistenceStatus }>>;
   readonly showMain: () => Promise<BridgeResult>;

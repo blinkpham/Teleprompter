@@ -2,13 +2,16 @@ import {
   app,
   BrowserWindow,
   clipboard,
+  dialog,
   globalShortcut,
   ipcMain,
   Menu,
   nativeTheme,
+  nativeImage,
   protocol,
   screen,
 } from 'electron';
+import { randomUUID } from 'node:crypto';
 import { promises as fs } from 'node:fs';
 import { dirname, extname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -21,6 +24,8 @@ import type {
   BridgeResult,
   CommandResult,
   CommandError,
+  ChooseReferenceImageRequest,
+  ChooseReferenceImageResult,
   CompiledDraftPreview,
   CopyResult,
   CueSnapshot,
@@ -38,11 +43,13 @@ import type {
   ShortcutState,
   SurfaceLayoutRequest,
   SurfaceLayoutResult,
+  ReferenceThumbnailRequest,
+  ReferenceThumbnailResult,
   TeleprompterBootstrap,
   DesktopCommand,
   CompileResult,
 } from '../shared/teleprompter-types';
-import { validateCopyCompiledDraftRequest, validateDraftCommand, validateLibraryCopyTextRequest, validationErrorToBridgeError, validateGetCompiledDraftRequest, validateLibraryTextRequest, validateReferenceBindingEnvelope, validateReferenceBindingsRequest, validateSurfaceLayoutRequest } from '../shared/teleprompter-validation';
+import { validateChooseReferenceImageRequest, validateCopyCompiledDraftRequest, validateDraftCommand, validateLibraryCopyTextRequest, validationErrorToBridgeError, validateGetCompiledDraftRequest, validateLibraryTextRequest, validateReferenceBindingEnvelope, validateReferenceBindingsRequest, validateReferenceThumbnailRequest, validateSurfaceLayoutRequest } from '../shared/teleprompter-validation';
 import {
   DEFAULT_ACCELERATOR,
   DEFAULT_PREFERENCES,
@@ -78,6 +85,16 @@ import {
   parseReferenceBindings,
   ReferenceBindingStore,
 } from './reference-bindings';
+import {
+  hasSupportedReferenceExtension,
+  pngDataUrl,
+  REFERENCE_IMAGE_MAX_BYTES,
+  REFERENCE_THUMBNAIL_EDGE,
+  REFERENCE_THUMBNAIL_MAX_BYTES,
+  referenceThumbnailPath,
+  suggestedReferenceLabel,
+  thumbnailDirectory,
+} from './reference-thumbnails';
 
 /** Keep the internal profile and protocol stable while visible identity changes. */
 app.setPath('userData', join(app.getPath('appData'), 'teleprompter'));
@@ -486,6 +503,84 @@ const persistReferenceBindings = async (): Promise<void> => {
     refreshPersistenceStatus();
   });
   await referenceBindingsQueue;
+};
+
+const hasReferenceThumbnail = async (handle: string): Promise<boolean> => {
+  const path = referenceThumbnailPath(app.getPath('userData'), handle);
+  if (!path) return false;
+  try {
+    const stats = await fs.stat(path);
+    return stats.isFile() && stats.size > 0 && stats.size <= REFERENCE_THUMBNAIL_MAX_BYTES;
+  } catch {
+    return false;
+  }
+};
+
+const chooseReferenceImage = async (
+  owner: BrowserWindow,
+  request: ChooseReferenceImageRequest,
+): Promise<BridgeResult<ChooseReferenceImageResult>> => {
+  try {
+    const result = await dialog.showOpenDialog(owner, {
+      title: `Choose Image ${request.imageNumber}`,
+      buttonLabel: 'Use image',
+      properties: ['openFile'],
+      filters: [{ name: 'Raster images', extensions: ['png', 'jpg', 'jpeg', 'webp', 'gif', 'bmp'] }],
+    });
+    if (result.canceled) return success({ cancelled: true });
+    const selectedPath = result.filePaths[0];
+    if (!selectedPath || !hasSupportedReferenceExtension(selectedPath)) return failure('INVALID_INPUT', 'Choose a PNG, JPEG, WebP, GIF, or BMP image.');
+
+    const stats = await fs.stat(selectedPath);
+    if (!stats.isFile() || stats.size <= 0 || stats.size > REFERENCE_IMAGE_MAX_BYTES) return failure('INVALID_INPUT', 'That image is empty or larger than 25 MB.');
+    const source = nativeImage.createFromPath(selectedPath);
+    if (source.isEmpty()) return failure('INVALID_INPUT', 'Teleprompter could not read that raster image.');
+    const dimensions = source.getSize();
+    if (!Number.isFinite(dimensions.width) || !Number.isFinite(dimensions.height) || dimensions.width < 1 || dimensions.height < 1 || dimensions.width > 10000 || dimensions.height > 10000) {
+      return failure('INVALID_INPUT', 'That image has unsupported dimensions.');
+    }
+    const edge = Math.min(REFERENCE_THUMBNAIL_EDGE, dimensions.width, dimensions.height);
+    let thumbnail = source.resize({ width: Math.max(1, Math.round(edge)) });
+    let bytes = thumbnail.toPNG();
+    if (bytes.length > REFERENCE_THUMBNAIL_MAX_BYTES) {
+      thumbnail = source.resize({ width: Math.max(1, Math.min(128, Math.round(edge))) });
+      bytes = thumbnail.toPNG();
+    }
+    if (bytes.length === 0 || bytes.length > REFERENCE_THUMBNAIL_MAX_BYTES) return failure('INVALID_INPUT', 'That image could not be reduced to a safe local thumbnail.');
+    const handle = `thumb-${randomUUID()}`;
+    const thumbnailPath = referenceThumbnailPath(app.getPath('userData'), handle);
+    if (!thumbnailPath) return failure('INTERNAL', 'The local thumbnail handle could not be created.');
+    await fs.mkdir(thumbnailDirectory(app.getPath('userData')), { recursive: true });
+    await fs.writeFile(thumbnailPath, bytes, { flag: 'wx' });
+    return success({
+      cancelled: false,
+      selection: {
+        bindingId: `binding-${randomUUID()}`,
+        draftId: request.draftId,
+        imageNumber: request.imageNumber,
+        suggestedLabel: suggestedReferenceLabel(selectedPath),
+        thumbnailHandle: handle,
+      },
+    });
+  } catch (cause) {
+    const errorCode = cause && typeof cause === 'object' && 'code' in cause ? (cause as { code?: unknown }).code : undefined;
+    if (errorCode === 'ENOENT') return failure('INVALID_INPUT', 'That image is no longer available. Choose it again.');
+    return failure('PERSISTENCE_FAILED', 'The local thumbnail could not be saved. The draft was left unchanged.');
+  }
+};
+
+const getReferenceThumbnail = async (request: ReferenceThumbnailRequest): Promise<BridgeResult<ReferenceThumbnailResult>> => {
+  const path = referenceThumbnailPath(app.getPath('userData'), request.thumbnailHandle);
+  if (!path) return failure('INVALID_INPUT', 'The thumbnail handle is invalid.');
+  try {
+    const stats = await fs.stat(path);
+    if (!stats.isFile() || stats.size <= 0 || stats.size > REFERENCE_THUMBNAIL_MAX_BYTES) return failure('UNAVAILABLE', 'That local reference image is unavailable. Choose the image again.');
+    const bytes = await fs.readFile(path);
+    if (bytes.length === 0 || bytes.length > REFERENCE_THUMBNAIL_MAX_BYTES || bytes[0] !== 0x89 || bytes[1] !== 0x50 || bytes[2] !== 0x4e || bytes[3] !== 0x47) return failure('UNAVAILABLE', 'That local reference thumbnail is unavailable. Choose the image again.');
+    return success({ thumbnailHandle: request.thumbnailHandle, dataUrl: pngDataUrl(bytes) });
+  } catch {
+    return failure('UNAVAILABLE', 'That local reference image is unavailable. Choose the image again.');
+  }
 };
 
 const broadcastDraftChanged = (sourceClientId?: string): void => {
@@ -986,10 +1081,27 @@ const registerHandlers = (): void => {
     if (!isAllowedSender(event)) return failure('UNAVAILABLE', 'The desktop window is unavailable.');
     const validated = validateReferenceBindingEnvelope(request);
     if (!validated.ok) return failure('INVALID_INPUT', validationErrorToBridgeError(validated.errors).message);
+    if (validated.value.operation === 'upsert' && validated.value.binding.thumbnailHandle && !(await hasReferenceThumbnail(validated.value.binding.thumbnailHandle))) {
+      return failure('INVALID_INPUT', 'That local reference thumbnail is unavailable. Choose the image again.');
+    }
     const result = referenceBindings.apply(validated.value);
     if (!result.ok) return failure(result.error.code, result.error.message);
     await persistReferenceBindings();
     return success(result.snapshot);
+  });
+  ipcMain.handle('choose-reference-image', async (event, request: unknown) => {
+    if (!isAllowedSender(event)) return failure('UNAVAILABLE', 'The desktop window is unavailable.');
+    const validated = validateChooseReferenceImageRequest(request);
+    if (!validated.ok) return failure('INVALID_INPUT', validationErrorToBridgeError(validated.errors).message);
+    const owner = BrowserWindow.fromWebContents(event.sender);
+    if (!owner || owner.isDestroyed()) return failure('UNAVAILABLE', 'The Cue window is unavailable.');
+    return chooseReferenceImage(owner, validated.value);
+  });
+  ipcMain.handle('get-reference-thumbnail', async (event, request: unknown) => {
+    if (!isAllowedSender(event)) return failure('UNAVAILABLE', 'The desktop window is unavailable.');
+    const validated = validateReferenceThumbnailRequest(request);
+    if (!validated.ok) return failure('INVALID_INPUT', validationErrorToBridgeError(validated.errors).message);
+    return getReferenceThumbnail(validated.value);
   });
   ipcMain.handle('request-surface-layout', (event, request: unknown): BridgeResult<SurfaceLayoutResult> => {
     if (!isAllowedSender(event) || senderSurface(event) !== 'spotlight') return failure('UNAVAILABLE', 'Measured surface layout is available only to the Cue window.');

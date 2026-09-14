@@ -2,6 +2,7 @@ import type { Technique } from './catalog-types';
 import type {
   BridgeError,
   BridgeResult,
+  ChooseReferenceImageResult,
   CommandResult,
   CopyFormat,
   CopyResult,
@@ -10,6 +11,9 @@ import type {
   LibraryView,
   PreviewIntent,
   PreviewRequest,
+  ReferenceBinding,
+  ReferenceBindingsSnapshot,
+  ReferenceThumbnailResult,
   SurfaceLayoutRequest,
   SurfaceLayoutResult,
 } from './teleprompter-types';
@@ -42,7 +46,19 @@ export interface CueSurfaceProps {
   readonly requestPreview?: (request: PreviewIntent) => Promise<void>;
   readonly requestSurfaceLayout?: (request: SurfaceLayoutRequest) => Promise<BridgeResult<SurfaceLayoutResult>>;
   readonly requestSize?: (size: 'compact' | 'expanded') => void;
+  readonly references?: ReferenceSurfaceProps;
   readonly dismiss?: () => void;
+}
+
+export interface ReferenceSurfaceProps {
+  readonly snapshot: ReferenceBindingsSnapshot | null;
+  readonly loading: boolean;
+  readonly error?: string;
+  readonly refresh: () => Promise<void>;
+  readonly upsert: (binding: ReferenceBinding) => Promise<BridgeResult<ReferenceBindingsSnapshot>>;
+  readonly remove: (binding: Pick<ReferenceBinding, 'bindingId' | 'imageNumber' | 'draftId'>) => Promise<BridgeResult<ReferenceBindingsSnapshot>>;
+  readonly chooseImage: (imageNumber: number) => Promise<BridgeResult<ChooseReferenceImageResult>>;
+  readonly getThumbnail: (thumbnailHandle: string) => Promise<BridgeResult<ReferenceThumbnailResult>>;
 }
 
 export interface PreviewIdentity {
