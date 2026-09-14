@@ -1,6 +1,6 @@
 # Library Curation State
 
-Status: Batch 002 proposed; accepted seed preserved with open coverage · 2026-09-13
+Status: Batch 002 curator-reviewed; proposed and needs evidence before lead acceptance · 2026-09-14
 
 ## Current checkpoint
 
@@ -38,7 +38,8 @@ The live catalog was loaded from `src/content/catalog.ts` and recounts to 104 Ch
 7. Logged current public research and access limits in the batch source ledger. MeiGen was used as a discovery reference only; no third-party prompt corpus or images were copied.
 
 8. Proposed four camera records in Batch 002: the 24mm-class focal atom, one close-distance atom, and flat bundles for the legacy `closewide24` and `closewide35` shorthands. The accepted `wide35` atom is reused; no runtime seed record was changed.
-9. Added four fixed-scene comparison requests covering focal change at neutral distance, distance change at 24mm-class and 35mm-class cues, and focal change with close distance held constant. These are proposals for the lead/illustrator; no generation was authorized here.
+9. Curator-reviewed the four records and accepted five illustration briefs, including a fixed-scene 2×2 matrix. These remain proposals for the lead/illustrator; no generation was authorized here.
+10. Recorded the explicit gate: Batch 002 is ready for lead review but blocked for Illustration until lead acceptance, draft/favorite impact audit, and an evidenced exact `gpt-image-2.5-flare` route.
 
 ## Unresolved decisions
 
@@ -48,9 +49,12 @@ The live catalog was loaded from `src/content/catalog.ts` and recounts to 104 Ch
 - Render terms (`draft`, `final`, `2k`, `4k`, `web-hq`) need an OUTPUT contract decision because they are delivery requests, not visual axes.
 - A lead must audit draft/favorite references locally before accepting any migration. The curator cannot inspect private user state.
 - Practical examples are request-ready but not generated or approved. Record the requested/resolved model separately when the illustrator runs the authorized route.
+- The four new Batch 002 records remain reference-only in the live app until the lead accepts the proposed batch and the fixed-scene evidence supports the focal/distance distinction.
+- The primary comparison is the fixed-scene 2×2 request in `batches/2026-09-13-002/comparison-2x2.json`; pairwise request lines remain diagnostic briefs.
+- Exact Flare route evidence is still blocked: the official model page proves availability, while the built-in route exposes neither model selection nor resolved model metadata.
 - The earlier Batch 001 consultation could not mount the local project; Batch 002 has a separate bounded Sol/Core review recorded in its Review.md.
 - Sol/Core returned a bounded review through the existing in-app conversation: the axis split and flat-bundle model are sound, but both close-wide distinctions remain pending until matched comparisons show repeatable near-feature scale differences without crop, height, pose, lighting, or composition drift.
 
 ## Next concrete task
 
-Lead review Batch 002's four records and comparison requests, then accept or revise the close-distance semantics. If accepted, the illustrator may consume only these four lead-approved requests; if not, keep the legacy close-wide rows reference-only and revise through Batch 003.
+Lead reads the curator handoff, validates the candidate records against the shared contract, audits local draft/favorite references, and decides whether to accept the 2×2 evidence request. If accepted and an exact Flare route is evidenced, Illustration may consume only the lead-approved requests; otherwise keep all four new records reference-only and revise through Batch 003 or a route request.

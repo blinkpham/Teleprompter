@@ -1,6 +1,6 @@
 # Batch 002 Review — camera distance and focal-perspective comparisons
 
-Status: proposed for Lead review · 2026-09-13
+Status: curator-reviewed; proposed and needs evidence before lead acceptance · 2026-09-14
 
 ## Objective
 
@@ -11,6 +11,19 @@ Separate the focal cue from subject distance in the two closest legacy camera pa
 The live catalog was recounted from `src/content/catalog.ts` and its source modules: 104 Cheatsheet entries and 15 Gallery techniques. Batch 0 remains the complete 119-row legacy map. The accepted runtime boundary remains the 14-record seed from Batch `2026-09-13-001`; this batch adds four proposed records for review only.
 
 Affected legacy IDs are exactly `camera-wide24`, `camera-closewide24`, `camera-wide35`, and `camera-closewide35`. The other 101 legacy rows are not remapped here and remain reference-only or previously accepted according to Batch 0.
+
+## Curator decision and gate
+
+The semantic model is curator-accepted as a review packet, not as runtime content:
+
+- `cam:wide24` is a focal atom under `camera.focal`.
+- `cam:close` is a separate subject-distance atom under `camera.distance`; it is a requested spatial cue, not a measured distance, crop, zoom, or focus target.
+- `cam:closewide24` and `cam:closewide35` remain flat focal-plus-distance bundles so their shorthand meaning survives decomposition.
+- `cam:wide35` remains the accepted Batch 001 focal atom and is reused as the neutral 35mm comparison cell; this batch does not alter it.
+
+The four Batch 002 candidate records remain `reference-only` in the live app because the batch is still proposed. The legacy strings remain recoverable through Batch 001's complete map plus this batch's four-row proposed delta. No adapter-generated candidate or proposed record may be activated from this packet.
+
+The packet is **ready for lead review, blocked for Illustration**. Illustration can consume the curator-accepted briefs only after the lead accepts the batch and the exact `gpt-image-2.5-flare` route is selected and evidenced. The official model page is availability evidence, not workspace route proof; the current built-in image route does not expose a selectable or resolved model ID.
 
 ## Authored decisions
 
@@ -38,10 +51,10 @@ These sources support the taxonomy and the proposed visible tests. They do not p
 
 | Record | Role | Status | Canonical placement |
 |---|---|---|---|
-| `atom.camera.focal.wide24` | New focal cue for the plain `wide24` legacy record. | accepted-ready for lead review; practical proof pending | Units → Optics → Camera; `camera.focal` |
-| `atom.camera.distance.close` | New independently selectable near-camera cue. | accepted-ready for lead review; practical proof pending | Units → Optics → Camera; `camera.distance` |
-| `bundle.camera.closewide24` | Decomposes the close-wide 24 legacy string. | accepted-ready for lead review; comparison pending | Units → Optics → Camera; flat bundle |
-| `bundle.camera.closewide35` | Decomposes the close-wide 35 legacy string. | accepted-ready for lead review; comparison pending | Units → Optics → Camera; flat bundle |
+| `atom.camera.focal.wide24` | New focal cue for the plain `wide24` legacy record. | curator-accepted candidate; reference-only until lead acceptance and comparison evidence | Units → Optics → Camera; `camera.focal` |
+| `atom.camera.distance.close` | New independently selectable near-camera cue. | curator-accepted candidate; reference-only until lead acceptance and comparison evidence | Units → Optics → Camera; `camera.distance` |
+| `bundle.camera.closewide24` | Decomposes the close-wide 24 legacy string. | curator-accepted candidate; reference-only until lead acceptance and comparison evidence | Units → Optics → Camera; flat bundle |
+| `bundle.camera.closewide35` | Decomposes the close-wide 35 legacy string. | curator-accepted candidate; reference-only until lead acceptance and comparison evidence | Units → Optics → Camera; flat bundle |
 
 No new axis or taxonomy node is needed. Existing `camera.focal` and `camera.distance` axes already provide the contract surface. One caution, `camera-distance`, is added to keep the measured-distance and backend-fidelity boundary visible.
 
@@ -53,9 +66,20 @@ The four-row `legacy-map.json` is scoped to the affected IDs. Batch 0 remains th
 
 ## AssetRequests
 
-Four requests are included only because the record meanings and taxonomy placement are decided enough to state a controlled visual test. They are not generation authorization. Each request names its controlled variable, fixed scene, required cues, avoid cues, source IDs, and requested model. The first compares 24mm-class against 35mm-class at a neutral distance; the next two hold focal cue constant while testing close distance; the last holds close distance constant while comparing focal cues. The requests support the focal-vs-distance shorthand decision and do not introduce a new style, look, or preset.
+Five requests are curator-accepted as illustration briefs only because the record meanings and taxonomy placement are decided enough to state controlled visual tests. They are not generation authorization. Each request names its controlled variable, fixed scene, required cues, avoid cues, source IDs, and requested model. The first four are focused pairwise diagnostics. `asset-request.batch-002.2x2` is the primary fixed-scene matrix: 24mm-class versus 35mm-class on rows, neutral versus close distance on columns. Its machine-readable matrix is in `comparison-2x2.json`.
 
-No other asset requests are authorized in this batch. In particular, no requests are issued yet for 18mm, 28mm, 135mm, macro, fisheye, depth/focus, or adjacent composition duplicates. The illustrator must consume only requests that the lead explicitly accepts from this file.
+The 2×2 matrix must be evaluated as one controlled scene, not as four unrelated examples. A result that changes crop, subject scale, camera height, pose, lighting, or courtyard geometry cannot close the distinction even if its labels look correct.
+
+No other asset requests are included in this batch. In particular, no requests are issued for 18mm, 28mm, 135mm, macro, fisheye, depth/focus, or adjacent composition duplicates. The illustrator must consume only requests that the lead explicitly accepts from this file and the matrix companion.
+
+## Exclusions
+
+- No Batch 002 record is added to the 14-record runtime boundary.
+- No legacy prompt text, shorthand, technique, style, or preset is rewritten; the four affected IDs remain recoverable through the proposed map chain.
+- `close` is not an alias for `comp:tight`, `focus:*`, `camera.depth`, or a guaranteed physical lens/camera measurement.
+- No new taxonomy node, output policy, preset, edit recipe, renderer asset, manifest entry, compiler behavior, or application source is part of this batch.
+- No practical image was generated, no metered route was used, and no unknown backend may be labeled Flare.
+- No private draft/favorite state was inspected; the lead must perform the local impact audit before migration acceptance.
 
 ## Validation
 
@@ -67,16 +91,17 @@ The batch files were checked for:
 - bundle atom IDs resolving to atoms only, with no nested bundle or preset;
 - `camera.focal` and `camera.distance` cardinalities matching the accepted axis registry;
 - exactly four affected legacy IDs, with the full 119-row recovery map still supplied by Batch 0;
-- exactly four comparison AssetRequests using only record and source IDs that resolve;
+- five comparison AssetRequests using only record and source IDs that resolve, plus a matching fixed-scene `comparison-2x2.json` matrix;
 - preservation of the accepted 14-record seed and untouched application files.
 
 This is a structural curation check, not proof of visual backend behavior. Lead acceptance still needs the practical comparison review and local draft/favorite impact audit.
 
 ## Open decisions and next action
 
-1. Lead decides whether `atom.camera.distance.close` is useful as a general camera-distance choice after reviewing the matched comparisons.
+1. Lead decides whether `atom.camera.distance.close` is useful as a general camera-distance choice after reviewing the 2×2 matrix.
 2. Lead decides whether the two bundles remain visibly distinct from their plain focal atoms and from each other in the target generation path.
-3. If accepted, the illustrator may consume only the four lead-approved requests and must report actual model evidence and visual review. If revised, keep the legacy close-wide rows reference-only and publish a new bounded batch.
+3. Lead audits local draft/favorite references and accepts or revises the proposed four-row migration delta.
+4. If accepted and the exact Flare route is evidenced, Illustration may consume only the lead-approved request lines and matrix. If either gate fails, keep the four new candidates reference-only and publish a new bounded batch or route request.
 
 ## Consultation boundary
 

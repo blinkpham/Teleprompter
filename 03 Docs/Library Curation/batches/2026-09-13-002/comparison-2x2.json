@@ -1,0 +1,58 @@
+{
+  "requestId": "asset-request.batch-002.2x2",
+  "kind": "fixed-scene-2x2",
+  "status": "curator-accepted-needs-lead-acceptance",
+  "recordIds": [
+    "atom.camera.focal.wide24",
+    "bundle.camera.closewide24",
+    "atom.camera.focal.wide35",
+    "bundle.camera.closewide35"
+  ],
+  "rows": {
+    "axisId": "camera.focal",
+    "values": [
+      { "label": "24mm-class", "recordId": "atom.camera.focal.wide24" },
+      { "label": "35mm-class", "recordId": "atom.camera.focal.wide35" }
+    ]
+  },
+  "columns": {
+    "axisId": "camera.distance",
+    "values": [
+      { "label": "neutral environmental distance", "recordIdSuffix": "plain focal atom" },
+      { "label": "physically close", "recordIdSuffix": "close-distance bundle" }
+    ]
+  },
+  "cells": [
+    { "cellId": "24-neutral", "recordId": "atom.camera.focal.wide24", "focal": "24mm-class", "distance": "neutral environmental distance" },
+    { "cellId": "24-close", "recordId": "bundle.camera.closewide24", "focal": "24mm-class", "distance": "physically close" },
+    { "cellId": "35-neutral", "recordId": "atom.camera.focal.wide35", "focal": "35mm-class", "distance": "neutral environmental distance" },
+    { "cellId": "35-close", "recordId": "bundle.camera.closewide35", "focal": "35mm-class", "distance": "physically close" }
+  ],
+  "fixedScene": "One synthetic adult subject presenting the same small cobalt product case in the same pale concrete courtyard; eye-height camera; neutral wardrobe; clean soft daylight; 4:3 landscape; same pose, subject identity, background geometry, crop intent, and final subject scale across all four cells.",
+  "requiredCues": [
+    "The 24mm-neutral cell reads wider than 35mm-neutral without fisheye curvature.",
+    "The 24mm-close cell shows the strongest near-feature scale relative to the background.",
+    "The 35mm-close cell shows a restrained but visible near-feature scale increase.",
+    "Both close cells remain recognizably close-distance variants rather than digital zoom or crop-only variants.",
+    "All cells retain enough courtyard context to judge the near/far relationship."
+  ],
+  "avoidCues": [
+    "Changed subject distance in the neutral focal comparison.",
+    "Changed crop, camera height, pose, lighting, scene geometry, or subject scale between cells.",
+    "Fisheye or barrel distortion, telephoto compression, or background blur as the only visible difference.",
+    "Text, logos, extra props, anatomy changes, or a different product case."
+  ],
+  "sourceIds": [
+    "local.skill.camera",
+    "web.adobe.focal-length",
+    "web.adobe.perspective",
+    "web.adobe.camera-shots",
+    "web.adobe.depth-of-field",
+    "web.canon.perspective",
+    "web.openai.image-prompting",
+    "curator.batch-2"
+  ],
+  "requestedModel": "gpt-image-2.5-flare",
+  "generationAuthorization": "not-granted",
+  "acceptanceUse": "Primary fixed-scene evidence for deciding whether camera.distance.close and the two close-wide bundles remain distinct from their plain focal atoms."
+}
