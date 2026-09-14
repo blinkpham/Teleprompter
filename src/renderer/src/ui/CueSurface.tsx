@@ -134,6 +134,7 @@ export function CueSurface({ surface, snapshot, library, dispatch, copy, preview
   const copyResetRef = useRef<number | undefined>(undefined);
   const pendingAuthoringRef = useRef<Promise<import('../../../shared/teleprompter').CommandResult>[]>([]);
   const sessionIdRef = useRef(`cue-${surface}-${Math.random().toString(36).slice(2, 10)}`);
+  const quickAddActivationRef = useRef(false);
   const layoutIdRef = useRef(0);
   const previousHeightRef = useRef<number | undefined>(undefined);
   const lastLayoutRef = useRef<string | undefined>(undefined);
@@ -221,6 +222,10 @@ export function CueSurface({ surface, snapshot, library, dispatch, copy, preview
   useEffect(() => {
     if (quickAddIndex >= quickAddResults.length) setQuickAddIndex(Math.max(0, quickAddResults.length - 1));
   }, [quickAddIndex, quickAddResults.length]);
+
+  useEffect(() => {
+    quickAddActivationRef.current = false;
+  }, [quickAddSession?.sessionId]);
 
   useEffect(() => {
     const element = whatRef.current;
@@ -326,6 +331,17 @@ export function CueSurface({ surface, snapshot, library, dispatch, copy, preview
       event.preventDefault();
       setQuickAddMatch(undefined);
     }
+  };
+
+  const handleQuickAddKeyDownCapture = (event: KeyboardEvent<HTMLElement>) => {
+    if (!quickAddSession || quickAddBusy || event.nativeEvent.isComposing || event.key !== 'Enter') return;
+    if (quickAddActivationRef.current) return;
+    quickAddActivationRef.current = true;
+    const result = quickAddSession.results[quickAddIndex];
+    if (!result) return;
+    event.preventDefault();
+    event.stopPropagation();
+    void acceptQuickAdd(result);
   };
 
   const measureSurface = useCallback(() => {
@@ -489,7 +505,7 @@ export function CueSurface({ surface, snapshot, library, dispatch, copy, preview
   const showParameterOverview = surface !== 'spotlight' || parametersOpen;
 
   return (
-    <section ref={surfaceRef} className={surface === 'spotlight' ? 'tp-cue tp-cue--spotlight' : 'tp-cue'} aria-labelledby="tp-cue-title">
+    <section ref={surfaceRef} className={surface === 'spotlight' ? 'tp-cue tp-cue--spotlight' : 'tp-cue'} aria-labelledby="tp-cue-title" onKeyDownCapture={handleQuickAddKeyDownCapture} onKeyUpCapture={handleQuickAddKeyDownCapture}>
       <div className="tp-cue-header">
         <h1 id="tp-cue-title" className="sr-only">Build a cue</h1>
         <div className="tp-header-actions">
@@ -670,7 +686,7 @@ function EmptySearch({ search }: { readonly search: string }) {
 function QuickAddList({ id, session, activeIndex, onChoose }: { readonly id: string; readonly session: QuickAddSession; readonly activeIndex: number; readonly onChoose: (result: QuickAddResultView) => void }) {
   return <div id={id} className="tp-quick-add" role="listbox" aria-label={session.trigger === 'mention' ? 'Reference suggestions' : 'Quick add suggestions'} aria-live="polite">
     <span className="sr-only">{session.results.length} suggestions. Use arrow keys and Enter to choose.</span>
-    {session.results.map((result, index) => <button id={`tp-quick-add-option-${index}`} key={`${result.target.kind}-${'recordId' in result.target ? result.target.recordId : result.target.imageNumber}`} type="button" role="option" aria-selected={index === activeIndex} className={`tp-quick-add-row${index === activeIndex ? ' is-active' : ''}`} onMouseDown={(event) => event.preventDefault()} onClick={() => onChoose(result)}>
+    {session.results.map((result, index) => <button id={`tp-quick-add-option-${index}`} key={`${result.target.kind}-${'recordId' in result.target ? result.target.recordId : result.target.imageNumber}`} type="button" tabIndex={-1} role="option" aria-selected={index === activeIndex} className={`tp-quick-add-row${index === activeIndex ? ' is-active' : ''}`} onMouseDown={(event) => event.preventDefault()} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); onChoose(result); } }} onClick={() => onChoose(result)}>
       <span className="tp-quick-add-mark" aria-hidden="true">{result.target.kind === 'reference' ? '@' : '/'}</span>
       <span className="tp-quick-add-copy"><strong>{result.title}</strong><small>{result.secondary ?? result.actionLabel}</small></span>
       <span className="tp-quick-add-action">{result.actionLabel}</span>

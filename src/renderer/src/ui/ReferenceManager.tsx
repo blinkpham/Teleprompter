@@ -20,6 +20,7 @@ export function ReferenceManager({ draft, dispatch, references }: {
   const bindings = references?.snapshot?.bindings ?? [];
   const slots = useMemo(() => referenceSlots(draft, bindings), [bindings, draft]);
   const nextNumber = nextReferenceNumber(slots);
+  const editMode = draft.id === 'edit';
 
   useEffect(() => {
     let active = true;
@@ -59,7 +60,7 @@ export function ReferenceManager({ draft, dispatch, references }: {
       });
       if (saved.ok) {
         const currentRole = draft.references.find((reference) => reference.imageNumber === imageNumber);
-        if (!currentRole) {
+        if (editMode && !currentRole) {
           const fallbackRole: ReferenceRole['role'] = draft.references.some((reference) => reference.role === 'base') ? 'style' : 'base';
           registerRole(imageNumber, fallbackRole, selection.suggestedLabel);
         }
@@ -80,20 +81,20 @@ export function ReferenceManager({ draft, dispatch, references }: {
       const result = await references.remove(slot.binding);
       if (!result.ok) setError(result.error.message);
     }
-    if (slot.role) void dispatch({ type: 'set-reference-roles', references: draft.references.filter((reference) => reference.imageNumber !== slot.imageNumber) });
+    if (editMode && slot.role) void dispatch({ type: 'set-reference-roles', references: draft.references.filter((reference) => reference.imageNumber !== slot.imageNumber) });
     setBusyImage(null);
     window.requestAnimationFrame(() => chooserRefs.current[slot.imageNumber]?.focus());
   };
 
   return <section className="tp-reference-manager" aria-labelledby="tp-reference-title">
     <header className="tp-reference-header">
-      <div><h2 id="tp-reference-title">References</h2><p>Bind local images to numbered references for @ mentions.</p></div>
+      <div><h2 id="tp-reference-title">References</h2><p>{editMode ? 'Bind local images to numbered references for @ mentions.' : 'Local image bindings are ready for Edit mode.'}</p></div>
       <button type="button" className="tp-add-chip" disabled={nextNumber > 20 || busyImage !== null} onClick={() => void chooseImage(nextNumber)}><Plus size={15} weight="bold" />Add image</button>
     </header>
     {references.loading && <p className="tp-reference-status" role="status">Loading local references…</p>}
     {references.error && <p className="tp-inline-error" role="alert">{references.error}</p>}
     {error && <p className="tp-inline-error" role="alert">{error}</p>}
-    {slots.length === 0 && !references.loading && <p className="tp-reference-empty">No images bound yet. Add one to enable @Image 1 suggestions.</p>}
+    {slots.length === 0 && !references.loading && <p className="tp-reference-empty">{editMode ? 'No images bound yet. Add one to enable @Image 1 suggestions.' : 'Switch to Edit to register image roles and use @ mentions.'}</p>}
     {slots.length > 0 && <div className="tp-reference-list">{slots.map((slot) => {
       const binding = slot.binding;
       const thumbnail = binding?.thumbnailHandle ? thumbnailUrls[binding.thumbnailHandle] : undefined;
@@ -103,8 +104,8 @@ export function ReferenceManager({ draft, dispatch, references }: {
         <div className="tp-reference-main">
           <div className="tp-reference-title-row"><strong>Image {slot.imageNumber}</strong><span>{binding?.label ?? (slot.mentioned ? 'Mentioned, choose an image' : 'Unbound')}</span></div>
           <div className="tp-reference-fields">
-            <label><span>Role</span><select aria-label={`Role for Image ${slot.imageNumber}`} value={role?.role ?? ''} onChange={(event) => registerRole(slot.imageNumber, event.target.value as ReferenceRole['role'], role?.note ?? binding?.label ?? '')}><option value="" disabled>Choose role</option>{ROLE_OPTIONS.map((option) => <option key={option} value={option}>{roleLabel(option)}</option>)}</select></label>
-            <label><span>Note</span><input aria-label={`Note for Image ${slot.imageNumber}`} value={role?.note ?? ''} placeholder="What this image controls" onChange={(event) => { if (role) registerRole(slot.imageNumber, role.role, event.target.value); }} disabled={!role} /></label>
+            <label><span>Role</span><select aria-label={`Role for Image ${slot.imageNumber}`} value={role?.role ?? ''} disabled={!editMode} onChange={(event) => registerRole(slot.imageNumber, event.target.value as ReferenceRole['role'], role?.note ?? binding?.label ?? '')}><option value="" disabled>{editMode ? 'Choose role' : 'Edit mode only'}</option>{ROLE_OPTIONS.map((option) => <option key={option} value={option}>{roleLabel(option)}</option>)}</select></label>
+            <label><span>Note</span><input aria-label={`Note for Image ${slot.imageNumber}`} value={role?.note ?? ''} placeholder="What this image controls" onChange={(event) => { if (role) registerRole(slot.imageNumber, role.role, event.target.value); }} disabled={!editMode || !role} /></label>
           </div>
         </div>
         <div className="tp-reference-actions">

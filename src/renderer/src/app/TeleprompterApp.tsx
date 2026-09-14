@@ -110,6 +110,7 @@ export function TeleprompterApp() {
   const [referenceBindings, setReferenceBindings] = useState<ReferenceBindingsSnapshot | null>(null);
   const [referenceLoading, setReferenceLoading] = useState(false);
   const [referenceError, setReferenceError] = useState<string | undefined>(undefined);
+  const referenceRequestSequence = useRef(0);
 
   const adoptSnapshot = useCallback((snapshot: CueSnapshot) => {
     previewRequestSequence.current += 1;
@@ -299,6 +300,7 @@ export function TeleprompterApp() {
   }, [surface]);
 
   const refreshReferences = useCallback(async (mode: Mode = activeModeRef.current): Promise<void> => {
+    const requestSequence = ++referenceRequestSequence.current;
     const bridge = window.teleprompter;
     const currentSnapshot = snapshotRef.current;
     const revision = currentSnapshot?.drafts[mode].revision;
@@ -309,6 +311,7 @@ export function TeleprompterApp() {
     }
     setReferenceLoading(true);
     const result = await bridge.getReferenceBindings({ draftId: mode, expectedDraftRevision: revision });
+    if (requestSequence !== referenceRequestSequence.current) return;
     setReferenceLoading(false);
     if (!result.ok) {
       setReferenceError(result.error.message);
@@ -324,6 +327,7 @@ export function TeleprompterApp() {
     if (!bridge?.setReferenceBinding || !current || current.draftId !== binding.draftId) return unavailableBridgeError<ReferenceBindingsSnapshot>('Reference bindings are unavailable until the manager is refreshed.');
     const result = await bridge.setReferenceBinding({ draftId: binding.draftId, expectedVersion: current.version, operation: 'upsert', binding });
     if (result.ok) {
+      referenceRequestSequence.current += 1;
       setReferenceBindings(result);
       setReferenceError(undefined);
     } else {
@@ -339,6 +343,7 @@ export function TeleprompterApp() {
     if (!bridge?.setReferenceBinding || !current || current.draftId !== binding.draftId) return unavailableBridgeError<ReferenceBindingsSnapshot>('Reference bindings are unavailable until the manager is refreshed.');
     const result = await bridge.setReferenceBinding({ draftId: binding.draftId, expectedVersion: current.version, operation: 'remove', bindingId: binding.bindingId, imageNumber: binding.imageNumber });
     if (result.ok) {
+      referenceRequestSequence.current += 1;
       setReferenceBindings(result);
       setReferenceError(undefined);
     } else {
@@ -363,7 +368,7 @@ export function TeleprompterApp() {
   useEffect(() => {
     if (!state) return;
     void refreshReferences(activeMode);
-  }, [activeMode, refreshReferences, state]);
+  }, [activeMode, refreshReferences, state?.snapshot.drafts[activeMode].revision]);
 
   const openSettings = useCallback(() => {
     const currentSnapshot = snapshotRef.current;
