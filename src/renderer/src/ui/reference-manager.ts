@@ -36,3 +36,7 @@ export const nextReferenceNumber = (slots: readonly ReferenceSlotView[]): number
   for (let number = 1; number <= 20; number += 1) if (!used.has(number)) return number;
   return 20;
 };
+
+export const roleLabel = (role: ReferenceRole['role']): string => role.charAt(0).toUpperCase() + role.slice(1);
+
+export const thumbnailIsBound = (binding: ReferenceBinding | undefined): boolean => Boolean(binding?.thumbnailHandle);

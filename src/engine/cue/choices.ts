@@ -44,6 +44,8 @@ const toChoice = (library: LibraryV2, record: Atom | Bundle | Preset | EditRecip
   label: record.label,
   shorthand: record.shorthand,
   summary: record.summary,
+  ...(record.kind === 'atom' ? { expansion: record.expansion } : {}),
+  ...((record.kind === 'atom' || record.kind === 'preset') ? { applicability: record.applicability } : {}),
   ...(recordField(library, record) ? { field: recordField(library, record) } : {}),
   ...(recordAxisId(library, record) ? { axisId: recordAxisId(library, record) } : {}),
   order: record.order,

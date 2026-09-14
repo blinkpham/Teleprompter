@@ -14,6 +14,7 @@ export function ReferenceManager({ draft, dispatch, references }: {
   readonly references?: ReferenceSurfaceProps;
 }) {
   const [thumbnailUrls, setThumbnailUrls] = useState<Record<string, string>>({});
+  const [thumbnailErrors, setThumbnailErrors] = useState<ReadonlySet<string>>(new Set());
   const [busyImage, setBusyImage] = useState<number | null>(null);
   const [error, setError] = useState<string | undefined>();
   const chooserRefs = useRef<Record<number, HTMLButtonElement | null>>({});
@@ -29,7 +30,11 @@ export function ReferenceManager({ draft, dispatch, references }: {
     void Promise.all(pending.map(async (binding) => {
       if (!binding.thumbnailHandle) return undefined;
       const result = await references.getThumbnail(binding.thumbnailHandle);
-      return result.ok ? [binding.thumbnailHandle, result.dataUrl] as const : undefined;
+      if (!result.ok) {
+        setThumbnailErrors((current) => new Set([...current, binding.thumbnailHandle!]));
+        return undefined;
+      }
+      return [binding.thumbnailHandle, result.dataUrl] as const;
     })).then((entries) => {
       if (!active) return;
       const additions = Object.fromEntries(entries.filter((entry): entry is readonly [string, string] => Boolean(entry)));
@@ -99,10 +104,13 @@ export function ReferenceManager({ draft, dispatch, references }: {
       const binding = slot.binding;
       const thumbnail = binding?.thumbnailHandle ? thumbnailUrls[binding.thumbnailHandle] : undefined;
       const role = slot.role;
-      return <article className={`tp-reference-row${binding ? '' : ' is-unbound'}`} key={slot.imageNumber}>
+      const missingThumbnail = Boolean(binding?.thumbnailHandle && thumbnailErrors.has(binding.thumbnailHandle));
+      const thumbnailStatus = missingThumbnail ? 'Local thumbnail unavailable · choose again' : thumbnail ? 'Local thumbnail saved' : binding ? 'Checking local thumbnail…' : 'Unbound · choose a local image';
+      return <article className={`tp-reference-row${binding ? '' : ' is-unbound'}${missingThumbnail ? ' is-missing' : ''}`} key={slot.imageNumber}>
         <div className="tp-reference-thumb" aria-hidden="true">{thumbnail ? <img src={thumbnail} alt="" /> : <ImageSquare size={21} weight="duotone" />}</div>
         <div className="tp-reference-main">
           <div className="tp-reference-title-row"><strong>Image {slot.imageNumber}</strong><span>{binding?.label ?? (slot.mentioned ? 'Mentioned, choose an image' : 'Unbound')}</span></div>
+          <small className="tp-reference-status">{thumbnailStatus}{slot.mentioned ? ' · used in What' : ''}</small>
           <div className="tp-reference-fields">
             <label><span>Role</span><select aria-label={`Role for Image ${slot.imageNumber}`} value={role?.role ?? ''} disabled={!editMode} onChange={(event) => registerRole(slot.imageNumber, event.target.value as ReferenceRole['role'], role?.note ?? binding?.label ?? '')}><option value="" disabled>{editMode ? 'Choose role' : 'Edit mode only'}</option>{ROLE_OPTIONS.map((option) => <option key={option} value={option}>{roleLabel(option)}</option>)}</select></label>
             <label><span>Note</span><input aria-label={`Note for Image ${slot.imageNumber}`} value={role?.note ?? ''} placeholder="What this image controls" onChange={(event) => { if (role) registerRole(slot.imageNumber, role.role, event.target.value); }} disabled={!editMode || !role} /></label>

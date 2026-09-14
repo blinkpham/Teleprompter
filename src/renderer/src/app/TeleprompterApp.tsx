@@ -55,6 +55,10 @@ const unavailableBridgeError = <T extends object>(message: string): BridgeResult
   error: { code: 'UNAVAILABLE', message },
 });
 
+const referenceSnapshotFrom = (result: BridgeResult<ReferenceBindingsSnapshot>): ReferenceBindingsSnapshot | undefined => result.ok
+  ? { draftId: result.draftId, version: result.version, bindings: result.bindings }
+  : undefined;
+
 const pathsForCommand = (command: CueCommand, state: AppState): readonly DraftFieldPath[] => {
   switch (command.type) {
     case 'accept-quick-add': {
@@ -318,7 +322,7 @@ export function TeleprompterApp() {
       return;
     }
     setReferenceError(undefined);
-    setReferenceBindings(result);
+    setReferenceBindings(referenceSnapshotFrom(result) ?? null);
   }, []);
 
   const upsertReferenceBinding = useCallback(async (binding: ReferenceBinding): Promise<BridgeResult<ReferenceBindingsSnapshot>> => {
@@ -328,7 +332,7 @@ export function TeleprompterApp() {
     const result = await bridge.setReferenceBinding({ draftId: binding.draftId, expectedVersion: current.version, operation: 'upsert', binding });
     if (result.ok) {
       referenceRequestSequence.current += 1;
-      setReferenceBindings(result);
+      setReferenceBindings(referenceSnapshotFrom(result) ?? null);
       setReferenceError(undefined);
     } else {
       setReferenceError(result.error.message);
@@ -344,7 +348,7 @@ export function TeleprompterApp() {
     const result = await bridge.setReferenceBinding({ draftId: binding.draftId, expectedVersion: current.version, operation: 'remove', bindingId: binding.bindingId, imageNumber: binding.imageNumber });
     if (result.ok) {
       referenceRequestSequence.current += 1;
-      setReferenceBindings(result);
+      setReferenceBindings(referenceSnapshotFrom(result) ?? null);
       setReferenceError(undefined);
     } else {
       setReferenceError(result.error.message);

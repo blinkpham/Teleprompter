@@ -5,7 +5,7 @@ Updated: 2026-09-14
 
 ## Current execution — 2026-09-14 post-worker checkpoint
 
-- Lead integration commits `8e5d3d6`, `6834f3d`, and `674e1df` add engine-owned atomic quick add, measured spotlight layout requests, exact Preview and Library/Tokens read paths, Create-only default handling, compact image-led Cue controls, caret-safe slash/@ suggestions, the Teleprompter skill package metadata/icon, and the local reference lifecycle.
+- Lead integration commits `8e5d3d6`, `6834f3d`, and `674e1df` add engine-owned atomic quick add, measured spotlight layout requests, exact Preview and Library/Tokens read paths, Create-only default handling, compact image-led Cue controls, caret-safe slash/@ suggestions, the Teleprompter skill package metadata/icon, and the local reference lifecycle. Worker commit `ad381db` was reviewed as an independent input; its projection/test improvements were incorporated selectively without replacing the lead's native focus fixes.
 - Sol/Core's fresh read-only review found four remaining contract/runtime risks: recovery construction can still re-enter new-document defaults unless the loader preserves the parsed blank fallback; quick-add acknowledgement must serialize editing so it cannot overwrite in-flight typing; the @ reference manager/chooser/thumbnail lifecycle is still missing; and configured-state styling plus B01 geometry need native confirmation.
 - The recovery loader and quick-add acknowledgement guard are fixed. The lead now owns a visible Reference manager with native chooser, opaque local thumbnail handles, cancellation focus return, role/note controls in Edit, and missing-thumbnail error handling. It remains outside the accepted 14-record runtime boundary and does not expose filesystem paths.
 - Curator Batch 002 is integrated as proposed/reference-only and is ready for lead review. Illustration remains blocked until lead acceptance and direct `gpt-image-2.5-flare` route evidence; no artwork is activated from the batch.
@@ -44,7 +44,7 @@ Updated: 2026-09-14
 ## Current verification — UI quality reset
 
 - `npm run typecheck` passes.
-- `npm run test:logic` passes: 13 files, 60 tests.
+- `npm run test:logic` passes: 14 files, 63 tests.
 - `npm run build` passes and emits the renderer with the accepted v2 Optics, Stage, and Finish assets.
 - `git diff --check` passes. The focused quick-add tests pass; native behavior remains separate from these local checks.
 - Earlier native inspection recorded image-led Cue group controls, a scoped Optics chooser, Library, and Tokens surfaces, but the latest planner re-audit contradicts visual acceptance: the controls still read as framed generic buttons, the Optics picker clips repeated artwork, and focus treatment is duplicated. Native desktop focused checks reported 15/15 placement tests passing; technical native acceptance remains separate from visual acceptance.

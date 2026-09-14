@@ -685,12 +685,14 @@ html:has(.tp-app), body:has(.tp-app), #root:has(.tp-app) { height: 100%; overflo
 .tp-reference-list { display: grid; gap: 8px; }
 .tp-reference-row { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 10px; border: 1px solid rgb(255 255 255 / 9%); border-radius: 14px; background: #1a1c1e; }
 .tp-reference-row.is-unbound { border-style: dashed; }
+.tp-reference-row.is-missing { border-color: rgb(255 154 118 / 45%); }
 .tp-reference-thumb { display: grid; width: 44px; height: 44px; place-items: center; overflow: hidden; border-radius: 10px; color: var(--tp-muted); background: #111315; }
 .tp-reference-thumb img { width: 100%; height: 100%; object-fit: cover; }
 .tp-reference-main { display: grid; min-width: 0; gap: 7px; }
 .tp-reference-title-row { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
 .tp-reference-title-row strong { color: var(--tp-text); font-size: 12px; }
 .tp-reference-title-row span { overflow: hidden; color: var(--tp-muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.tp-reference-status { color: var(--tp-muted); font-size: 10px; }
 .tp-reference-fields { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 8px; }
 .tp-reference-fields label { display: grid; gap: 3px; }
 .tp-reference-fields label > span { color: var(--tp-muted); font-size: 9px; letter-spacing: .08em; text-transform: uppercase; }

@@ -234,6 +234,8 @@ const libraryView = (): LibraryView => {
       label: record.label,
       shorthand: record.shorthand,
       summary: record.summary,
+      ...(record.kind === 'atom' ? { expansion: record.expansion } : {}),
+      ...((record.kind === 'atom' || record.kind === 'preset') ? { applicability: record.applicability } : {}),
       ...(axisId === undefined ? {} : { axisId, field: axes.get(axisId)?.field }),
       order: record.order,
       status: record.status,

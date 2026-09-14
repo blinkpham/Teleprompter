@@ -392,6 +392,8 @@ export interface LibraryChoiceView {
   readonly label: string;
   readonly shorthand: string;
   readonly summary: string;
+  readonly expansion?: string;
+  readonly applicability?: readonly Mode[];
   readonly field?: Field;
   readonly axisId?: Id;
   readonly order: number;

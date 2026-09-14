@@ -162,10 +162,11 @@ export function CueSurface({ surface, snapshot, library, dispatch, copy, preview
     return activeChoices
       .filter((choice) => {
         if (choice.kind === 'bundle') return false;
+        if ((choice.kind === 'atom' || choice.kind === 'preset') && choice.applicability && !choice.applicability.includes(snapshot.activeMode)) return false;
         if (category === 'preset') return choice.kind === 'preset' && library.presets.find((preset) => preset.id === choice.id)?.applicability.includes(snapshot.activeMode);
         if (category === 'token') return choice.kind === 'atom';
         if (category === 'edit') return snapshot.activeMode === 'edit' && choice.kind === 'edit-recipe';
-        if (category === 'snippet') return choice.kind === 'atom';
+        if (category === 'snippet') return choice.kind === 'atom' && Boolean(choice.expansion);
         return choice.kind === 'preset' || choice.kind === 'atom' || (snapshot.activeMode === 'edit' && choice.kind === 'edit-recipe');
       })
       .map((choice) => ({ choice, score: choiceMatches(choice, quickAddMatch.query) }))
