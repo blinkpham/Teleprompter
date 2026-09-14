@@ -36,11 +36,13 @@ import type {
   Mode,
   PersistenceStatus,
   ShortcutState,
+  SurfaceLayoutRequest,
+  SurfaceLayoutResult,
   TeleprompterBootstrap,
   DesktopCommand,
   CompileResult,
 } from '../shared/teleprompter-types';
-import { validateCopyCompiledDraftRequest, validateDraftCommand, validateLibraryCopyTextRequest, validationErrorToBridgeError, validateGetCompiledDraftRequest, validateLibraryTextRequest } from '../shared/teleprompter-validation';
+import { validateCopyCompiledDraftRequest, validateDraftCommand, validateLibraryCopyTextRequest, validationErrorToBridgeError, validateGetCompiledDraftRequest, validateLibraryTextRequest, validateReferenceBindingEnvelope, validateReferenceBindingsRequest, validateSurfaceLayoutRequest } from '../shared/teleprompter-validation';
 import {
   DEFAULT_ACCELERATOR,
   DEFAULT_PREFERENCES,
@@ -55,7 +57,9 @@ import {
   placeSpotlight,
   resizeSpotlight,
   shouldDismissSpotlightOnBlur,
+  placeAdaptiveSurface,
   SPOTLIGHT_BOUNDS,
+  type SurfaceGrowthDirection,
   type SpotlightSize,
 } from './placement';
 import {
@@ -69,6 +73,11 @@ import {
   type DraftStoreDocument,
 } from './draft-store';
 import { isPathInside, isPermittedRendererUrl, rendererContentSecurityPolicy } from './security';
+import {
+  createReferenceBindingsDocument,
+  parseReferenceBindings,
+  ReferenceBindingStore,
+} from './reference-bindings';
 
 /** Keep the internal profile and protocol stable while visible identity changes. */
 app.setPath('userData', join(app.getPath('appData'), 'teleprompter'));
@@ -148,6 +157,10 @@ let mainReady = false;
 let spotlightReady = false;
 let spotlightSize: SpotlightSize = 'compact';
 let spotlightAnchor: { x: number; y: number } | null = null;
+let spotlightGrowthDirection: SurfaceGrowthDirection | undefined;
+let spotlightSessionId: string | null = null;
+let latestSurfaceLayoutId = -1;
+let latestSurfaceLayoutRequest: SurfaceLayoutRequest | null = null;
 let spotlightTransitionUntil = 0;
 let spotlightBlurTimer: ReturnType<typeof setTimeout> | undefined;
 let isQuitting = false;
@@ -162,20 +175,25 @@ let preferencesWriteBlocked = false;
 let profileRecovery = false;
 let preferencesWriteFailed = false;
 let draftsWriteFailed = false;
+let referenceBindingsWriteFailed = false;
+let referenceBindingsWriteBlocked = false;
 let preferencesQueue = Promise.resolve();
 let draftQueue = Promise.resolve();
+let referenceBindingsQueue = Promise.resolve();
 let draftTimer: ReturnType<typeof setTimeout> | undefined;
 let latestDraftWriteSequence = 0;
 const renderers = new Map<number, RegisteredRenderer>();
 const clientIds = new Map<number, string>();
 const rendererOrigin = process.env.ELECTRON_RENDERER_URL ? new URL(process.env.ELECTRON_RENDERER_URL).origin : undefined;
 let draftStore = new DraftStore(library, runtimeModule);
+let referenceBindings = new ReferenceBindingStore(createReferenceBindingsDocument());
 
 const preferencesPath = (): string => join(app.getPath('userData'), 'preferences.json');
 const draftsPath = (): string => join(app.getPath('userData'), 'cue-drafts.json');
+const referenceBindingsPath = (): string => join(app.getPath('userData'), 'reference-bindings.json');
 
 const refreshPersistenceStatus = (): void => {
-  persistenceStatus = profileRecovery ? 'recovery' : (preferencesWriteFailed || draftsWriteFailed ? 'session' : 'disk');
+  persistenceStatus = profileRecovery ? 'recovery' : (preferencesWriteFailed || draftsWriteFailed || referenceBindingsWriteFailed ? 'session' : 'disk');
 };
 
 const failure = <T extends object = Record<string, never>>(code: BridgeError['code'], message: string): BridgeResult<T> => ({ ok: false, error: { code, message } });
@@ -425,6 +443,51 @@ const loadDrafts = async (): Promise<void> => {
   }
 };
 
+const loadReferenceBindings = async (): Promise<void> => {
+  try {
+    const raw = await fs.readFile(referenceBindingsPath(), 'utf8');
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      await preserveFile(referenceBindingsPath(), `recovery-${Date.now()}`);
+      referenceBindings = new ReferenceBindingStore();
+      profileRecovery = true;
+      refreshPersistenceStatus();
+      return;
+    }
+    const loaded = parseReferenceBindings(parsed);
+    referenceBindings = new ReferenceBindingStore(loaded.document);
+    if (loaded.status !== 'loaded') {
+      if (loaded.status === 'future') referenceBindingsWriteBlocked = true;
+      await preserveFile(referenceBindingsPath(), `${loaded.status}-${Date.now()}`);
+      profileRecovery = true;
+      refreshPersistenceStatus();
+    }
+  } catch (cause) {
+    const errorCode = cause && typeof cause === 'object' && 'code' in cause ? (cause as { code?: unknown }).code : undefined;
+    if (errorCode !== 'ENOENT') profileRecovery = true;
+    refreshPersistenceStatus();
+    referenceBindings = new ReferenceBindingStore();
+  }
+};
+
+const persistReferenceBindings = async (): Promise<void> => {
+  if (referenceBindingsWriteBlocked) return;
+  const document = `${JSON.stringify(referenceBindings.toDocument(), null, 2)}\n`;
+  referenceBindingsQueue = referenceBindingsQueue.then(async () => {
+    try {
+      await fs.mkdir(dirname(referenceBindingsPath()), { recursive: true });
+      await writeJsonAtomically(referenceBindingsPath(), document);
+      referenceBindingsWriteFailed = false;
+    } catch {
+      referenceBindingsWriteFailed = true;
+    }
+    refreshPersistenceStatus();
+  });
+  await referenceBindingsQueue;
+};
+
 const broadcastDraftChanged = (sourceClientId?: string): void => {
   const event = draftChanged(draftStore.getSnapshot(preferences.shortcut, persistenceStatus), sourceClientId);
   for (const { contents } of renderers.values()) {
@@ -514,8 +577,57 @@ const setSpotlightBounds = (size: SpotlightSize): void => {
   spotlightWindow.setBounds(bounds, true);
 };
 
+const sameBounds = (left: Electron.Rectangle, right: { readonly x: number; readonly y: number; readonly width: number; readonly height: number }): boolean => left.x === right.x
+  && left.y === right.y
+  && left.width === right.width
+  && left.height === right.height;
+
+const applySurfaceLayout = (request: SurfaceLayoutRequest, recordRequest: boolean): BridgeResult<SurfaceLayoutResult> => {
+  if (!spotlightWindow || spotlightWindow.isDestroyed() || !spotlightWindow.isVisible() || !spotlightAnchor) {
+    return failure('UNAVAILABLE', 'Measured surface layout is unavailable until Cue is visible.');
+  }
+  if (recordRequest && request.layoutId <= latestSurfaceLayoutId) {
+    return failure('CONFLICT', 'This surface layout is older than the latest applied layout.');
+  }
+  const workArea = screen.getDisplayNearestPoint(spotlightAnchor).workArea;
+  const layout = placeAdaptiveSurface(spotlightAnchor, workArea, {
+    preferredWidth: request.preferredWidth,
+    intrinsicHeight: request.intrinsicHeight,
+    accessory: request.accessory,
+    growthDirection: spotlightGrowthDirection,
+  });
+  spotlightGrowthDirection = layout.growthDirection;
+  try {
+    const currentBounds = spotlightWindow.getBounds();
+    if (!sameBounds(currentBounds, layout.bounds)) {
+      spotlightWindow.setBounds(layout.bounds, request.transition !== 'immediate');
+    }
+    const contentSize = spotlightWindow.getContentSize();
+    const width = contentSize[0] ?? layout.bounds.width;
+    const height = contentSize[1] ?? layout.bounds.height;
+    const result: SurfaceLayoutResult = {
+      appliedBounds: layout.bounds,
+      interiorSize: { width, height },
+      constrained: layout.constrained,
+      surfaceSessionId: request.surfaceSessionId,
+      layoutId: request.layoutId,
+    };
+    if (recordRequest) {
+      latestSurfaceLayoutId = request.layoutId;
+      latestSurfaceLayoutRequest = request;
+    }
+    return success(result);
+  } catch {
+    return failure('UNAVAILABLE', 'Measured surface layout is not supported by the active Cue window.');
+  }
+};
+
 const reflowVisibleSpotlight = (): void => {
   if (!spotlightWindow || spotlightWindow.isDestroyed() || !spotlightWindow.isVisible() || !spotlightAnchor) return;
+  if (latestSurfaceLayoutRequest && spotlightSessionId === latestSurfaceLayoutRequest.surfaceSessionId) {
+    void applySurfaceLayout(latestSurfaceLayoutRequest, false);
+    return;
+  }
   const workArea = screen.getDisplayNearestPoint(spotlightAnchor).workArea;
   spotlightWindow.setBounds(resizeSpotlight(spotlightAnchor, workArea, spotlightSize), true);
 };
@@ -527,6 +639,10 @@ const hideSpotlight = (reason: 'shortcut' | 'blur' | 'menu' = 'menu'): void => {
   spotlightWindow.hide();
   spotlightAnchor = null;
   spotlightSize = 'compact';
+  spotlightGrowthDirection = undefined;
+  spotlightSessionId = null;
+  latestSurfaceLayoutId = -1;
+  latestSurfaceLayoutRequest = null;
   if (wasVisible) sendDesktopCommand({ type: 'hide-spotlight', reason });
 };
 
@@ -536,6 +652,10 @@ const showSpotlight = (): void => {
   const workArea = screen.getDisplayNearestPoint(point).workArea;
   spotlightAnchor = point;
   spotlightSize = 'compact';
+  spotlightGrowthDirection = undefined;
+  spotlightSessionId = null;
+  latestSurfaceLayoutId = -1;
+  latestSurfaceLayoutRequest = null;
   spotlightWindow.setBounds(placeSpotlight(point, workArea, spotlightSize), true);
   spotlightWindow.show();
   spotlightWindow.focus();
@@ -850,6 +970,35 @@ const registerHandlers = (): void => {
     if (!validated.ok) return failure('INVALID_INPUT', validationErrorToBridgeError(validated.errors).message);
     return recordText(validated.value);
   });
+  ipcMain.handle('get-reference-bindings', (event, request: unknown) => {
+    if (!isAllowedSender(event)) return failure('UNAVAILABLE', 'The desktop window is unavailable.');
+    const validated = validateReferenceBindingsRequest(request);
+    if (!validated.ok) return failure('INVALID_INPUT', validationErrorToBridgeError(validated.errors).message);
+    const snapshot = draftStore.getSnapshot(preferences.shortcut, persistenceStatus);
+    const result = referenceBindings.list(
+      validated.value.draftId,
+      validated.value.expectedDraftRevision,
+      snapshot.drafts[validated.value.draftId].revision,
+    );
+    return result.ok ? success(result.snapshot) : failure(result.error.code, result.error.message);
+  });
+  ipcMain.handle('set-reference-binding', async (event, request: unknown) => {
+    if (!isAllowedSender(event)) return failure('UNAVAILABLE', 'The desktop window is unavailable.');
+    const validated = validateReferenceBindingEnvelope(request);
+    if (!validated.ok) return failure('INVALID_INPUT', validationErrorToBridgeError(validated.errors).message);
+    const result = referenceBindings.apply(validated.value);
+    if (!result.ok) return failure(result.error.code, result.error.message);
+    await persistReferenceBindings();
+    return success(result.snapshot);
+  });
+  ipcMain.handle('request-surface-layout', (event, request: unknown): BridgeResult<SurfaceLayoutResult> => {
+    if (!isAllowedSender(event) || senderSurface(event) !== 'spotlight') return failure('UNAVAILABLE', 'Measured surface layout is available only to the Cue window.');
+    const validated = validateSurfaceLayoutRequest(request);
+    if (!validated.ok) return failure('INVALID_INPUT', validationErrorToBridgeError(validated.errors).message);
+    if (spotlightSessionId === null) spotlightSessionId = validated.value.surfaceSessionId;
+    if (spotlightSessionId !== validated.value.surfaceSessionId) return failure('CONFLICT', 'This Cue opening is no longer the active surface session.');
+    return applySurfaceLayout(validated.value, true);
+  });
   ipcMain.handle('set-favorite', async (event, request: unknown) => {
     if (!isAllowedSender(event) || !request || typeof request !== 'object') return failure('UNAVAILABLE', 'The desktop window is unavailable.');
     const candidate = request as Record<string, unknown>;
@@ -871,6 +1020,8 @@ const registerHandlers = (): void => {
     if (size !== 'compact' && size !== 'expanded') return failure('INVALID_INPUT', 'Spotlight size is invalid.');
     if (spotlightSize !== size) {
       spotlightSize = size;
+      latestSurfaceLayoutRequest = null;
+      spotlightGrowthDirection = undefined;
       setSpotlightBounds(size);
     }
     return success({ size });
@@ -933,7 +1084,7 @@ if (!singleInstance) {
     event.preventDefault();
     globalShortcut.unregisterAll();
     void Promise.race([
-      Promise.all([persistPreferences(), persistDrafts()]),
+      Promise.all([persistPreferences(), persistDrafts(), persistReferenceBindings()]),
       new Promise<void>((resolvePromise) => setTimeout(resolvePromise, 1000)),
     ]).finally(() => app.exit(0));
   });
@@ -943,6 +1094,7 @@ if (!singleInstance) {
     nativeTheme.themeSource = 'dark';
     await loadPreferences();
     await loadDrafts();
+    await loadReferenceBindings();
     registerLocalProtocol();
     registerHandlers();
     createMenu();

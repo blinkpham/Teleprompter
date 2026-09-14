@@ -47,6 +47,15 @@ describe('draft store', () => {
     expect(restored.document.drafts.edit.customText.output).toBeUndefined();
   });
 
+  it('keeps corrupt and future recovery blank instead of applying new-document defaults', () => {
+    const corrupt = parseDraftStore({ schemaVersion: 1, drafts: null }, library);
+    expect(corrupt.status).toBe('recovered');
+    expect(corrupt.document.drafts.create.customText.output).toBeUndefined();
+    const future = parseDraftStore({ schemaVersion: 99 }, library);
+    expect(future.status).toBe('future');
+    expect(future.document.drafts.create.customText.output).toBeUndefined();
+  });
+
   it('accepts ordered edits and rejects a stale same-field write', () => {
     const store = new DraftStore(library, { applyDraftCommand: apply });
     const first = store.apply(command('client-a', 'one', 'first'), { accelerator: 'x', registered: true }, 'disk');

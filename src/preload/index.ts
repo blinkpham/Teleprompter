@@ -12,8 +12,14 @@ import type {
   DraftCommandEnvelope,
   LibraryCopyTextRequest,
   LibraryTextResult,
+  ReferenceBindingEnvelope,
+  ReferenceBindingsRequest,
+  ReferenceBindingsSnapshot,
+  SurfaceLayoutRequest,
+  SurfaceLayoutResult,
   TeleprompterBootstrap,
   TeleprompterBridge,
+  TeleprompterDesktopBridge,
 } from '../shared/teleprompter-types';
 
 type BootstrapWithClient = TeleprompterBootstrap & { readonly clientId?: string };
@@ -38,6 +44,8 @@ const teleprompter: TeleprompterBridge = {
   copyLibraryText: (request: LibraryCopyTextRequest) => ipcRenderer.invoke('copy-library-text', request),
   getCompiledDraft: (request: CopyCompiledDraftRequest): Promise<BridgeResult<CompiledDraftPreview>> => ipcRenderer.invoke('get-compiled-draft', request),
   getLibraryText: (request: LibraryCopyTextRequest): Promise<BridgeResult<LibraryTextResult>> => ipcRenderer.invoke('get-library-text', request),
+  getReferenceBindings: (request: ReferenceBindingsRequest): Promise<BridgeResult<ReferenceBindingsSnapshot>> => ipcRenderer.invoke('get-reference-bindings', request),
+  setReferenceBinding: (request: ReferenceBindingEnvelope): Promise<BridgeResult<ReferenceBindingsSnapshot>> => ipcRenderer.invoke('set-reference-binding', request),
   setFavorite: (request) => ipcRenderer.invoke('set-favorite', request),
   setShortcut: (request) => ipcRenderer.invoke('set-shortcut', request),
   showMain: () => ipcRenderer.invoke('show-main'),
@@ -66,6 +74,9 @@ contextBridge.exposeInMainWorld('teleprompter', teleprompter);
 contextBridge.exposeInMainWorld('teleprompterLegacy', legacy);
 
 // The renderer surface contract intentionally keeps size state enumerated.
-contextBridge.exposeInMainWorld('teleprompterDesktop', {
+const teleprompterDesktop: TeleprompterDesktopBridge = {
+  requestSurfaceLayout: (request: SurfaceLayoutRequest): Promise<BridgeResult<SurfaceLayoutResult>> => ipcRenderer.invoke('request-surface-layout', request),
   requestSize: (size: 'compact' | 'expanded'): Promise<BridgeResult<{ readonly size: 'compact' | 'expanded' }>> => ipcRenderer.invoke('set-spotlight-size', { size }),
-});
+};
+
+contextBridge.exposeInMainWorld('teleprompterDesktop', teleprompterDesktop);

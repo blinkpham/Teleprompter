@@ -57,14 +57,14 @@ const isRecord = (value: unknown): value is Record<string, unknown> => typeof va
 const isNonNegativeInteger = (value: unknown): value is number => typeof value === 'number' && Number.isInteger(value) && value >= 0;
 const clone = <T>(value: T): T => structuredClone(value);
 
-export const createEmptyDraft = (id: Mode, libraryVersion: string): CueDraft => ({
+export const createEmptyDraft = (id: Mode, libraryVersion: string, newDocument = true): CueDraft => ({
   schemaVersion: 1,
   id,
   revision: 0,
   libraryVersion,
   what: '',
   choices: [],
-  customText: newDraftDefaults(id).customText,
+  customText: newDocument ? newDraftDefaults(id).customText : {},
   edits: [],
   references: [],
   manualUnlocks: [],
@@ -86,12 +86,12 @@ const createFieldRevisions = (library: LibraryV2): Record<string, number> => {
   return revisions;
 };
 
-export const createDraftStoreDocument = (library: LibraryV2): DraftStoreDocument => ({
+export const createDraftStoreDocument = (library: LibraryV2, newDocument = true): DraftStoreDocument => ({
   schemaVersion: 1,
   libraryVersion: library.contentVersion,
   drafts: {
-    create: createEmptyDraft('create', library.contentVersion),
-    edit: createEmptyDraft('edit', library.contentVersion),
+    create: createEmptyDraft('create', library.contentVersion, newDocument),
+    edit: createEmptyDraft('edit', library.contentVersion, newDocument),
   },
   fieldRevisions: {
     create: createFieldRevisions(library),
@@ -105,7 +105,9 @@ const validRevisions = (value: unknown): value is Record<string, number> => isRe
 
 /** Parse without rewriting. The caller decides how to preserve corrupt/future files. */
 export const parseDraftStore = (input: unknown, library: LibraryV2): DraftStoreLoadResult => {
-  const fallback = createDraftStoreDocument(library);
+  // Recovery is not new-document creation. Preserve a blank recovered profile
+  // so the output default cannot overwrite an intentional or damaged state.
+  const fallback = createDraftStoreDocument(library, false);
   if (!isRecord(input)) return { document: fallback, status: 'recovered' };
   if (input.schemaVersion !== 1) {
     return { document: fallback, status: typeof input.schemaVersion === 'number' && input.schemaVersion > 1 ? 'future' : 'recovered' };
