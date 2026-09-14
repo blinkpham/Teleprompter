@@ -131,7 +131,7 @@ export const applyDraftCommand = (library: LibraryV2, draft: CueDraft, command: 
       return { ok: true, value: { draft: bump(draft, { manualUnlocks: unique(command.domains) }), touchedPaths: ['manualUnlocks'] } };
     }
     case 'choose-format': return { ok: true, value: { draft: bump(draft, { outputFormat: command.format }), touchedPaths: ['format'] } };
-    case 'reset-draft': return { ok: true, value: { draft: createDraft(library, draft.id, draft.revision + 1), touchedPaths: ['draft'] } };
+    case 'reset-draft': return { ok: true, value: { draft: createDraft(library, draft.id, draft.revision + 1, false), touchedPaths: ['draft'] } };
     case 'undo-draft': {
       const previous = history.at(-1);
       if (!previous) return issue('HISTORY_UNAVAILABLE', 'Undo is available after the first accepted draft change.');

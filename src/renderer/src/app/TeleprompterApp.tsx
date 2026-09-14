@@ -9,6 +9,8 @@ import type {
   DraftFieldPath,
   DraftCommandEnvelope,
   LibraryChoiceView,
+  LibraryCopyTextRequest,
+  LibraryTextResult,
   PreviewIntent,
   PreviewRequest,
   Mode,
@@ -50,6 +52,19 @@ const unavailableBridgeError = <T extends object>(message: string): BridgeResult
 
 const pathsForCommand = (command: CueCommand, state: AppState): readonly DraftFieldPath[] => {
   switch (command.type) {
+    case 'accept-quick-add': {
+      const draft = state.snapshot.drafts[state.snapshot.activeMode];
+      const target = command.acceptance.target;
+      if (target.kind === 'reference' || target.kind === 'snippet') return ['what'];
+      if (target.kind === 'token') {
+        const atom = state.library.choices.find((choice) => choice.kind === 'atom' && choice.id === target.recordId);
+        return ['what', ...(atom?.axisId ? [`axis:${atom.axisId}` as DraftFieldPath] : [])];
+      }
+      if (target.kind === 'edit') return ['what', `recipe:${target.recordId}`];
+      const preset = state.library.presets.find((item) => item.id === target.recordId);
+      const previousPresetAxes = draft.choices.filter((choice) => choice.source === 'preset' && choice.presetId === draft.activePresetId).map((choice) => choice.axisId);
+      return ['what', 'preset', ...[...new Set([...(preset?.scopeAxisIds ?? []), ...previousPresetAxes])].map((axisId) => `axis:${axisId}` as DraftFieldPath)];
+    }
     case 'set-what': return ['what'];
     case 'set-custom-text': return [`custom:${command.field}`];
     case 'set-axis':
@@ -242,6 +257,11 @@ export function TeleprompterApp() {
     return result;
   }, [state]);
 
+  const readLibraryText = useCallback((request: LibraryCopyTextRequest): Promise<BridgeResult<LibraryTextResult>> => {
+    if (!window.teleprompter?.getLibraryText) return Promise.resolve(unavailableBridgeError<LibraryTextResult>('Exact library text is unavailable until the desktop read bridge is loaded.'));
+    return window.teleprompter.getLibraryText(request);
+  }, []);
+
   const changeMode = useCallback((mode: Mode) => {
     activeModeRef.current = mode;
     setActiveMode(mode);
@@ -369,8 +389,8 @@ export function TeleprompterApp() {
         cautionIds: record.cautionIds,
         previewAssetId: record.previewAssetId,
       });
-    }} onCopy={(recordId, format) => copyLibraryText(recordId, format)} />}
-    {view === 'tokens' && <TokensSurface library={state.library} onApply={applyChoice} onCopy={(choice) => copyLibraryText(choice.id, 'expanded')} />}
+    }} onCopy={(recordId, format) => copyLibraryText(recordId, format)} onReadText={readLibraryText} />}
+    {view === 'tokens' && <TokensSurface library={state.library} onApply={applyChoice} onCopy={(choice) => copyLibraryText(choice.id, 'expanded')} onReadText={readLibraryText} />}
     {settings && settingsOpen && <SettingsDialog settings={settings} shortcutDraft={shortcutDraft} onShortcutChange={setShortcutDraft} onSubmit={saveShortcut} onClose={() => setSettingsOpen(false)} />}
   </TeleprompterShell>;
 }

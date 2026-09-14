@@ -30,7 +30,7 @@ describe('Teleprompter Cue engine', () => {
     });
   });
 
-  it('keeps the output default scoped to new Create and reset', () => {
+  it('keeps the output default scoped to new Create, not reset', () => {
     const create = createDraft(legacyLibrary, 'create');
     const edit = createDraft(legacyLibrary, 'edit');
     expect(create.customText.output).toBe('4:5 aspect ratio; 2K resolution target');
@@ -40,7 +40,7 @@ describe('Teleprompter Cue engine', () => {
     if (!changed.ok) return;
     const reset = applyDraftCommand(legacyLibrary, changed.value.draft, { type: 'reset-draft' });
     expect(reset.ok).toBe(true);
-    if (reset.ok) expect(reset.value.draft.customText.output).toBe('4:5 aspect ratio; 2K resolution target');
+    if (reset.ok) expect(reset.value.draft.customText.output).toBeUndefined();
   });
 
   it('unfolds a preset, lets a manual axis override win, and stays deterministic', () => {

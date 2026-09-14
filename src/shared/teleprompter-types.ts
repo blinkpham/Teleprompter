@@ -291,6 +291,7 @@ export type DraftFieldPath = 'draft' | 'what' | 'references' | 'manualUnlocks' |
 export type ExpectedFieldRevisions = Partial<Readonly<Record<DraftFieldPath, number>>>;
 
 export type CueCommand =
+  | AcceptQuickAddCommand
   | { readonly type: 'set-what'; readonly text: string }
   | { readonly type: 'set-custom-text'; readonly field: Field; readonly text: string }
   | { readonly type: 'set-axis'; readonly axisId: Id; readonly atomIds: readonly Id[]; readonly pinnedBlank?: boolean }

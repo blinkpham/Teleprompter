@@ -497,6 +497,7 @@ const validateCommand = (value: unknown, path: string): readonly ValidationIssue
     case 'set-reference-roles': requireKeys(['type', 'references']); if (!Array.isArray(command.references)) errors.push(issue(`${path}.references`, 'References must be an array.')); else errors.push(...command.references.flatMap((reference, index) => validateReferenceRole(reference, `${path}.references[${index}]`))); break;
     case 'set-manual-unlocks': requireKeys(['type', 'domains']); if (!Array.isArray(command.domains) || !command.domains.every((domain) => includes(DOMAINS, domain)) || !unique(command.domains as string[])) errors.push(issue(`${path}.domains`, 'Domains must be unique known values.')); break;
     case 'choose-format': requireKeys(['type', 'format']); if (!includes(['expanded', 'shorthand'], command.format)) errors.push(issue(`${path}.format`, 'Format is invalid.')); break;
+    case 'accept-quick-add': requireKeys(['type', 'acceptance']); errors.push(...validateQuickAddAcceptance(command.acceptance, `${path}.acceptance`)); break;
     case 'reset-draft': case 'undo-draft': requireKeys(['type']); break;
     default: errors.push(issue(`${path}.type`, 'Unknown command operation.'));
   }

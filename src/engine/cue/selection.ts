@@ -51,14 +51,14 @@ const axisPath = (axisId: Id): DraftFieldPath => `axis:${axisId}`;
 const atomMap = (library: LibraryV2): ReadonlyMap<Id, Atom> => new Map(library.atoms.map((atom) => [atom.id, atom]));
 const axisMap = (library: LibraryV2): ReadonlyMap<Id, Axis> => new Map(library.axes.map((axis) => [axis.id, axis]));
 
-export const createDraft = (library: LibraryV2, mode: Mode, revision = 0): CueDraft => ({
+export const createDraft = (library: LibraryV2, mode: Mode, revision = 0, newDocument = true): CueDraft => ({
   schemaVersion: 1,
   id: mode,
   revision,
   libraryVersion: library.contentVersion,
   what: '',
   choices: [],
-  customText: newDraftDefaults(mode).customText,
+  customText: newDocument ? newDraftDefaults(mode).customText : {},
   edits: [],
   references: [],
   manualUnlocks: [],

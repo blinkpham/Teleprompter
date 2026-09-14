@@ -1,12 +1,13 @@
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
-import type { Axis, AxisChoice, CopyFormat, CueCommand, CueDraft, Field, LibraryChoiceView, Mode } from '../../../shared/teleprompter';
+import type { Axis, AxisChoice, CopyFormat, CueCommand, CueDraft, Field, LibraryChoiceView, Mode, QuickAddResultView, QuickAddSession } from '../../../shared/teleprompter';
 import type { CueSurfaceProps } from '../../../shared/ui-types';
 import { CREATE_OUTPUT_DEFAULT_TEXT } from '../../../shared/teleprompter';
 import finishGroupUrl from '../assets/teleprompter/runtime/group-finish-v2.png';
 import opticsGroupUrl from '../assets/teleprompter/runtime/group-optics-v2.png';
 import stageGroupUrl from '../assets/teleprompter/runtime/group-stage-v2.png';
 import { createCueLayoutRequest, cueAccessory, cueTransition, type CuePickerKind } from './cue-layout';
+import { findQuickAddTrigger, type QuickAddTriggerMatch } from './quick-add';
 import {
   ArrowsClockwise,
   Check,
@@ -40,6 +41,25 @@ const GROUP_ART: Readonly<Record<GroupKey, string>> = {
   optics: opticsGroupUrl,
   stage: stageGroupUrl,
   finish: finishGroupUrl,
+};
+
+const quickAddAction = (kind: QuickAddResultView['target']['kind']): string => {
+  if (kind === 'preset') return 'Use preset';
+  if (kind === 'token') return 'Use token';
+  if (kind === 'edit') return 'Use operation';
+  if (kind === 'snippet') return 'Insert text';
+  return 'Use reference';
+};
+
+const choiceMatches = (choice: LibraryChoiceView, query: string): number => {
+  const needle = query.trim().toLowerCase();
+  if (!needle) return 1;
+  const title = choice.label.toLowerCase();
+  const values = [title, choice.shorthand.toLowerCase(), choice.summary.toLowerCase(), ...choice.aliases.map((alias) => alias.toLowerCase())];
+  if (title === needle || values.includes(needle)) return 1000;
+  if (title.startsWith(needle) || values.some((value) => value.startsWith(needle))) return 700;
+  if (values.some((value) => value.includes(needle))) return 400;
+  return 0;
 };
 
 const FIELD_LABELS: Readonly<Record<Field, string>> = {
@@ -99,6 +119,13 @@ export function CueSurface({ surface, snapshot, library, dispatch, copy, preview
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState<string | null>(null);
   const [what, setWhat] = useState(draft.what);
+  const [caret, setCaret] = useState(draft.what.length);
+  const [quickAddMatch, setQuickAddMatch] = useState<QuickAddTriggerMatch | undefined>();
+  const [quickAddIndex, setQuickAddIndex] = useState(0);
+  const [quickAddBusy, setQuickAddBusy] = useState(false);
+  const localInputRef = useRef(false);
+  const pasteRef = useRef(false);
+  const composingRef = useRef(false);
   const surfaceRef = useRef<HTMLElement | null>(null);
   const whatRef = useRef<HTMLTextAreaElement>(null);
   const openerRef = useRef<HTMLButtonElement | null>(null);
@@ -113,10 +140,86 @@ export function CueSurface({ surface, snapshot, library, dispatch, copy, preview
   const choiceMap = useMemo(() => new Map(library.choices.map((choice) => [choice.id, choice])), [library.choices]);
   const activeChoices = useMemo(() => library.choices.filter((choice) => choice.status === 'active'), [library.choices]);
 
+  const quickAddResults = useMemo<readonly QuickAddResultView[]>(() => {
+    if (!quickAddMatch) return [];
+    if (quickAddMatch.category === 'reference') {
+      const query = quickAddMatch.query.trim().toLowerCase();
+      return draft.references
+        .slice()
+        .sort((left, right) => left.imageNumber - right.imageNumber)
+        .filter((reference) => !query || `image ${reference.imageNumber} ${reference.role} ${reference.note}`.toLowerCase().includes(query))
+        .slice(0, 6)
+        .map((reference) => ({
+          target: { kind: 'reference' as const, imageNumber: reference.imageNumber },
+          title: `Image ${reference.imageNumber}`,
+          actionLabel: 'Use reference',
+          secondary: `${titleCase(reference.role)} · ${reference.note || 'Unbound reference'}`,
+        }));
+    }
+    const category = quickAddMatch.category;
+    return activeChoices
+      .filter((choice) => {
+        if (choice.kind === 'bundle') return false;
+        if (category === 'preset') return choice.kind === 'preset' && library.presets.find((preset) => preset.id === choice.id)?.applicability.includes(snapshot.activeMode);
+        if (category === 'token') return choice.kind === 'atom';
+        if (category === 'edit') return snapshot.activeMode === 'edit' && choice.kind === 'edit-recipe';
+        if (category === 'snippet') return choice.kind === 'atom';
+        return choice.kind === 'preset' || choice.kind === 'atom' || (snapshot.activeMode === 'edit' && choice.kind === 'edit-recipe');
+      })
+      .map((choice) => ({ choice, score: choiceMatches(choice, quickAddMatch.query) }))
+      .filter((item) => item.score > 0)
+      .sort((left, right) => right.score - left.score || left.choice.order - right.choice.order || left.choice.id.localeCompare(right.choice.id))
+      .slice(0, 6)
+      .map(({ choice }) => {
+        const targetKind = quickAddMatch.category === 'snippet' ? 'snippet' : choice.kind === 'preset' ? 'preset' : choice.kind === 'edit-recipe' ? 'edit' : 'token';
+        return {
+          target: { kind: targetKind, recordId: choice.id },
+          title: readableChoiceLabel(choice.label),
+          actionLabel: quickAddAction(targetKind),
+          secondary: choice.summary,
+          ...(choice.previewAssetId ? { previewAssetId: choice.previewAssetId } : {}),
+        };
+      });
+  }, [activeChoices, draft.references, library.presets, quickAddMatch, snapshot.activeMode]);
+
+  const quickAddSession = useMemo<QuickAddSession | undefined>(() => {
+    if (!quickAddMatch || quickAddResults.length === 0) return undefined;
+    return {
+      sessionId: `${surface}-${quickAddMatch.start}-${quickAddMatch.end}`,
+      trigger: quickAddMatch.trigger,
+      draftId: draft.id,
+      query: quickAddMatch.query,
+      queryRange: { start: quickAddMatch.start, end: quickAddMatch.end },
+      expectedWhat: what,
+      expectedRevision: draft.revision,
+      contentVersion: library.contentVersion,
+      results: quickAddResults,
+    };
+  }, [draft.id, draft.revision, library.contentVersion, quickAddMatch, quickAddResults, surface, what]);
+
   useEffect(() => {
     if (whatRef.current?.matches(':focus')) return;
     setWhat(draft.what);
+    setCaret(draft.what.length);
+    setQuickAddMatch(undefined);
   }, [draft.what]);
+
+  useEffect(() => {
+    if (!localInputRef.current) return;
+    localInputRef.current = false;
+    if (pasteRef.current) {
+      pasteRef.current = false;
+      setQuickAddMatch(undefined);
+      return;
+    }
+    const match = findQuickAddTrigger(what, caret, caret, composingRef.current);
+    setQuickAddMatch(match);
+    setQuickAddIndex(0);
+  }, [caret, what]);
+
+  useEffect(() => {
+    if (quickAddIndex >= quickAddResults.length) setQuickAddIndex(Math.max(0, quickAddResults.length - 1));
+  }, [quickAddIndex, quickAddResults.length]);
 
   useEffect(() => {
     const element = whatRef.current;
@@ -163,6 +266,66 @@ export function CueSurface({ surface, snapshot, library, dispatch, copy, preview
     }
     return true;
   }, [draft.what, trackDispatch, what]);
+
+  const acceptQuickAdd = async (result: QuickAddResultView) => {
+    const session = quickAddSession;
+    if (!session || copying || quickAddBusy) return;
+    // Acceptance is serialized with authoring so a late acknowledgement cannot
+    // overwrite characters typed against the pre-acceptance snapshot.
+    setQuickAddBusy(true);
+    try {
+      if (!(await flushAuthoring())) return;
+      const command: CueCommand = {
+        type: 'accept-quick-add',
+        acceptance: {
+          target: result.target,
+          queryRange: session.queryRange,
+          queryText: what.slice(session.queryRange.start, session.queryRange.end),
+          expectedWhat: what,
+          expectedContentVersion: session.contentVersion,
+        },
+      };
+      const acknowledgement = await trackDispatch(command);
+      if (!acknowledgement.ok) {
+        setCopyError(acknowledgement.error.message);
+        setQuickAddMatch(undefined);
+        return;
+      }
+      const nextWhat = acknowledgement.value.snapshot.drafts[session.draftId].what;
+      const suffix = what.slice(session.queryRange.end);
+      const nextCaret = nextWhat.endsWith(suffix) ? nextWhat.length - suffix.length : session.queryRange.start;
+      setWhat(nextWhat);
+      setCaret(Math.max(0, nextCaret));
+      setQuickAddMatch(undefined);
+      window.requestAnimationFrame(() => {
+        whatRef.current?.focus();
+        whatRef.current?.setSelectionRange(Math.max(0, nextCaret), Math.max(0, nextCaret));
+      });
+    } finally {
+      setQuickAddBusy(false);
+    }
+  };
+
+  const handleWhatKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (!quickAddSession) return;
+    if (event.nativeEvent.isComposing || composingRef.current) return;
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      setQuickAddIndex((index) => Math.min(index + 1, quickAddSession.results.length - 1));
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      setQuickAddIndex((index) => Math.max(index - 1, 0));
+    } else if (event.key === 'Enter') {
+      const result = quickAddSession.results[quickAddIndex];
+      if (result) {
+        event.preventDefault();
+        void acceptQuickAdd(result);
+      }
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      setQuickAddMatch(undefined);
+    }
+  };
 
   const measureSurface = useCallback(() => {
     if (surface !== 'spotlight' || !requestSurfaceLayout) return;
@@ -343,12 +506,14 @@ export function CueSurface({ surface, snapshot, library, dispatch, copy, preview
 
       <LayoutGroup id={`tp-cue-${surface}`}>
         {showParameterOverview && <motion.div className="tp-parameter-grid" layout transition={{ type: 'spring', stiffness: 380, damping: 34 }}>
-          {GROUPS.map((group) => <ParameterTile key={group.key} group={group} draft={draft} library={library} choiceMap={choiceMap} isOpen={picker === 'group' && groupForField(pickerField) === group.key} onOpen={(event) => openPicker('group', event.currentTarget, group.fields[0])} />)}
+          {GROUPS.map((group) => <ParameterTile key={group.key} group={group} draft={draft} library={library} choiceMap={choiceMap} isOpen={picker === 'group' && pickerField !== 'all' && groupForField(pickerField) === group.key} onOpen={(event) => openPicker('group', event.currentTarget, group.fields[0])} />)}
         </motion.div>}
         <motion.div className="tp-composer-surface" layout transition={{ type: 'spring', stiffness: 330, damping: 30, mass: 1 }}>
           <div className="tp-composer-glow" aria-hidden="true" />
           <label className="tp-what-label" htmlFor={`tp-what-${surface}`}>What</label>
-          <textarea ref={whatRef} id={`tp-what-${surface}`} className="tp-what-input" value={what} onChange={(event) => updateWhat(event.target.value.slice(0, 10000))} onBlur={() => updateWhat(what, true)} rows={2} placeholder={snapshot.activeMode === 'edit' ? 'Describe any other changes…' : 'Describe the subject, action, and scene…'} />
+          <textarea ref={whatRef} id={`tp-what-${surface}`} className="tp-what-input" value={what} disabled={quickAddBusy} aria-busy={quickAddBusy} onChange={(event) => { localInputRef.current = true; setCaret(event.target.selectionStart); updateWhat(event.target.value.slice(0, 10000)); }} onSelect={(event) => setCaret(event.currentTarget.selectionStart)} onKeyUp={(event) => setCaret(event.currentTarget.selectionStart)} onKeyDown={handleWhatKeyDown} onPaste={() => { pasteRef.current = true; }} onCompositionStart={() => { composingRef.current = true; setQuickAddMatch(undefined); }} onCompositionEnd={(event) => { composingRef.current = false; setCaret(event.currentTarget.selectionStart); }} onBlur={() => updateWhat(what, true)} rows={2} aria-controls={quickAddSession ? `tp-quick-add-${surface}` : undefined} aria-expanded={quickAddSession !== undefined} aria-activedescendant={quickAddSession ? `tp-quick-add-option-${quickAddIndex}` : undefined} placeholder={snapshot.activeMode === 'edit' ? 'Describe any other changes…' : 'Describe the subject, action, and scene…'} />
+          {quickAddBusy && <span className="tp-quick-add-status" role="status">Applying suggestion…</span>}
+          {quickAddSession && !quickAddBusy && <QuickAddList id={`tp-quick-add-${surface}`} session={quickAddSession} activeIndex={quickAddIndex} onChoose={(result) => void acceptQuickAdd(result)} />}
           {snapshot.activeMode === 'edit' && <EditSlots draft={draft} library={library} choiceMap={choiceMap} dispatch={trackDispatch} />}
         </motion.div>
       </LayoutGroup>
@@ -497,4 +662,15 @@ function PreviewPanel({ draft, preview, onChooseFormat, onCopy, onClose, copying
 
 function EmptySearch({ search }: { readonly search: string }) {
   return <div className="tp-empty-search"><MagnifyingGlass size={20} weight="duotone" /><strong>{search ? `No matches for “${search}”` : 'No mapped options yet'}</strong><span>Try another term or add literal custom text.</span></div>;
+}
+
+function QuickAddList({ id, session, activeIndex, onChoose }: { readonly id: string; readonly session: QuickAddSession; readonly activeIndex: number; readonly onChoose: (result: QuickAddResultView) => void }) {
+  return <div id={id} className="tp-quick-add" role="listbox" aria-label={session.trigger === 'mention' ? 'Reference suggestions' : 'Quick add suggestions'} aria-live="polite">
+    <span className="sr-only">{session.results.length} suggestions. Use arrow keys and Enter to choose.</span>
+    {session.results.map((result, index) => <button id={`tp-quick-add-option-${index}`} key={`${result.target.kind}-${'recordId' in result.target ? result.target.recordId : result.target.imageNumber}`} type="button" role="option" aria-selected={index === activeIndex} className={`tp-quick-add-row${index === activeIndex ? ' is-active' : ''}`} onMouseDown={(event) => event.preventDefault()} onClick={() => onChoose(result)}>
+      <span className="tp-quick-add-mark" aria-hidden="true">{result.target.kind === 'reference' ? '@' : '/'}</span>
+      <span className="tp-quick-add-copy"><strong>{result.title}</strong><small>{result.secondary ?? result.actionLabel}</small></span>
+      <span className="tp-quick-add-action">{result.actionLabel}</span>
+    </button>)}
+  </div>;
 }

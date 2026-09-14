@@ -420,7 +420,7 @@ const loadDrafts = async (): Promise<void> => {
       parsed = JSON.parse(raw);
     } catch {
       await preserveFile(draftsPath(), `recovery-${Date.now()}`);
-      draftStore = new DraftStore(library, runtimeModule);
+      draftStore = new DraftStore(library, runtimeModule, createDraftStoreDocument(library, false));
       profileRecovery = true;
       refreshPersistenceStatus();
       return;
@@ -429,7 +429,7 @@ const loadDrafts = async (): Promise<void> => {
     if (loaded.status !== 'loaded') {
       if (loaded.status === 'future') preferencesWriteBlocked = true;
       await preserveFile(draftsPath(), `${loaded.status}-${Date.now()}`);
-      draftStore = new DraftStore(library, runtimeModule);
+      draftStore = new DraftStore(library, runtimeModule, loaded.document);
       profileRecovery = true;
       refreshPersistenceStatus();
       return;
@@ -439,7 +439,7 @@ const loadDrafts = async (): Promise<void> => {
     const errorCode = cause && typeof cause === 'object' && 'code' in cause ? (cause as { code?: unknown }).code : undefined;
     if (errorCode !== 'ENOENT') profileRecovery = true;
     refreshPersistenceStatus();
-    draftStore = new DraftStore(library, runtimeModule);
+    draftStore = new DraftStore(library, runtimeModule, errorCode === 'ENOENT' ? undefined : createDraftStoreDocument(library, false));
   }
 };
 

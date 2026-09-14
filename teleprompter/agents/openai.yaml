@@ -1,0 +1,12 @@
+interface:
+  display_name: Teleprompter
+  short_description: Turn terse image-generation or image-editing requests plus attached references into preservation-first, production-ready prompts.
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true

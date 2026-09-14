@@ -2,7 +2,7 @@
 
 Date: 2026-09-14
 From → To: Library Curator → Teleprompter lead / Illustration owner
-Project: Image Director → Teleprompter
+Project: Teleprompter
 
 ## Outcome
 

@@ -154,6 +154,7 @@ const pathFor = (draft: CueDraft, command: CueCommand, library: LibraryV2): Draf
     case 'set-reference-roles': return ['references'];
     case 'set-manual-unlocks': return ['manualUnlocks'];
     case 'choose-format': return ['format'];
+    case 'accept-quick-add': return ['what'];
     case 'reset-draft': case 'undo-draft': return ['draft'];
   }
 };
