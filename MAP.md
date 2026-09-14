@@ -3,6 +3,14 @@
 Goal: Implement the Teleprompter upgrade: dark-only Cue Create/Edit, shortcut spotlight, redesigned library, generated artwork, and structured long-term curation.
 Updated: 2026-09-14
 
+## Current execution — 2026-09-14 post-worker checkpoint
+
+- Lead integration commit `8e5d3d6` adds engine-owned atomic quick add, measured spotlight layout requests, exact Preview and Library/Tokens read paths, Create-only default handling, compact image-led Cue controls, caret-safe slash/@ suggestions, and the Teleprompter skill package metadata/icon.
+- Sol/Core's fresh read-only review found four remaining contract/runtime risks: recovery construction can still re-enter new-document defaults unless the loader preserves the parsed blank fallback; quick-add acknowledgement must serialize editing so it cannot overwrite in-flight typing; the @ reference manager/chooser/thumbnail lifecycle is still missing; and configured-state styling plus B01 geometry need native confirmation.
+- The recovery loader and quick-add acknowledgement guard are now fixed. The reference lifecycle is dispatched as a separate worker lane; it must remain outside the accepted 14-record runtime boundary and must not expose filesystem paths.
+- Curator Batch 002 is integrated as proposed/reference-only and is ready for lead review. Illustration remains blocked until lead acceptance and direct `gpt-image-2.5-flare` route evidence; no artwork is activated from the batch.
+- Native witness: `03 Docs/Teleprompter Execution/Visual Reset 2026-09-13/Native/2026-09-14/Witness.md`. Electron visibly loads the dark Cue, one-axis Optics picker/search, and slash suggestions. Native quick-add keyboard acceptance, reference lifecycle, adaptive placement, clipboard read-back, and the full B01–B05/N01–N30 matrix remain open.
+
 ## Current execution — integrated offline Cue slice
 
 - `03 Docs/Teleprompter Plan/00-Start-Here.md` routes the audit, shared contracts, five worker missions, and lead acceptance plan.
@@ -25,7 +33,7 @@ Updated: 2026-09-14
 
 ## Upgrade checks still open
 
-- Local follow-up now wires the exact preview and Library/Tokens read-only seams, scopes the new Create output default, and removes misleading repeated family art from axis options. Native visual acceptance is still open because the user paused host-software use from 09:00–20:00.
+- Local follow-up now wires the exact preview and Library/Tokens read-only seams, scopes the new Create output default, adds atomic quick add and measured layout, and removes misleading repeated family art from axis options. Native visual acceptance remains open; the latest witness is recorded separately.
 
 - The default global shortcut is accepted on this macOS host through an OS-level System Events key-event witness; the configurable menu fallback remains available, while hardware-keyboard delivery and collision handling are unverified.
 - Native panel focus/Space behavior and physical display coverage require implementation-time tests.
@@ -36,9 +44,9 @@ Updated: 2026-09-14
 ## Current verification — UI quality reset
 
 - `npm run typecheck` passes.
-- `npm run test:logic` passes: 8 files, 33 tests.
+- `npm run test:logic` passes: 12 files, 57 tests.
 - `npm run build` passes and emits the renderer with the accepted v2 Optics, Stage, and Finish assets.
-- `git diff --check` passes; the focused Impeccable detector returns `[]` for the Cue surface and global styles.
+- `git diff --check` passes. The focused quick-add tests pass; native behavior remains separate from these local checks.
 - Earlier native inspection recorded image-led Cue group controls, a scoped Optics chooser, Library, and Tokens surfaces, but the latest planner re-audit contradicts visual acceptance: the controls still read as framed generic buttons, the Optics picker clips repeated artwork, and focus treatment is duplicated. Native desktop focused checks reported 15/15 placement tests passing; technical native acceptance remains separate from visual acceptance.
 
 ## Implemented v1 baseline
@@ -67,8 +75,8 @@ Updated: 2026-09-14
 
 ## Next
 
-1. Retain the accepted macOS shortcut/cursor evidence, menu fallback, and verified lifecycle; leave physical-keyboard, collision, second-display, and non-macOS coverage explicitly unverified.
-2. Dispatch future visual work only from `03 Docs/Teleprompter Plan/Visual Reset 2026-09-13/00-Start-Here.md` after lead review; keep its 31 requirements and 30 native cases open until the real Electron comparison passes.
-3. Keep practical illustration blocked until the exact GPT Image 2.5 Flare route is explicitly evidenced; then consume only the six curator-accepted AssetRequests.
-4. Preserve the 14-record runtime boundary while later curation resolves the 101 reference-only legacy rows.
-5. After the restricted window, run the actual Electron comparison for the updated capsules, exact preview, adaptive surface, focus treatment, and shortcut/reference seams; only then close native acceptance gaps.
+1. Integrate and verify the reference manager/chooser worker lane; keep stable Image N numbering, cancellation focus, missing-file state, and opaque thumbnail handles explicit.
+2. Re-run native quick-add acceptance and recovery/default witnesses, then record N16/N27/N28–N30 separately from local checks.
+3. Run the Electron comparison for B01–B05, adaptive N09/N20–N25, and the shortcut/reference seams; close only directly witnessed cases.
+4. Keep practical illustration blocked until the exact GPT Image 2.5 Flare route is explicitly evidenced; then consume only the six curator-accepted AssetRequests.
+5. Preserve the 14-record runtime boundary while later curation resolves the 101 reference-only legacy rows.
