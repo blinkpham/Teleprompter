@@ -1,6 +1,6 @@
 # Teleprompter — native Liquid Glass migration decision
 
-Date: 2026-09-14. Status: architecture decision; implementation remains open.
+Date: 2026-09-15. Status: architecture decision; native shell spike implemented locally, runtime acceptance remains open.
 
 ## Decision
 
@@ -25,7 +25,7 @@ The default native route is one AppKit-owned panel with one SwiftUI content tree
 The first native target assumes:
 
 - macOS 26.0 or later at runtime for the Liquid Glass path.
-- Xcode 26 or later with the macOS 26 SDK for the native build.
+- Xcode 26 or later with the macOS 26 SDK is the preferred native build environment. The current host has Swift 6.3.2 and the macOS 26.5 Command Line Tools SDK; `swift build` is available, while full Xcode and `xcodebuild` are not installed.
 - SwiftUI and AppKit available in the same application target; no web view is required for the first native surface.
 - A macOS 26 build/runtime witness on a real host before any claim about material, focus, animated bounds, or display placement.
 
@@ -110,7 +110,7 @@ The native layer does not create a second draft store or reimplement compiler se
 
 The adapter must preserve the existing local-only constraints: no model calls, network requests, uploads, accounts, or automatic paste. Any native IPC must validate message shape and sender/session identity at the boundary, and must not expose filesystem access to the SwiftUI content view.
 
-The canonical user-data location remains the existing project path required by the working contract, including the established preferences file and related local stores. The current Electron source and the documented Teleprompter directory assignment must be reconciled; that discrepancy is a migration blocker, not permission to silently move or duplicate user data. Resolve it with a separately witnessed migration decision before the native runtime writes real data.
+The canonical user-data location remains the existing project path required by the working contract, including the established preferences file and related local stores. The current source explicitly selects the Teleprompter user-data directory. The native handover gate is inventory, backup, compatible restore, and exclusive writing; do not silently move or duplicate user data. Resolve it with a separately witnessed migration decision before the native runtime writes real data.
 
 ## Content and naming boundaries
 
@@ -125,7 +125,7 @@ The canonical user-data location remains the existing project path required by t
 Each stage is a stop/go gate. A passing local build or browser preview never closes the corresponding native gate.
 
 1. **Freeze the contract and data boundary.** Publish the native adapter mapping above, confirm the 14-record library projection, confirm the canonical data path, and assign ownership of any new Swift/Xcode paths. Gate: no duplicate compiler/store contract and no unresolved data-path decision. Blocker: current Electron path mismatch until resolved.
-2. **Build the native shell spike.** Create a disposable macOS 26 target with AppKit lifecycle, one `NSPanel`, one SwiftUI content view, menu/shortcut wiring, display-edge placement, and an opaque fallback. Gate: direct `xcodebuild` succeeds with the macOS 26 SDK and the built app launches on the real macOS 26 host. Blocker: no native target currently exists in this Electron checkout.
+2. **Build the native shell spike.** The bounded target now lives at `native/TeleprompterNative/` with AppKit lifecycle, one `NSPanel`, one SwiftUI content view, a native editor, one Optics → Focal surface, Liquid Glass availability, and an opaque fallback. Gate: `swift build -c debug` succeeds with the installed macOS 26 SDK and the built executable launches on the real macOS 26 host. Full `xcodebuild` remains a separate tooling limitation, not the only acceptable build gate.
 3. **Prove the panel boundary.** Exercise quick bar, wrapped text, six-result list, compact parameter card, long preview, hide/reopen, Escape, outside dismissal, IME, chooser cancellation, Reduced Motion, Reduced Transparency, and two pointer locations. Gate: fresh native evidence for actual bounds, focus, hit footprint, and cancellation; no rectangular glass slab or stale resize. Blocker: any failed click-through, text-input, or lifecycle case sends the route back to a smaller connected surface or a targeted AppKit repair.
 4. **Connect the authoritative runtime.** Wire bootstrap, draft commands, snapshots, exact preview, copy, library text, references, and settings through the local adapter. Gate: native preview and clipboard read-back agree with the existing compiler for Create and Edit; quick-add is atomic and stale-safe; persistence status is observable. Blocker: any second store, stale result, raw-path exposure, or compiler divergence.
 5. **Implement B01–B03 and Liquid Glass.** Apply SwiftUI/AppKit material only to the accepted functional shapes, then prove the opaque accessibility fallback. Gate: fresh native B01–B03 captures and direct focus/material witnesses at macOS 26. Blocker: API availability without visual/runtime proof, double focus, repeated artwork, or invisible hit regions.
@@ -137,9 +137,9 @@ Installer packaging, signing, distribution, Windows/Linux support, Tauri migrati
 
 ## Explicit open blockers
 
-1. No SwiftUI/AppKit native target or direct Liquid Glass runtime witness exists in this checkout.
-2. The canonical project data path and the current Electron `userData` assignment disagree; do not write native data until that is resolved.
-3. The native local adapter transport and helper lifecycle are not implemented or acceptance-tested.
+1. The native SwiftUI/AppKit target builds from `native/TeleprompterNative/`, and the packaged app has direct AX evidence; formal Liquid Glass material/runtime acceptance remains open.
+2. Native data handover still needs inventory, backup, compatible restore, and exclusive-writer evidence before real user-data writes.
+3. The versioned local adapter and helper lifecycle are implemented and smoke-tested; native compiler/clipboard parity and restart persistence remain acceptance-open.
 4. Native B01–B05, N20–N30, reduced-transparency behavior, VoiceOver, physical keyboard delivery, collision handling, and second-display coverage remain unwitnessed.
 5. Exact `gpt-image-2.5-flare` route evidence and curator-before-Illustration acceptance remain required before practical artwork is activated.
 

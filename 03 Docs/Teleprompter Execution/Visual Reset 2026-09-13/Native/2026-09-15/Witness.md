@@ -18,7 +18,7 @@ Witness date: 2026-09-15, Asia/Ho_Chi_Minh (UTC+07:00).
 
 | Field | Recorded value |
 |---|---|
-| Checkout | `/Users/blinblon/.codex/worktrees/5d0c/Image Director` |
+| Checkout | native witness worktree (recorded separately from this checkout) |
 | Git identity | detached `HEAD`, `6fcfec3` |
 | Dirty state before witness | Modified: `03 Docs/Teleprompter Plan/Visual Reset 2026-09-13/{00-Start-Here.md,05-Adaptive-Window-Research.md,09-Astra-Implementation-Brief-2026-09-14.md,10-Native-Liquid-Glass-Migration-Decision.md}`; untracked `native/` already present |
 | Host | macOS 26.6.2, build 25G83, arm64 |
@@ -32,14 +32,14 @@ The first build attempt failed only because the package cache contained a module
 
 ## Build, package, and launch evidence
 
-Commands were run from `/Users/blinblon/.codex/worktrees/5d0c/Image Director/native/TeleprompterNative` unless stated otherwise.
+Commands were run from the native witness worktree's `native/TeleprompterNative` directory unless stated otherwise.
 
-1. `swift build -c debug` — first attempt failed with a stale `SwiftShims.pcm` path pointing at `/Users/blinblon/Claude/Projects/Image Director/...`.
+1. `swift build -c debug` — first attempt failed with a stale `SwiftShims.pcm` path pointing at a different checkout.
 2. `swift package clean` — cleared only this package's generated `.build/` cache.
 3. `swift build -c debug` — **pass**, `Build complete!`.
 4. `swift build -c debug` — **pass**, incremental confirmation, `Build complete! (0.20s)`.
-5. `./Scripts/package-app.sh` — **pass**; produced `/Users/blinblon/.codex/worktrees/5d0c/Image Director/native/TeleprompterNative/.build/TeleprompterNative.app` with an ad hoc signature.
-6. `open -n '/Users/blinblon/.codex/worktrees/5d0c/Image Director/native/TeleprompterNative/.build/TeleprompterNative.app'` — launched the exact recorded bundle at `2026-09-15T14:02:55Z` as PID `90291`.
+5. `./Scripts/package-app.sh` — **pass**; produced the native witness worktree's `.build/TeleprompterNative.app` with an ad hoc signature.
+6. `open -n '.build/TeleprompterNative.app'` — launched the exact recorded bundle at `2026-09-15T14:02:55Z` as PID `90291`.
 
 Bundle identity:
 
@@ -54,7 +54,7 @@ An older debug executable was simultaneously present as PID `67979` (`./.build/a
 
 The packaged PID `90291` was terminated at `2026-09-15T14:10:54Z`. Reopen command:
 
-`open -n '/Users/blinblon/.codex/worktrees/5d0c/Image Director/native/TeleprompterNative/.build/TeleprompterNative.app'`
+`open -n '.build/TeleprompterNative.app'`
 
 This reopened the same bundle at `2026-09-15T14:11:02Z` as PID `4545`. CUA showed one `Teleprompter Cue` panel, empty WHAT, `Native • 14 records`, and `rev 0`. CoreGraphics measured the reopened window as `x=446, y=105, width=620, height=234`.
 

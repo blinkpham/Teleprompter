@@ -4,6 +4,8 @@ Date: 2026-09-14. Scope: implementation planning and dispatch. **Visual acceptan
 
 The user reports that five main grievances remain unresolved. Treat B01–B05 below as explicit acceptance blockers, even where an earlier handoff says accepted. Complete the adaptive Cue scope alongside them. This brief routes the existing [reset plan](00-Start-Here.md); it does not replace its 31 requirements or 30 native cases.
 
+**Architecture override — 2026-09-15:** the new implementation target is native macOS SwiftUI/AppKit with genuine Liquid Glass. Electron is retained for compatibility comparison only and cannot close native acceptance. The bounded native spike lives under `native/TeleprompterNative/`; its current fixture bridge must be replaced by a versioned local JSON-lines adapter to the authoritative TypeScript store/compiler.
+
 ## Objective and reading route
 
 Deliver a compact, image-led composer with a smoothly resizing translucent popup, exact compiler preview, saved new-draft output defaults, real shortcut settings, compact parameter controls, `/` quick add, and `@` reference mentions. Success requires fresh native evidence of the intended appearance and behavior.
@@ -11,6 +13,8 @@ Deliver a compact, image-led composer with a smoothly resizing translucent popup
 Read `AGENTS.md` and `MAP.md`, then this brief, [visual contract](01-Visual-Contract.md), [adaptive Cue](07-Adaptive-Cue-Contract.md), and [quick add](08-Quick-Add-and-References.md). Use [worker missions](03-Worker-Missions.md) for dispatch details and [acceptance](04-Acceptance.md) for N01–N30. Consult [native research](05-Adaptive-Window-Research.md) only for the host decision and [interaction research](06-Compact-Interaction-Research.md) for the chosen controls. The [mismatch log](02-Reaudit-and-Mismatch-Log.md) links the original annotations and September 13 native before images.
 
 Use os-build for implementation and impeccable for the affected UI. Preserve existing dirty work. One lead owns integration, publication, and conclusions; one witness owns the native cursor at a time. This planner has not run a new native session or implemented application changes.
+
+The product and prompting skill are **Teleprompter** throughout new plans, implementation, acceptance copy, and handoffs. The live skill source is `teleprompter/`. The retained renderer surface uses `window.teleprompterLegacy`; the primary Cue bridge remains `window.teleprompter`. Use those current names and verify path existence instead of reconstructing paths from an older product name.
 
 ## Five blockers that must remain visible
 
@@ -70,11 +74,11 @@ Write new handoffs under `03 Docs/Teleprompter Execution/Visual Reset 2026-09-13
 
 ## Adaptive host and compact interaction decisions
 
-Start with Electron. The first native spike uses five UI fixtures: one-line bar, wrapped WHAT, six-result list, compact parameter card, and long preview. Test actual bounds, transparent-gap input, caret/IME stability, interruption, display-edge anchoring, and Reduced Motion/Transparency before accepting the host route. Use the bounded repetitions and fallback criteria in file 05.
+Start with the native macOS spike. Use the five UI fixtures—one-line bar, wrapped WHAT, six-result list, compact parameter card, and long preview—inside an AppKit `NSPanel` with SwiftUI content. Test actual bounds, transparent-gap input, caret/IME stability, interruption, display-edge anchoring, and Reduced Motion/Transparency before accepting the native route. Use the bounded repetitions and fallback criteria in file 05. The installed Swift 6.3.2/macOS 26.5 SDK can be used for the first command-line build; full Xcode and `xcodebuild` are currently unavailable and must be recorded as a limitation.
 
 The target rests near 540×64 DIP and grows with measured content. Visible material belongs to the capsule/card/action shapes. No permanent oversized host, fixed tall background, pointer chasing, or invisible click-catching gaps. Coordinate native bounds and renderer motion through one owner; keep editable text mounted and unscaled. Defaults are 160–220ms expansion and 120–160ms collapse, with immediate or ≤80ms fade under Reduced Motion. A supplied still reference establishes shape and hierarchy, not demonstrated motion.
 
-If Electron fails a named native requirement after the bounded targeted repair, record the evidence and choose the narrow fallback: shaped native material bridge where sufficient, or a Swift `NSPanel` popup when lifecycle/input demands it. Prove any `WKWebView` transparency assumption; retain a native Cue-view option if needed. Keep the main Electron app and one authoritative store/compiler. The lead assigns any new native module's exact paths before implementation. A whole-app framework migration is outside this reset. Literal notch attachment remains optional and must have a non-notched fallback.
+Use the native `NSPanel` route as the primary host and keep the existing Electron app only as a compatibility comparison. Prove genuine Liquid Glass and its opaque Reduced Transparency fallback; a CSS/WebView transparency result is insufficient. Keep one authoritative store/compiler behind the versioned local adapter. The lead assigns exact native paths before implementation. A whole-app framework migration beyond the bounded native surface is outside this reset. Literal notch attachment remains optional and must have a non-notched fallback.
 
 Pick controls by accepted option semantics: short rows/segments, a finite camera-style ticker for ordered discrete cues, explicit toggles for multi-select, and a bounded searchable list for many choices. Numeric scrubbers require published units/range/step; artwork does not create numeric semantics. Drag highlights, release commits once, Escape cancels, and keyboard/direct entry remain usable. Expand only one axis, cap suggestions at six 44px rows, and scroll within available height. Context menus contain secondary actions; they do not hide the primary selection path.
 
@@ -88,6 +92,6 @@ Pick controls by accepted option semantics: short rows/segments, a finite camera
 4. Maintain two ledgers: N01–N30 case results and B01–B05 visual blocker closure. Use pass/fail/partial/unwitnessed/blocked with linked evidence. Motion needs a recording or described live witness; clipboard contents and persistence need actual observations. Browser output and technical test counts cannot close visual approval.
 5. Return each defect to its owner and recheck its affected cases. The lead closes visual acceptance only after reviewing fresh native comparisons that resolve all five blockers and the required reset states. User-reported remaining mismatches reopen acceptance. Unavailable hardware or practical art stays explicit, with no fabricated pass.
 
-Retain offline operation, independent Create/Edit drafts, source-faithful compilation, intentional blanks, and the existing 14 accepted runtime records. Proposed Batch 002 content remains inactive; practical artwork still requires an evidenced exact `gpt-image-2.5-flare` route. Preserve original source folders, historical plans, and the existing preferences location.
+Retain offline operation, independent Create/Edit drafts, source-faithful compilation, intentional blanks, and the existing 14 accepted runtime records. Proposed Batch 002 content remains inactive; practical artwork still requires an evidenced exact `gpt-image-2.5-flare` route. Preserve `teleprompter/` source material, historical plans, and saved user data while consuming the lead's current Teleprompter naming and storage configuration.
 
 Next action: lead reconciles Mission 0 against the current dirty contracts and dispatches the first ready missions using this brief.

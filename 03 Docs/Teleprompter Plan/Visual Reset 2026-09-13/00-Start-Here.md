@@ -18,7 +18,7 @@ The lead owns publication into MAP.md, the top-level plan index, and the executi
 | [02 — Reaudit and mismatch log](02-Reaudit-and-Mismatch-Log.md) | What is still wrong, what improved, and what has not been witnessed |
 | [03 — Worker missions](03-Worker-Missions.md) | Ownership, dependencies, exact dispatch prompts, integration exceptions |
 | [04 — Acceptance](04-Acceptance.md) | Native before/after cases and evidence required to close each requirement |
-| [05 — Native host research](05-Adaptive-Window-Research.md) | Electron feasibility, transparent/input limits, and narrow AppKit fallback |
+| [05 — Native host research](05-Adaptive-Window-Research.md) | Native macOS/AppKit host, Liquid Glass feasibility, transparent/input limits, and retained compatibility evidence |
 | [06 — Compact interaction research](06-Compact-Interaction-Research.md) | Expandable cards, morphs, camera tickers, scrubbers, context menus, suggestions |
 | [07 — Adaptive Cue](07-Adaptive-Cue-Contract.md) | Measured popup sizes, compact selectors, motion coordination, host mission |
 | [08 — Quick add and references](08-Quick-Add-and-References.md) | `/preset`, `/snippet`, `@`, atomic acceptance, local image bindings |
@@ -45,14 +45,14 @@ Library gives each preset a visual cover and a clear “Use in Cue” action. Co
 ## Dispatch order
 
 1. Lead reconciles current dirty ownership and the partial contracts listed in 09, then completes and publishes the preview/default, layout, quick-add, and reference-binding contracts.
-2. Desktop and UI owners run the bounded adaptive-host spike; asset audit and engine quick-add work proceed independently where contracts are ready.
-3. Owners implement and integrate the chosen host and visual surfaces, then run the smallest affected checks.
+2. Native host and UI owners run the bounded SwiftUI/AppKit spike; asset audit and engine quick-add work proceed independently where contracts are ready.
+3. Owners implement and integrate the native surface, then run the smallest affected checks. Electron remains a compatibility comparison only.
 4. Native witness captures the 30 acceptance cases; the lead resolves failures and records practical-art or hardware limits separately.
 
 The native-host spike is necessary because the window contract changes. It does not justify unrelated platform/installer work. Do not regenerate objects merely because their current CSS crops them badly.
 
 ## Lead dispatch prompt
 
-> Implement `03 Docs/Teleprompter Plan/Visual Reset 2026-09-13/`. Read AGENTS.md and MAP.md, then this index, Mission 0, and contracts 07–08. Treat the five annotations and native main/Optics evidence as open requirements. Use os-build and impeccable. Publish the typed seams, run the bounded Electron host spike, and take the narrow native-popup fallback only if its named checks fail. Implement compact selectors, exact compiler preview, new Create-output defaults, `/` quick add, and `@` reference bindings while preserving accepted content and compiler meaning. Delegate the bounded missions with one UI/style owner and one native cursor owner at a time. You are not alone in the codebase: preserve all existing dirty work. Publish this pointer in MAP.md and obtain the native evidence in 04. Report partial or blocked criteria honestly; assets, screenshots, and tests prove different layers.
+> Implement `03 Docs/Teleprompter Plan/Visual Reset 2026-09-13/`. Read AGENTS.md and MAP.md, then this index, Mission 0, and contracts 07–08. Treat the five annotations and native main/Optics evidence as open requirements. Use os-build and impeccable. Publish the typed seams, run the bounded native macOS host spike from `native/TeleprompterNative/`, and preserve Electron only as compatibility evidence. Implement compact selectors, exact compiler preview, new Create-output defaults, `/` quick add, and `@` reference bindings while preserving accepted content and compiler meaning. Delegate the bounded missions with one UI/style owner and one native cursor owner at a time. You are not alone in the codebase: preserve all existing dirty work. Publish this pointer in MAP.md and obtain the native evidence in 04. Report partial or blocked criteria honestly; assets, screenshots, and tests prove different layers.
 
 Next action: use 09 as the lead's current implementation brief, with the contracts and missions linked here.

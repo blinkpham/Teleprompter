@@ -1,7 +1,14 @@
 # MAP — Teleprompter
 
 Goal: Implement the Teleprompter upgrade: dark-only Cue Create/Edit, shortcut spotlight, redesigned library, generated artwork, and structured long-term curation.
-Updated: 2026-09-14
+Updated: 2026-09-16
+
+## Current checkpoint — native pivot implementation
+
+- The direct user pivot is implemented in the native Cue surface: `CueView.swift` now presents individually floating prompt/actions with no enclosing slab, focused one-at-a-time Optics/Stage/Finish/Preview flows, selectable Preview text, bouncy spring feedback, and Reduce Motion/Reduce Transparency fallbacks. Visible `Cue`, `Native • 14 records`, `rev 0`, and redundant secondary labels are removed. Lead commit: `3ae2893` (worker source: `9422a5c`).
+- The authoritative TypeScript helper is integrated in `src/core/`, consuming `src/shared/native-bridge.ts` rather than creating a second wire contract. It provides byte-first JSON-lines framing, disposable-session runtime handling, exact revision-bound Preview/Library text, persistence/flush state, separate request/command idempotency, and a terminal shutdown path. Lead commit: `cd99800` (worker source: `7bdd133`).
+- The native host now launches that helper over inherited pipes, bundles `teleprompter-helper.js` when available, maps bootstrap/submit-command/exact-preview responses into the existing Cue bridge, and falls back explicitly to the fixture only when helper/Node resolution fails. The current packaged app's live AX tree shows the floating prompt, Optics/Stage/Finish controls, Preview, and Apply; helper-backed clipboard/compiler parity is still unclosed.
+- Verification now passes: `npm run typecheck`, `npm run test:logic` (16 files, 76 tests), `npm run typecheck:helper`, `npm run test:helper` (9 tests), `npm run helper:build`, `npm run build`, `swift build -c debug`, the native ad-hoc package script, and a direct packaged launch with helper resolution. Astra has not been messaged during this unfinished implementation cycle.
 
 ## Current execution — native macOS/Liquid Glass route
 
@@ -83,8 +90,8 @@ Updated: 2026-09-14
 
 ## Next
 
-1. Review the three current Luna missions: the authoritative JSON-lines bridge, the native acceptance witness, and the proposed curator gate; consume only disjoint, verified handoffs.
-2. Connect the native bridge to the TypeScript store/compiler, then port B01–B05/N01–N30 and run native keyboard, focus, bounds, reduced-transparency, accessibility, and clipboard witnesses.
+1. Harden native data handover and helper/Node packaging so the direct bridge has an explicit durable/recovery path rather than relying on fixture fallback.
+2. Port B01–B05/N01–N30 and run native keyboard, focus, bounds, reduced-transparency, accessibility, clipboard, restart, and persistence witnesses.
 3. Preserve Electron comparison evidence for regression only; do not use it to close native Liquid Glass acceptance.
 4. Keep practical illustration blocked until Curator's proposed taxonomy is accepted and the exact GPT Image 2.5 Flare route is explicitly evidenced; then consume only the six accepted AssetRequests.
-5. Preserve the 14-record runtime boundary while later curation resolves the 101 reference-only legacy rows.
+5. Preserve the 14-record runtime boundary while later curation resolves the 101 reference-only legacy rows, and publish the Teleprompter repo once the authenticated GitHub remote is configured.
