@@ -2,7 +2,7 @@
 
 ## Outcome
 
-The bounded native parity fix is implemented and packaged. Live evidence shows the three accepted v2 Cue identity assets in the native controls and their corresponding in-flow panels. The acceptance result remains **NOT CLEAN / partial**: the last explicit Sol verdict was NOT CLEAN, and the post-witness Sol request timed out while ChatGPT Web still showed “Working.” No final post-review verdict was available to replace it.
+The bounded native parity fix is implemented and packaged. Live evidence shows the three accepted v2 Cue identity assets in the native controls and their corresponding in-flow panels. The bounded parity result is **CLEAN / partial**: Sol's final post-witness review accepted the contour and image-led parity fix, while the broader native acceptance matrix remains partial or unwitnessed.
 
 No full B01–B05 pass is claimed. This witness does not close compiler/clipboard equality, persistence, reduced-transparency or reduced-motion behavior, search, VoiceOver/IME, physical hardware keyboard, adaptive edge cases, or the remaining native acceptance matrix.
 
@@ -25,7 +25,7 @@ The starting lead HEAD was `c7e5d26`. The later parent-authorized parity fix cha
 
 The pre-witness Sol review required exact package identity, disposable persistence, helper-child proof, direct AX/bounds evidence, conservative status vocabulary, and no claim that normal translucency proves genuine Liquid Glass. Its explicit visual verdict was **NOT CLEAN**: competing interactive glass, nested rounded surfaces, and the macOS focus ring were diagnosed as the likely source of the connected/squiggly contour. The requested smallest direction was one material owner, clean group hit regions, one focus treatment, the accepted v2 rasters for Optics/Stage/Finish, compact collapsed controls, and truthful unavailable states.
 
-The post-witness review was submitted after the fix with the final package identity, screenshots, AX sequence, and window-bound classification. A 10-second bounded wait ended with the Sol tab still showing `Working`; no additional CUA retry was made. Therefore the pre-witness NOT CLEAN verdict remains the governing parity verdict. The post-review request itself is evidence of consultation, not a response or acceptance.
+The post-witness review was submitted after the fix with the final package identity, screenshots, AX sequence, and window-bound classification. Sol returned **CLEAN for the bounded Cue parity fix**. Sol accepted the separated contours, compact image-led controls, one focus treatment, utility SF Symbols, and the host-edge classification. Sol also kept B01–B03 partial and B04–B05 unwitnessed, with no full N01–N30 passes.
 
 ## Runtime identity and safety
 

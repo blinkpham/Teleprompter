@@ -3,6 +3,14 @@
 Goal: Implement the Teleprompter upgrade: dark-only Cue Create/Edit, shortcut spotlight, redesigned library, generated artwork, and structured long-term curation.
 Updated: 2026-09-16
 
+## Current checkpoint — final Sol parity review and image-led native Cue (2026-09-16)
+
+- Final Sol post-witness review is **CLEAN for the bounded Cue parity fix**. The reported connected/squiggly button contour is closed at the product-control level: the decorative enclosing glass owner is no longer interactive, the group controls keep one consistent treatment, and the thin remaining perimeter is classified as the AppKit window edge rather than a connected button outline.
+- The native packaged Cue now visibly uses the accepted premium v2 generated family artwork for Optics, Stage, and Finish. Utility actions remain native SF Symbols. The assets are loaded explicitly from the signed app bundle and are copied into `Contents/Resources`; the live collapsed and in-flow panel captures are in `03 Docs/Teleprompter Execution/Visual Reset 2026-09-13/Native/2026-09-16/`.
+- Adaptive hierarchy is implemented: controls collapse by default, reveal on hover/focus, panels insert in flow, the prompt grows with wrapped text, Apply is the large primary icon action, Preview is the smaller secondary action, and Ratio/Resolution/Add Reference remain available. Sol still leaves responsive edge cases, Reduced Motion/Transparency, and full motion proof open.
+- Lead commit `9bd7e24` integrates native asset packaging, explicit raster loading, the bounded contour fix, and the native witness. Lead commit `69a45c7` records the curator's Batch 002 decision: **REVISE / KEEP PROPOSED / REFERENCE-ONLY**. The exact Flare route remains unavailable/evidenceless; no practical record-specific artwork is activated.
+- Lead checks pass: `npm run typecheck`, `npm run test:logic` (79 tests), `npm run build`, `swift build -c debug`, native packaging, codesign verification, `git diff --check`, and the focused Impeccable detector (`[]`). Remaining native ceilings are B01–B03 partial, B04–B05 unwitnessed, and no full N01–N30 passes.
+
 ## Current checkpoint — native Cue redesign and handover hardening (2026-09-16)
 
 - The latest user correction is implemented in native `CueView.swift`: the default state is collapsed, configuration controls reveal on hover/focus, selection panels insert in-flow instead of hiding the prompt/actions, the prompt wraps and grows, Apply is a large icon-only primary action, Preview is a smaller icon-only action below it, and Ratio/Resolution/Add Reference controls are present.
@@ -91,8 +99,8 @@ Updated: 2026-09-16
 
 ## Next
 
-1. Harden native data handover and helper/Node packaging so the direct bridge has an explicit durable/recovery path rather than relying on fixture fallback.
-2. Port B01–B05/N01–N30 and run native keyboard, focus, bounds, reduced-transparency, accessibility, clipboard, restart, and persistence witnesses.
-3. Preserve Electron comparison evidence for regression only; do not use it to close native Liquid Glass acceptance.
-4. Keep practical illustration blocked until Curator's proposed taxonomy is accepted and the exact GPT Image 2.5 Flare route is explicitly evidenced; then consume only the six accepted AssetRequests.
-5. Preserve the 14-record runtime boundary while later curation resolves the 101 reference-only legacy rows, and keep the public Teleprompter remote synchronized with reviewed commits.
+1. Send the new bounded Astra plan brief with the five grievance blockers, the final Sol parity verdict, the native evidence ceilings, and the Curator/Illustration gates.
+2. Revise Batch 002 as a new proposal with MECE focal/distance semantics, live IDs, an import guard, corrected fixed/variable controls, and the required draft/favorite impact audit.
+3. Continue only the remaining native witnesses: Apply → Preview/compiler/clipboard parity, persistence/defaults/settings, Reduced Motion/Transparency, adaptive edge/display behavior, search/focus, and VoiceOver/IME.
+4. Keep practical illustration blocked until the exact `gpt-image-2.5-flare` route is explicitly selectable/evidenced and the revised curator requests are accepted; do not substitute generic icons or unknown-model outputs.
+5. Preserve the 14-record runtime boundary and publish only reviewed commits to the public Teleprompter remote.
