@@ -15,9 +15,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var controller: CuePanelController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        if let bridge = NativeHelperBridge.make() {
+        let profile = NativeHelperProfile.fromEnvironment
+        if let bridge = NativeHelperBridge.make(profile: profile) {
             controller = CuePanelController(bridge: bridge)
         } else {
+            fputs("Teleprompter helper unavailable for the \(profile.rawValue) profile; using the development fixture. No compiler/store parity is claimed.\n", stderr)
             controller = CuePanelController(bridge: DevelopmentFixtureBridge())
         }
         controller?.show()

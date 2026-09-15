@@ -89,16 +89,16 @@ final class NativeHelperBridge: @unchecked Sendable, NativeRuntimeBridge {
         draftRevision: 0
     )
 
-    static func make() -> NativeHelperBridge? {
+    static func make(profile: NativeHelperProfile = .fromEnvironment) -> NativeHelperBridge? {
         do {
-            return try NativeHelperBridge()
+            return try NativeHelperBridge(profile: profile)
         } catch {
             fputs("Teleprompter helper unavailable: \(error.localizedDescription)\n", stderr)
             return nil
         }
     }
 
-    private init() throws {
+    private init(profile: NativeHelperProfile) throws {
         let helperPath = try Self.resolveHelperPath()
         let nodePath = try Self.resolveNodePath()
         let toHelper = Pipe()
@@ -110,6 +110,14 @@ final class NativeHelperBridge: @unchecked Sendable, NativeRuntimeBridge {
         process.standardInput = toHelper
         process.standardOutput = fromHelper
         process.standardError = FileHandle.standardError
+        var childEnvironment = ProcessInfo.processInfo.environment
+        childEnvironment["TELEPROMPTER_PERSISTENCE_PROFILE"] = profile.rawValue
+        if let persistencePath = Self.persistencePath(for: profile) {
+            childEnvironment["TELEPROMPTER_PERSISTENCE_PATH"] = persistencePath
+        } else {
+            childEnvironment.removeValue(forKey: "TELEPROMPTER_PERSISTENCE_PATH")
+        }
+        process.environment = childEnvironment
         input = toHelper.fileHandleForWriting
         output = fromHelper.fileHandleForReading
         clientId = "native-\(UUID().uuidString.lowercased())"
@@ -120,7 +128,7 @@ final class NativeHelperBridge: @unchecked Sendable, NativeRuntimeBridge {
                 operation: "hello",
                 payload: [
                     "clientVersion": "teleprompter-native-macos",
-                    "profileId": "disposable-native",
+                    "profileId": "native-\(profile.rawValue)",
                     "profileKind": "disposable",
                     "requestedCapabilities": Self.operations,
                 ],
@@ -145,6 +153,12 @@ final class NativeHelperBridge: @unchecked Sendable, NativeRuntimeBridge {
     }
 
     deinit {
+        lock.lock()
+        if !closed && process.isRunning && !helperSessionId.isEmpty {
+            try? _ = requestUnlocked(operation: "shutdown", payload: ["reason": "host-exit"])
+            closed = true
+        }
+        lock.unlock()
         if process.isRunning { process.terminate() }
     }
 
@@ -230,19 +244,26 @@ final class NativeHelperBridge: @unchecked Sendable, NativeRuntimeBridge {
         ]
         let data = try JSONSerialization.data(withJSONObject: frame, options: []) + Data([0x0A])
         try input.write(contentsOf: data)
-        let response = try readFrame()
-        guard response["operation"] as? String == operation,
-              response["requestId"] as? String == id else {
-            throw NativeBridgeError.protocolViolation("The helper response identity did not match the request.")
+        while true {
+            let response = try readFrame()
+            if response["kind"] as? String == "event" {
+                // Mutations emit an authoritative snapshot after their response. Consume it
+                // so it cannot be mistaken for the next request's response.
+                continue
+            }
+            guard response["operation"] as? String == operation,
+                  response["requestId"] as? String == id else {
+                throw NativeBridgeError.protocolViolation("The helper response identity did not match the request.")
+            }
+            if response["ok"] as? Bool == false {
+                let error = response["error"] as? [String: Any]
+                throw NativeBridgeError.remote(
+                    code: error?["code"] as? String ?? "INTERNAL",
+                    message: error?["message"] as? String ?? "The helper rejected the request."
+                )
+            }
+            return response
         }
-        if response["ok"] as? Bool == false {
-            let error = response["error"] as? [String: Any]
-            throw NativeBridgeError.remote(
-                code: error?["code"] as? String ?? "INTERNAL",
-                message: error?["message"] as? String ?? "The helper rejected the request."
-            )
-        }
-        return response
     }
 
     private func readFrame() throws -> [String: Any] {
@@ -288,9 +309,26 @@ final class NativeHelperBridge: @unchecked Sendable, NativeRuntimeBridge {
         throw NativeBridgeError.unavailable("Set TELEPROMPTER_HELPER_PATH or package the helper with the app.")
     }
 
+    private static func persistencePath(for profile: NativeHelperProfile) -> String? {
+        guard profile == .durable else { return nil }
+        if let override = ProcessInfo.processInfo.environment["TELEPROMPTER_PERSISTENCE_PATH"], !override.isEmpty {
+            return override
+        }
+        return canonicalDraftStorePath.path
+    }
+
+    private static var canonicalDraftStorePath: URL {
+        let applicationSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        return applicationSupport
+            .appendingPathComponent("teleprompter", isDirectory: true)
+            .appendingPathComponent("cue-drafts.json", isDirectory: false)
+    }
+
     private static func resolveNodePath() throws -> String {
         let environment = ProcessInfo.processInfo.environment
-        let candidates = [environment["TELEPROMPTER_NODE_PATH"], "/opt/homebrew/bin/node", "/usr/local/bin/node", "/usr/bin/node"].compactMap { $0 }
+        let pathCandidates = environment["PATH"]?.split(separator: ":").map { "\($0)/node" } ?? []
+        let candidates = [environment["TELEPROMPTER_NODE_PATH"], "/opt/homebrew/bin/node", "/usr/local/bin/node", "/usr/bin/node"]
+            .compactMap { $0 } + pathCandidates
         if let path = candidates.first(where: { FileManager.default.isExecutableFile(atPath: $0) }) { return path }
         throw NativeBridgeError.unavailable("Set TELEPROMPTER_NODE_PATH to the bundled Node executable.")
     }
@@ -299,6 +337,15 @@ final class NativeHelperBridge: @unchecked Sendable, NativeRuntimeBridge {
         lock.lock()
         defer { lock.unlock() }
         return try body()
+    }
+}
+
+enum NativeHelperProfile: String {
+    case disposable
+    case durable
+
+    static var fromEnvironment: NativeHelperProfile {
+        ProcessInfo.processInfo.environment["TELEPROMPTER_PERSISTENCE_PROFILE"] == "durable" ? .durable : .disposable
     }
 }
 

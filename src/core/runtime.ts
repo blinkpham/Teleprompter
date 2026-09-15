@@ -245,7 +245,7 @@ export class NativeRuntime {
   public getStatus(): NativeStatusPayload {
     const persistence = this.persistenceState();
     return {
-      state: this.closed ? 'stopped' : persistence.status === 'failed' || persistence.status === 'recovery' ? 'degraded' : 'ready',
+      state: this.closed ? 'stopped' : persistence.status === 'failed' || persistence.status === 'recovery' || persistence.status === 'unavailable' ? 'degraded' : 'ready',
       persistence: persistence.status,
       pendingCommandIds: [],
       sequence: persistence.sequence,
@@ -417,9 +417,10 @@ export class NativeRuntime {
   }
 
   private async shutdown(request: NativeBridgeRequest<'shutdown'>): Promise<NativeBridgeResponse<'shutdown'>> {
-    const state = await this.persistence.flush(this.store.toDocument());
+    await this.persistence.flush(this.store.toDocument());
+    await this.persistence.release();
     this.closed = true;
-    const payload: NativeFlushResult = this.flushResult(this.store.toDocument().sequence, state);
+    const payload: NativeFlushResult = this.flushResult(this.store.toDocument().sequence, this.persistenceState());
     return this.success(request, { accepted: true, flush: payload }) as NativeBridgeResponse<'shutdown'>;
   }
 
@@ -436,6 +437,10 @@ export class NativeRuntime {
 
   private persistenceState(): PersistenceState {
     return this.persistence.getState(this.store.toDocument().sequence);
+  }
+
+  public async release(): Promise<void> {
+    await this.persistence.release();
   }
 
   private snapshotEvent(snapshot: CueSnapshot): NativeBridgeEvent {

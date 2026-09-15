@@ -4,7 +4,9 @@ import { JsonLinesDecoder, encodeJsonLine } from './json-lines';
 import { createNativeRuntime, type NativeRuntime } from './runtime';
 
 export interface HelperOptions {
-  /** Omit for an explicit disposable, session-only profile. */
+  /** Explicit helper persistence profile. Defaults to disposable when no path is supplied. */
+  readonly profile?: 'disposable' | 'durable';
+  /** Required for durable mode; a supplied path implies durable for direct callers. */
   readonly persistencePath?: string;
   readonly runtime?: NativeRuntime;
   readonly input?: NodeJS.ReadableStream;
@@ -13,6 +15,36 @@ export interface HelperOptions {
 }
 
 const isWritable = (value: NodeJS.WritableStream): value is NodeJS.WritableStream & { write: (chunk: string) => boolean } => typeof value.write === 'function';
+
+export interface ResolvedHelperPersistence {
+  readonly profile: 'disposable' | 'durable';
+  readonly persistencePath?: string;
+}
+
+/** Resolve launch-time persistence without silently upgrading a disposable helper. */
+export const resolveHelperPersistence = (
+  options: Pick<HelperOptions, 'profile' | 'persistencePath'> = {},
+  environment: NodeJS.ProcessEnv = process.env,
+): ResolvedHelperPersistence => {
+  const environmentProfile = environment.TELEPROMPTER_PERSISTENCE_PROFILE;
+  if (environmentProfile !== undefined && environmentProfile !== 'disposable' && environmentProfile !== 'durable') {
+    throw new Error('TELEPROMPTER_PERSISTENCE_PROFILE must be disposable or durable.');
+  }
+  const persistencePath = options.persistencePath ?? environment.TELEPROMPTER_PERSISTENCE_PATH;
+  const profile = options.profile
+    ?? environmentProfile
+    ?? (persistencePath === undefined ? 'disposable' : 'durable');
+  if (profile === 'durable' && !persistencePath) {
+    throw new Error('The durable helper profile requires TELEPROMPTER_PERSISTENCE_PATH.');
+  }
+  if (profile === 'disposable' && persistencePath !== undefined) {
+    throw new Error('The disposable helper profile cannot receive a persistence path.');
+  }
+  return {
+    profile,
+    ...(persistencePath === undefined ? {} : { persistencePath }),
+  };
+};
 
 const transportFailure = (runtime: NativeRuntime, message: string): Record<string, unknown> => ({
   protocolVersion: 1,
@@ -27,7 +59,8 @@ const transportFailure = (runtime: NativeRuntime, message: string): Record<strin
 
 /** Run the local helper over stdin/stdout only; no listener or network port is opened. */
 export const runHelper = async (options: HelperOptions = {}): Promise<void> => {
-  const runtime = options.runtime ?? await createNativeRuntime({ persistencePath: options.persistencePath });
+  const persistence = resolveHelperPersistence(options);
+  const runtime = options.runtime ?? await createNativeRuntime({ persistencePath: persistence.persistencePath });
   const input = options.input ?? process.stdin;
   const output = options.output ?? process.stdout;
   const errorOutput = options.errorOutput ?? process.stderr;
@@ -91,6 +124,7 @@ export const runHelper = async (options: HelperOptions = {}): Promise<void> => {
   });
   await completed;
   await queue;
+  await runtime.release();
 };
 
 const isMain = process.argv[1] !== undefined && resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url));

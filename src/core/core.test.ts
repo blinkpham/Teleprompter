@@ -1,4 +1,5 @@
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { PassThrough } from 'node:stream';
@@ -20,9 +21,10 @@ import {
 } from '../shared/native-bridge';
 import { legacyLibrary } from '../content';
 import { encodeJsonLine, JsonLinesDecoder } from './json-lines';
-import { runHelper } from './helper';
+import { resolveHelperPersistence, runHelper } from './helper';
 import { DraftPersistence } from './persistence';
 import { createNativeRuntime, type NativeRuntime } from './runtime';
+import { createDraftStoreDocument, serializeDraftStore } from '../main/draft-store';
 
 const request = <TOperation extends NativeBridgeOperation>(
   operation: TOperation,
@@ -71,6 +73,22 @@ const commandRequest = (
   helperSessionId,
   requestId,
   commandId: envelope.commandId,
+});
+
+const shutdownRuntime = async (runtime: NativeRuntime, clientId: string, helperSessionId: string, requestId: string): Promise<void> => {
+  const response = await runtime.handle(request('shutdown', { reason: 'user' }, { clientId, helperSessionId, requestId }));
+  expect(response.ok).toBe(true);
+};
+
+describe('helper persistence profile boundary', () => {
+  it('requires an explicit durable path and keeps disposable mode path-free', () => {
+    expect(resolveHelperPersistence({ profile: 'disposable' })).toEqual({ profile: 'disposable' });
+    expect(resolveHelperPersistence({ profile: 'durable', persistencePath: '/tmp/teleprompter-drafts.json' })).toEqual({
+      profile: 'durable', persistencePath: '/tmp/teleprompter-drafts.json',
+    });
+    expect(() => resolveHelperPersistence({}, { TELEPROMPTER_PERSISTENCE_PROFILE: 'durable' })).toThrow();
+    expect(() => resolveHelperPersistence({ profile: 'disposable', persistencePath: '/tmp/should-not-write.json' })).toThrow();
+  });
 });
 
 describe('native helper runtime', () => {
@@ -289,41 +307,111 @@ describe('native helper persistence and stream', () => {
       const flush = flushed.payload as { persistedThroughSequence: number; durable: boolean; persistence: string };
       expect(flush).toMatchObject({ persistedThroughSequence: 1, durable: true, persistence: 'disk' });
       expect(JSON.parse(await readFile(path, 'utf8')).drafts.create.what).toBe('durable text');
+      const persistedBeforeCleanRestart = await readFile(path, 'utf8');
+      await shutdownRuntime(first.runtime, first.clientId, first.helperSessionId, 'durable-shutdown');
 
       const restarted = await startRuntime({ persistencePath: path });
       expect((await bootstrap(restarted.runtime, restarted.clientId, restarted.helperSessionId)).drafts.create.what).toBe('durable text');
+      await shutdownRuntime(restarted.runtime, restarted.clientId, restarted.helperSessionId, 'restarted-shutdown');
+      expect(await readFile(path, 'utf8')).toBe(persistedBeforeCleanRestart);
       const disposable = await startRuntime();
       expect((await bootstrap(disposable.runtime, disposable.clientId, disposable.helperSessionId)).drafts.create.what).toBe('');
       const sessionFlush = await disposable.runtime.handle(request('flush', { reason: 'user', afterSequence: 0 }, { clientId: disposable.clientId, helperSessionId: disposable.helperSessionId, requestId: 'session-flush' }));
       expect(sessionFlush.ok).toBe(true);
       expect(sessionFlush.payload).toMatchObject({ persistence: 'session', durable: false, persistedThroughSequence: 0 });
+      await shutdownRuntime(disposable.runtime, disposable.clientId, disposable.helperSessionId, 'disposable-shutdown');
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  it('preserves invalid data with a non-overwriting checksum manifest and refuses unsafe restore', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'teleprompter-helper-recovery-'));
+    const path = join(directory, 'cue-drafts.json');
+    const invalid = '{"schemaVersion":99,"future":true}\n';
+    try {
+      await writeFile(path, invalid, 'utf8');
+      const persistence = new DraftPersistence({ profile: 'durable', path });
+      const loaded = await persistence.load(legacyLibrary);
+      expect(loaded.state.status).toBe('recovery');
+      expect(loaded.state.recoveryBackup).toMatchObject({ reason: 'future', bytes: Buffer.byteLength(invalid), manifestWritten: true });
+      const backup = loaded.state.recoveryBackup!;
+      expect(await readFile(backup.path, 'utf8')).toBe(invalid);
+      expect(JSON.parse(await readFile(backup.manifestPath, 'utf8'))).toMatchObject({
+        sourceFile: 'cue-drafts.json', bytes: Buffer.byteLength(invalid), sha256: createHash('sha256').update(invalid).digest('hex'),
+      });
+      const shutdownState = await persistence.flush(loaded.document);
+      expect(shutdownState).toMatchObject({ status: 'recovery', writer: 'held', flushedSequence: 0 });
+      const refused = await persistence.restoreFromBackup(legacyLibrary, backup.path);
+      expect(refused).toMatchObject({ status: 'failed', writer: 'held' });
+      expect(refused.error).toMatch(/target already exists/);
+      await persistence.release();
+      expect(await readFile(path, 'utf8')).toBe(invalid);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  it('makes exclusive durable ownership deterministic and restores only a verified compatible backup', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'teleprompter-helper-writer-'));
+    const path = join(directory, 'cue-drafts.json');
+    const backupPath = join(directory, 'cue-drafts.json.valid.backup.json');
+    try {
+      const first = await startRuntime({ persistencePath: path });
+      const second = await startRuntime({ persistencePath: path });
+      expect(second.runtime.getStatus()).toMatchObject({ state: 'degraded', persistence: 'unavailable' });
+      expect((await bootstrap(second.runtime, second.clientId, second.helperSessionId)).persistenceStatus).toBe('session');
+
+      const valid = serializeDraftStore(createDraftStoreDocument(legacyLibrary, false));
+      const sha256 = createHash('sha256').update(valid).digest('hex');
+      await writeFile(backupPath, valid, 'utf8');
+      await writeFile(`${backupPath}.manifest.json`, `${JSON.stringify({
+        schemaVersion: 1, sourceFile: 'restored-drafts.json', reason: 'test', bytes: Buffer.byteLength(valid), sha256,
+      })}\n`, 'utf8');
+
+      const restoreTarget = join(directory, 'restored-drafts.json');
+      const restore = new DraftPersistence({ profile: 'durable', path: restoreTarget });
+      await restore.load(legacyLibrary);
+      const restored = await restore.restoreFromBackup(legacyLibrary, backupPath);
+      expect(restored).toMatchObject({ status: 'disk', writer: 'held', sequence: 0, flushedSequence: 0 });
+      expect(JSON.parse(await readFile(restoreTarget, 'utf8')).schemaVersion).toBe(1);
+
+      await restore.release();
+      await shutdownRuntime(first.runtime, first.clientId, first.helperSessionId, 'writer-first-shutdown');
+      await shutdownRuntime(second.runtime, second.clientId, second.helperSessionId, 'writer-second-shutdown');
     } finally {
       await rm(directory, { recursive: true, force: true });
     }
   });
 
   it('keeps an accepted mutation visible when the explicit disk write fails', async () => {
-    const persistence = new DraftPersistence({
-      path: join(tmpdir(), 'teleprompter-helper-write-failure.json'),
-      write: async () => { throw new Error('write blocked'); },
-    });
-    const { runtime, clientId, helperSessionId } = await startRuntime({ persistence });
-    const initial = await bootstrap(runtime, clientId, helperSessionId);
-    const command: DraftCommandEnvelope = {
-      commandId: 'failed-disk-command', clientId, draftId: 'create',
-      expectedFieldRevisions: { what: initial.fieldRevisions.create.what },
-      command: { type: 'set-what', text: 'accepted in memory' },
-    };
-    const response = await runtime.handle(commandRequest(command, helperSessionId, 'failed-disk-request'));
-    expect(response.ok).toBe(true);
-    const result = response.payload as CommandResult;
-    expect(result.ok).toBe(true);
-    if (result.ok) expect(result.value.snapshot.persistenceStatus).toBe('session');
-    runtime.drainEvents();
-    const flush = await runtime.handle(request('flush', { reason: 'user', afterSequence: 1 }, { clientId, helperSessionId, requestId: 'failed-disk-flush' }));
-    expect(flush.ok).toBe(true);
-    expect(flush.payload).toMatchObject({ persistence: 'failed', durable: false, persistedThroughSequence: 0 });
-    expect(runtime.getStatus().state).toBe('degraded');
+    const directory = await mkdtemp(join(tmpdir(), 'teleprompter-helper-write-failure-'));
+    try {
+      const persistence = new DraftPersistence({
+        path: join(directory, 'cue-drafts.json'),
+        write: async () => { throw new Error('write blocked'); },
+      });
+      const { runtime, clientId, helperSessionId } = await startRuntime({ persistence });
+      const initial = await bootstrap(runtime, clientId, helperSessionId);
+      const command: DraftCommandEnvelope = {
+        commandId: 'failed-disk-command', clientId, draftId: 'create',
+        expectedFieldRevisions: { what: initial.fieldRevisions.create.what },
+        command: { type: 'set-what', text: 'accepted in memory' },
+      };
+      const response = await runtime.handle(commandRequest(command, helperSessionId, 'failed-disk-request'));
+      expect(response.ok).toBe(true);
+      const result = response.payload as CommandResult;
+      expect(result.ok).toBe(true);
+      if (result.ok) expect(result.value.snapshot.persistenceStatus).toBe('session');
+      runtime.drainEvents();
+      const flush = await runtime.handle(request('flush', { reason: 'user', afterSequence: 1 }, { clientId, helperSessionId, requestId: 'failed-disk-flush' }));
+      expect(flush.ok).toBe(true);
+      expect(flush.payload).toMatchObject({ persistence: 'failed', durable: false, persistedThroughSequence: 0 });
+      expect(runtime.getStatus().state).toBe('degraded');
+      await shutdownRuntime(runtime, clientId, helperSessionId, 'failed-disk-shutdown');
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
   });
 
   it('handles split UTF-8, coalesced frames, malformed lines, byte limits, and clean helper exit', async () => {
