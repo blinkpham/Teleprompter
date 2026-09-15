@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct CueView<Bridge: NativeRuntimeBridge>: View {
@@ -22,19 +23,11 @@ struct CueView<Bridge: NativeRuntimeBridge>: View {
             }
         }
 
-        var symbol: String {
+        var assetName: String {
             switch self {
-            case .optics: "camera.aperture"
-            case .stage: "rectangle.3.group"
-            case .finish: "circle.dotted"
-            }
-        }
-
-        var tint: Color {
-            switch self {
-            case .optics: .cyan
-            case .stage: .purple
-            case .finish: .orange
+            case .optics: "group-optics-v2"
+            case .stage: "group-stage-v2"
+            case .finish: "group-finish-v2"
             }
         }
     }
@@ -213,11 +206,10 @@ struct CueView<Bridge: NativeRuntimeBridge>: View {
             togglePanel(.group(group))
         } label: {
             HStack(spacing: 10) {
-                Image(systemName: group.symbol)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(group.tint)
-                    .frame(width: 34, height: 34)
-                    .background(group.tint.opacity(isOpen ? 0.25 : 0.14), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                nativeAsset(named: group.assetName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 52, height: 46)
                     .accessibilityHidden(true)
 
                 VStack(alignment: .leading, spacing: 2) {
@@ -391,11 +383,10 @@ struct CueView<Bridge: NativeRuntimeBridge>: View {
                     .foregroundStyle(.secondary)
 
                 HStack(spacing: 10) {
-                    Image(systemName: "camera.aperture")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(.cyan)
-                        .frame(width: 34, height: 34)
-                        .background(Color.cyan.opacity(0.15), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    nativeAsset(named: ParameterGroup.optics.assetName)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 58, height: 56)
                         .accessibilityHidden(true)
 
                     VStack(alignment: .leading, spacing: 2) {
@@ -416,10 +407,10 @@ struct CueView<Bridge: NativeRuntimeBridge>: View {
             }
 
         case .group(.stage):
-            emptyPanelMessage("No mapped choices in this fixture.", symbol: "rectangle.3.group", tint: .purple)
+            emptyPanelMessage("No mapped choices in this fixture.", assetName: ParameterGroup.stage.assetName, tint: .purple)
 
         case .group(.finish):
-            emptyPanelMessage("No mapped choices in this fixture.", symbol: "circle.dotted", tint: .orange)
+            emptyPanelMessage("No mapped choices in this fixture.", assetName: ParameterGroup.finish.assetName, tint: .orange)
 
         case .ratio:
             outputPanelMessage(
@@ -447,13 +438,12 @@ struct CueView<Bridge: NativeRuntimeBridge>: View {
         }
     }
 
-    private func emptyPanelMessage(_ message: String, symbol: String, tint: Color) -> some View {
+    private func emptyPanelMessage(_ message: String, assetName: String, tint: Color) -> some View {
         HStack(spacing: 10) {
-            Image(systemName: symbol)
-                .font(.system(size: 17, weight: .semibold))
-                .foregroundStyle(tint)
-                .frame(width: 34, height: 34)
-                .background(tint.opacity(0.14), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+            nativeAsset(named: assetName)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 58, height: 52)
                 .accessibilityHidden(true)
 
             Text(message)
@@ -481,6 +471,14 @@ struct CueView<Bridge: NativeRuntimeBridge>: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
+    }
+
+    private func nativeAsset(named name: String) -> Image {
+        guard let path = Bundle.main.path(forResource: name, ofType: "png"),
+              let image = NSImage(contentsOfFile: path) else {
+            return Image(systemName: "photo")
+        }
+        return Image(nsImage: image)
     }
 
     private var promptAndActions: some View {
@@ -676,7 +674,7 @@ private struct CueShellSurface<S: InsettableShape>: ViewModifier {
         if #available(macOS 26.0, *), !reduceTransparency {
             content
                 .background(shape.fill(Color.black.opacity(0.22)))
-                .glassEffect(.regular.tint(tint.opacity(0.13)).interactive(), in: shape)
+                .glassEffect(.regular.tint(tint.opacity(0.13)), in: shape)
                 .clipShape(shape)
                 .shadow(color: .black.opacity(0.34), radius: 28, y: 15)
         } else {

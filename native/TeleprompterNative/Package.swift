@@ -11,7 +11,8 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "TeleprompterNative",
-            path: "Sources/TeleprompterNative"
+            path: "Sources/TeleprompterNative",
+            resources: [.process("Resources")]
         ),
     ]
 )

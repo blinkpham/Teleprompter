@@ -1,0 +1,124 @@
+# Native Cue witness — 2026-09-16
+
+## Outcome
+
+The bounded native parity fix is implemented and packaged. Live evidence shows the three accepted v2 Cue identity assets in the native controls and their corresponding in-flow panels. The acceptance result remains **NOT CLEAN / partial**: the last explicit Sol verdict was NOT CLEAN, and the post-witness Sol request timed out while ChatGPT Web still showed “Working.” No final post-review verdict was available to replace it.
+
+No full B01–B05 pass is claimed. This witness does not close compiler/clipboard equality, persistence, reduced-transparency or reduced-motion behavior, search, VoiceOver/IME, physical hardware keyboard, adaptive edge cases, or the remaining native acceptance matrix.
+
+## Scope and bounded source fix
+
+The reviewed package is:
+
+`native/TeleprompterNative/.build/TeleprompterNative.app`
+
+The starting lead HEAD was `c7e5d26`. The later parent-authorized parity fix changed only the native Cue/package seam and this dated evidence folder:
+
+- `CueView.swift` loads `group-optics-v2.png`, `group-stage-v2.png`, and `group-finish-v2.png` with an explicit `NSImage` path, preserving transparent object bounds and utility SF Symbols.
+- The enclosing `CueShellSurface` retains one glass material owner but no longer marks decorative enclosing geometry interactive.
+- `Package.swift` processes the native `Resources` directory.
+- `package-app.sh` copies the three assets into `Contents/Resources` and requires the generated resource bundle.
+
+`MAP.md`, the source catalog, the v1 Electron layer, and unrelated worktrees were not changed.
+
+## Sol review record
+
+The pre-witness Sol review required exact package identity, disposable persistence, helper-child proof, direct AX/bounds evidence, conservative status vocabulary, and no claim that normal translucency proves genuine Liquid Glass. Its explicit visual verdict was **NOT CLEAN**: competing interactive glass, nested rounded surfaces, and the macOS focus ring were diagnosed as the likely source of the connected/squiggly contour. The requested smallest direction was one material owner, clean group hit regions, one focus treatment, the accepted v2 rasters for Optics/Stage/Finish, compact collapsed controls, and truthful unavailable states.
+
+The post-witness review was submitted after the fix with the final package identity, screenshots, AX sequence, and window-bound classification. A 10-second bounded wait ended with the Sol tab still showing `Working`; no additional CUA retry was made. Therefore the pre-witness NOT CLEAN verdict remains the governing parity verdict. The post-review request itself is evidence of consultation, not a response or acceptance.
+
+## Runtime identity and safety
+
+- Host: macOS 26.6.2, build 25G83, arm64; Swift 6.3.2; SDK 26.5; developer directory `/Library/Developer/CommandLineTools`.
+- Bundle ID: `local.teleprompter.native`; display name: `Teleprompter`; minimum macOS: 26.0.
+- Launch: `TELEPROMPTER_NODE_PATH=/Users/blinblon/.hermes/node/bin/node TELEPROMPTER_PERSISTENCE_PROFILE=disposable` followed by the exact packaged executable.
+- Live proof: app PID `84314`; helper child PID `84316`; child command resolved to the packaged `Contents/Resources/teleprompter-helper.js`.
+- Disposable profile had no persistence path. The canonical draft checksum stayed `adcf8a11cc3d728e08aff77d1f9e13f040f33914a490f01bc5b6802d19ebc9e6` before and after the run.
+- Only the c657 app/helper were stopped. Sibling Image Director processes and canonical data were left untouched.
+
+Current packaged hashes:
+
+| Item | SHA-256 |
+| --- | --- |
+| Native executable | `fb183c84b6323749539d6043bea5f657802fd0398fabe06e7412e572637a316f` |
+| Packaged helper | `ffb64a3784f7c187c559ea66da9858e8ee09d6bae2cc76561c477ecd16662cc1` |
+| `group-optics-v2.png` | `4398b257def406bd9781d8340adbb22e9e0ba7a6e882ca47c302f2bc45c41165` |
+| `group-stage-v2.png` | `6f70a228b350447f989e8217bdeb798287adbd76964907d998e5ee0468e45c0e` |
+| `group-finish-v2.png` | `b0a629ce4d492e30efbcab0594bc7f4c7acb1a89414a8088f49d89c65ab5b6f5` |
+
+## Build and package checks
+
+- Initial `npm run typecheck:helper` failed because this isolated worktree had no `node_modules` (`tsc: command not found`).
+- `npm ci --ignore-scripts` installed 113 packages with 0 reported vulnerabilities in this worktree.
+- `npm run typecheck:helper`: PASS.
+- `npm run helper:build`: PASS; helper emitted to `out/helper/teleprompter-helper.js`.
+- `swift build --package-path native/TeleprompterNative -c debug`: PASS.
+- `native/TeleprompterNative/Scripts/package-app.sh`: PASS.
+- `codesign --verify --deep --strict`: PASS.
+- `git diff --check`: PASS.
+
+## Visual and interaction evidence
+
+Evidence files in this folder:
+
+- `02-native-cue-image-led-window.png` — collapsed native Cue with all three v2 assets visibly present.
+- `03-native-optics-open-window.png` — in-flow Focal panel with the Optics asset and separate rounded group controls.
+- `04-native-stage-open-window.png` — Stage asset and truthful `No mapped choices in this fixture.` panel.
+- `05-native-finish-open-window.png` — Finish asset and the same truthful unavailable state.
+
+The window-only Optics capture was `x=446,y=105,w=620,h=488`, alpha `1.0`, layer `3`. The thin rectangular perimeter appears at the AppKit window capture boundary; the rounded group surfaces are separate and do not form a connected button outline. It is classified here as the host/window capture edge, not a product contour. This classification does not claim that every OS screenshot artifact is absent from every capture mode.
+
+AX identifiers remained stable for `cue-group-optics`, `cue-group-stage`, `cue-group-finish`, `cue-ratio`, `cue-resolution`, `cue-add-reference`, `cue-what`, `cue-apply`, `cue-slash-hook`, `cue-mention-hook`, and `cue-preview-action`.
+
+CUA-delivered keyboard sequence: Tab cycled Optics → Stage → Finish → Ratio → Resolution → Add Reference → Prompt → Apply → Slash commands → Reference mentions → Preview → Optics. Space opened Optics; Escape closed it and returned focus to Prompt. Return on focused Optics had no effect. These are accessibility-event observations, not proof of physical hardware keyboard behavior.
+
+The current witness stopped before rerunning Apply → Preview after the parity fix. The helper child was live, but exact compiler output, native clipboard equality, and preview rendering remain unverified in this witness.
+
+## Acceptance matrix
+
+| Case | Status | Witness ceiling |
+| --- | --- | --- |
+| N01 | partial | Native Cue image-led wide state witnessed; full default/output parity not witnessed. |
+| N02 | partial | Prompt editing is present; durable saved-draft behavior not witnessed. |
+| N03 | partial | Image-led group controls, focus, and Space path witnessed; hover, tooltip, and full press behavior not closed. |
+| N04 | partial | Optics Focal row and v2 asset witnessed; fixture cardinality and full choice behavior not closed. |
+| N05 | partial | Stage/Finish image panels and truthful unavailable state witnessed. |
+| N06 | unwitnessed | Search surface not exercised. |
+| N07 | unwitnessed | Search results behavior not exercised. |
+| N08 | unwitnessed | Search keyboard behavior not exercised. |
+| N09 | unwitnessed | Search empty/error behavior not exercised. |
+| N10 | unwitnessed | Library/filter behavior not exercised. |
+| N11 | unwitnessed | Library selection behavior not exercised. |
+| N12 | unwitnessed | Library persistence behavior not exercised. |
+| N13 | unwitnessed | Library copy/record behavior not exercised. |
+| N14 | unwitnessed | Exact Apply → Preview compiler and clipboard equality not rerun after the fix. |
+| N15 | unwitnessed | Preview surface details not exercised. |
+| N16 | unwitnessed | Copy confirmation/native clipboard behavior not exercised. |
+| N17 | partial | Group open, in-flow panel, close, and focus return observed; complete native sequence and motion not recorded. |
+| N18 | unwitnessed | Reduced Motion was not toggled. |
+| N19 | unwitnessed | Shortcut, outside-click, and native-copy paths not closed. |
+| N20 | unwitnessed | Cursor-positioned slash popup not exercised. |
+| N21 | unwitnessed | Mention popup not exercised. |
+| N22 | unwitnessed | Popup filtering/selection not exercised. |
+| N23 | partial | Prompt edit/select and focus return were observed; IME, drag, and chooser paths were not. |
+| N24 | unwitnessed | Natural 50 row is a read-only fixture; persistence and editing were not closed. |
+| N25 | unwitnessed | Adaptive edge, reduced transparency, and fullscreen/display behavior were not exercised. |
+| N26 | unwitnessed | VoiceOver behavior not exercised. |
+| N27 | unwitnessed | Physical keyboard behavior not proven. |
+| N28 | unwitnessed | IME behavior not exercised. |
+| N29 | unwitnessed | Accessibility announcements/focus narration not exercised. |
+| N30 | unwitnessed | Full VoiceOver and IME acceptance case not exercised. |
+
+| Gate | Status | Witness ceiling |
+| --- | --- | --- |
+| B01 | partial | Image-led equal-slot controls and no connected contour were observed; all hover/pressed/narrow states are not closed. |
+| B02 | partial | v2 assets are not repeated as generic icons; complete record/cardinality proof is not available. |
+| B03 | unwitnessed | No search surface was exercised, so the one-focus-ring result cannot close this gate. |
+| B04 | unwitnessed | No fresh post-fix Apply → Preview exact compiler/clipboard witness. |
+| B05 | unwitnessed | Disposable profile only; defaults, durable persistence, settings, and reload were not exercised. |
+
+Remaining ceilings include reduced transparency, reduced motion, full Liquid Glass branch identity, VoiceOver/IME, physical hardware keyboard, clipboard/compiler parity, durable persistence, search and popup behavior, shortcut collision, outside click, edge/second-display/fullscreen layout, and complete native acceptance. Normal rounded translucency is recorded as visible native material only; it is not a formal genuine-Liquid-Glass pass.
+
+## Files and commit scope
+
+The commit contains the bounded native source/package fix, the three copied accepted v2 assets, and the dated PNG evidence plus this handoff. Generated `node_modules`, `out`, and `.build` artifacts remain ignored and are not committed. No `MAP.md` update was made by this worker.
