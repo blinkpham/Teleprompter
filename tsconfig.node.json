@@ -9,5 +9,5 @@
     "types": ["node", "vitest/globals"],
     "skipLibCheck": true
   },
-  "include": ["electron.vite.config.ts", "src/main/**/*.ts", "src/preload/**/*.ts", "src/shared/**/*.ts", "src/content/**/*.ts", "src/engine/**/*.ts"]
+    "include": ["electron.vite.config.ts", "vite.helper.config.ts", "src/main/**/*.ts", "src/preload/**/*.ts", "src/core/**/*.ts", "src/shared/**/*.ts", "src/content/**/*.ts", "src/engine/**/*.ts"]
 }

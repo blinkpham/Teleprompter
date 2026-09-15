@@ -11,7 +11,11 @@
     "build": "electron-vite build",
     "preview": "electron-vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
-    "test:logic": "vitest run"
+    "test:logic": "vitest run",
+    "test:helper": "vitest run src/core",
+    "typecheck:helper": "tsc --noEmit -p tsconfig.helper.json",
+    "helper:build": "vite build --config vite.helper.config.ts",
+    "helper": "npm run helper:build && node out/helper/teleprompter-helper.js"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",
