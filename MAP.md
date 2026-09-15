@@ -8,7 +8,8 @@ Updated: 2026-09-14
 - User decision on 2026-09-14: the new Teleprompter implementation moves to a native macOS host/surface, not Electron. Liquid Glass is a first-class requirement. Electron remains compatibility evidence and a migration seam only; no Electron deletion or whole-app rewrite is accepted before a buildable native seam and direct runtime evidence exist.
 - The existing offline store/compiler, shared contracts, 14-record runtime boundary, exact `gpt-image-2.5-flare` gate, Curator-before-Illustration order, and all five grievance blockers B01–B05 remain in force.
 - Native implementation worker missions are dispatched for a bounded SwiftUI/AppKit Cue spike and a documentation-only Liquid Glass architecture decision. Their worktrees remain isolated until the lead reviews changed files, official Apple source evidence, and native build/runtime results.
-- Astra was updated in its owner session with this architecture override and the unresolved B01–B05 grievance bundle. No readable Astra plan response has been returned yet; do not treat the update as a completed planner decision.
+- The bounded native shell now lives under `native/TeleprompterNative/`. `swift build -c debug` and the ad-hoc app package succeed on the installed macOS 26 toolchain; direct runtime observation verified the Cue editor, Optics → Focal expansion, typing, Apply revision change, and Preview disclosure. The current `DevelopmentFixtureBridge` is explicitly not compiler/store parity.
+- Astra was updated in its owner session with this checkpoint and the unresolved B01–B05 grievance bundle. The next native gate is the real versioned JSON-lines helper to the authoritative TypeScript store/compiler, followed by data handover and native acceptance; do not close Liquid Glass or grievance acceptance from the fixture witness.
 
 ## Current execution — 2026-09-14 post-worker checkpoint
 
@@ -82,8 +83,8 @@ Updated: 2026-09-14
 
 ## Next
 
-1. Review the native SwiftUI/AppKit worker and Liquid Glass decision worker; accept only a buildable seam with direct native evidence.
-2. Port the Cue contracts and grievance acceptance cases B01–B05/N01–N30 to the native surface, then run native keyboard, focus, bounds, reduced-transparency, and clipboard witnesses.
+1. Review the three current Luna missions: the authoritative JSON-lines bridge, the native acceptance witness, and the proposed curator gate; consume only disjoint, verified handoffs.
+2. Connect the native bridge to the TypeScript store/compiler, then port B01–B05/N01–N30 and run native keyboard, focus, bounds, reduced-transparency, accessibility, and clipboard witnesses.
 3. Preserve Electron comparison evidence for regression only; do not use it to close native Liquid Glass acceptance.
-4. Keep practical illustration blocked until the exact GPT Image 2.5 Flare route is explicitly evidenced; then consume only the six curator-accepted AssetRequests.
+4. Keep practical illustration blocked until Curator's proposed taxonomy is accepted and the exact GPT Image 2.5 Flare route is explicitly evidenced; then consume only the six accepted AssetRequests.
 5. Preserve the 14-record runtime boundary while later curation resolves the 101 reference-only legacy rows.
