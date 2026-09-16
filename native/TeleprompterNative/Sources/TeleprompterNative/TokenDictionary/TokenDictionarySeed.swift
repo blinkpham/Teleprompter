@@ -1,0 +1,200 @@
+import Foundation
+
+// Projection of the currently accepted V2 seed. Example strings are authored UI
+// usage examples; they do not add new runtime catalog records.
+enum TokenDictionarySeed {
+    static let records: [PromptToken] = [
+        PromptToken(
+            id: "atom.camera.focal.wide35",
+            kind: .atom,
+            label: "Wide 35",
+            shorthand: "cam:wide35",
+            tags: ["35mm", "advertising", "social", "camera"],
+            category: .optics,
+            axis: "Focal cue",
+            summary: "Classic versatile advertising/social environmental portrait.",
+            expansion: "Use a classic advertising/social environmental portrait cue with energetic, natural, versatile perspective.",
+            examples: [TokenExample(id: "wide35-campaign", title: "Campaign product scene", prompt: "cam:wide35 + a product hero in an energetic environment")],
+            sortOrder: 1
+        ),
+        PromptToken(
+            id: "atom.camera.focal.natural50",
+            kind: .atom,
+            label: "Natural 50",
+            shorthand: "cam:natural50",
+            aliases: ["cam:50"],
+            tags: ["50mm", "natural", "balanced", "camera"],
+            category: .optics,
+            axis: "Focal cue",
+            summary: "Balanced perspective for polished realism.",
+            expansion: "Use a balanced perspective cue for polished commercial/editorial realism.",
+            examples: [TokenExample(id: "natural50-editorial", title: "Editorial portrait", prompt: "cam:natural50 + a polished editorial portrait with believable space")],
+            sortOrder: 2
+        ),
+        PromptToken(
+            id: "atom.camera.focal.portrait85",
+            kind: .atom,
+            label: "Portrait 85",
+            shorthand: "cam:portrait85",
+            aliases: ["cam:85"],
+            tags: ["85mm", "portrait", "compression", "camera"],
+            category: .optics,
+            axis: "Focal cue",
+            summary: "Flattering compression with clean background separation.",
+            expansion: "Use a compressed, flattering portrait/product-with-person cue with cleaner background separation.",
+            examples: [TokenExample(id: "portrait85-product", title: "Product with person", prompt: "cam:portrait85 + a product held in a clean, softly separated scene")],
+            sortOrder: 3
+        ),
+        PromptToken(
+            id: "atom.angle.azimuth.three-quarter",
+            kind: .atom,
+            label: "Three-quarter",
+            shorthand: "angle:3q",
+            aliases: ["three quarter", "three-quarter"],
+            tags: ["angle", "people", "product", "interior"],
+            category: .optics,
+            axis: "Azimuth",
+            summary: "Clean three-quarter relationship.",
+            expansion: "Use a clean 3/4 view for people, products, desks, or interiors.",
+            examples: [TokenExample(id: "three-quarter-desk", title: "Desk scene", prompt: "angle:3q + a readable desk setup with depth")],
+            sortOrder: 4
+        ),
+        PromptToken(
+            id: "atom.camera.depth.medium",
+            kind: .atom,
+            label: "Medium depth",
+            shorthand: "dof:medium",
+            tags: ["depth of field", "background", "separation", "camera"],
+            category: .optics,
+            axis: "Depth of field",
+            summary: "Keep the subject clear with a legible softened background.",
+            expansion: "Keep the subject clear while the background is softened but still legible.",
+            examples: [TokenExample(id: "medium-context", title: "Context stays readable", prompt: "dof:medium + a subject with a softened but legible environment")],
+            sortOrder: 5
+        ),
+        PromptToken(
+            id: "atom.composition.hierarchy.hero",
+            kind: .atom,
+            label: "Hero hierarchy",
+            shorthand: "comp:hero",
+            tags: ["hero", "key visual", "composition", "advertising"],
+            category: .stage,
+            axis: "Subject hierarchy",
+            summary: "Dominant subject with campaign hierarchy.",
+            expansion: "Make the subject dominant with a clear hierarchy, strong silhouette, and advertising key-visual readability.",
+            examples: [TokenExample(id: "hero-key-visual", title: "Key visual", prompt: "comp:hero + one unmistakable product or subject as the focal point")],
+            sortOrder: 1
+        ),
+        PromptToken(
+            id: "atom.light.key.high-soft",
+            kind: .atom,
+            label: "High-key soft",
+            shorthand: "light:highkey",
+            tags: ["high key", "bright", "soft", "commercial"],
+            category: .stage,
+            axis: "Key source",
+            summary: "Bright polished commercial softness.",
+            expansion: "Use a large soft source, bright exposure, clean whites, open shadows, and polished commercial finish.",
+            examples: [TokenExample(id: "high-key-studio", title: "Bright studio", prompt: "light:highkey + clean whites and open shadows around the subject")],
+            sortOrder: 2
+        ),
+        PromptToken(
+            id: "atom.look.base.commercial",
+            kind: .atom,
+            label: "Commercial",
+            shorthand: "look:commercial",
+            tags: ["advertising", "polished", "finish", "professional"],
+            category: .finish,
+            axis: "Base finish",
+            summary: "Polished professional advertising finish.",
+            expansion: "Use polished professional advertising photography with crisp but natural detail, controlled lighting, clean surfaces, and clear hierarchy.",
+            examples: [TokenExample(id: "commercial-launch", title: "Launch image", prompt: "look:commercial + crisp detail and clean product hierarchy")],
+            sortOrder: 1
+        ),
+        PromptToken(
+            id: "atom.look.palette.clean-blue",
+            kind: .atom,
+            label: "Clean blue",
+            shorthand: "look:cleanblue",
+            tags: ["white blue", "modern", "palette", "cool"],
+            category: .finish,
+            axis: "Palette",
+            summary: "Bright white and clean blue modernity.",
+            expansion: "Use bright white and clean blue, cool daylight, minimal modern architecture, and smooth surfaces.",
+            examples: [TokenExample(id: "clean-blue-architecture", title: "Modern space", prompt: "look:cleanblue + cool daylight and smooth modern surfaces")],
+            sortOrder: 2
+        ),
+        PromptToken(
+            id: "preset.directed-studio.commercial",
+            kind: .preset,
+            label: "Directed studio commercial",
+            shorthand: "preset:commercial",
+            aliases: ["commercial preset"],
+            tags: ["advertising", "polished", "hero", "preset"],
+            category: .presets,
+            summary: "Polished commercial advertising combination.",
+            expansion: "A deconstructible commercial set: wide 35, three-quarter, hero hierarchy, high-key soft, commercial finish, and medium depth.",
+            examples: [TokenExample(id: "commercial-preset", title: "One-click starting point", prompt: "preset:commercial → cam:wide35 · angle:3q · comp:hero · light:highkey · look:commercial · dof:medium")],
+            components: [
+                "atom.camera.focal.wide35",
+                "atom.angle.azimuth.three-quarter",
+                "atom.composition.hierarchy.hero",
+                "atom.light.key.high-soft",
+                "atom.look.base.commercial",
+                "atom.camera.depth.medium"
+            ],
+            sortOrder: 1
+        ),
+        PromptToken(
+            id: "edit.local.surgical-correction",
+            kind: .editRecipe,
+            label: "Local correction",
+            shorthand: "fix:",
+            tags: ["edit", "surgical edit", "local correction", "preservation"],
+            category: .edits,
+            summary: "Correct one named detail locally.",
+            expansion: "Change only [requested element]. Preserve identity, camera, pose, lighting, composition, and geometry exactly. Do not redesign or reinterpret unaffected regions.",
+            examples: [TokenExample(id: "fix-label", title: "Correct a detail", prompt: "fix: label alignment on the front panel")],
+            placeholders: ["requested element"],
+            sortOrder: 1
+        ),
+        PromptToken(
+            id: "edit.background.object-removal",
+            kind: .editRecipe,
+            label: "Object removal",
+            shorthand: "remove:",
+            tags: ["edit", "delete", "cleanup", "reconstruct", "preservation"],
+            category: .edits,
+            summary: "Remove a named item and rebuild its background.",
+            expansion: "Remove the requested object, person, or text and reconstruct a plausible clean surface behind it. Preserve everything else in the scene.",
+            examples: [TokenExample(id: "remove-cable", title: "Clean the scene", prompt: "remove: loose cable beside the product")],
+            sortOrder: 2
+        ),
+        PromptToken(
+            id: "edit.reference.tone-transfer",
+            kind: .editRecipe,
+            label: "Tone transfer",
+            shorthand: "tone:",
+            tags: ["edit", "palette", "mood", "lighting", "reference"],
+            category: .edits,
+            summary: "Transfer palette, lighting, or mood from a reference.",
+            expansion: "Use the reference only for palette, lighting, contrast, material treatment, and overall visual mood. Keep the base subject, pose, composition, camera, geometry, objects, and content unchanged.",
+            examples: [TokenExample(id: "tone-reference", title: "Borrow the atmosphere", prompt: "tone: the cool, low-contrast palette from image 2")],
+            placeholders: ["reference tone"],
+            sortOrder: 3
+        ),
+        PromptToken(
+            id: "edit.quality.restoration",
+            kind: .editRecipe,
+            label: "Quality restoration",
+            shorthand: "hq",
+            aliases: ["hq:"],
+            tags: ["edit", "restoration", "quality", "anti-degradation"],
+            category: .edits,
+            summary: "Request quality restoration without a new interpretation.",
+            expansion: "Quality-restoration pass only. Do not redesign, restyle, recompose, or change content. Remove noise, grain, compression artifacts, smearing, muddy textures, doubled edges, and accumulated degradation while preserving the same image.",
+            examples: [TokenExample(id: "hq-restoration", title: "Restore the same image", prompt: "hq — preserve the image while removing compression damage")],
+            sortOrder: 4
+        )
+    ]
+}
