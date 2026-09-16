@@ -109,6 +109,27 @@ struct CueView<Bridge: NativeRuntimeBridge>: View {
     @State private var editGroups: Set<ParameterGroup> = []
     @FocusState private var focusedElement: FocusTarget?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.colorScheme) private var colorScheme
+
+    private var controlSurface: Color {
+        Color(nsColor: .controlBackgroundColor)
+            .opacity(colorScheme == .dark ? 0.76 : 0.9)
+    }
+
+    private var controlSurfaceSubtle: Color {
+        Color(nsColor: .controlBackgroundColor)
+            .opacity(colorScheme == .dark ? 0.56 : 0.78)
+    }
+
+    private var fieldSurface: Color {
+        Color(nsColor: .textBackgroundColor)
+            .opacity(colorScheme == .dark ? 0.62 : 0.88)
+    }
+
+    private var controlStroke: Color {
+        Color(nsColor: .separatorColor)
+            .opacity(colorScheme == .dark ? 0.58 : 0.82)
+    }
 
     init(bridge: Bridge) {
         self.bridge = bridge
@@ -164,9 +185,10 @@ struct CueView<Bridge: NativeRuntimeBridge>: View {
                         .foregroundStyle(mode == option ? Color.black : Color.primary)
                         .frame(width: 78, height: 30)
                         .background(
-                            mode == option ? accent : Color.clear,
+                            mode == option ? accent : controlSurfaceSubtle,
                             in: Capsule()
                         )
+                        .overlay(Capsule().stroke(controlStroke, lineWidth: mode == option ? 0 : 1))
                 }
                 .buttonStyle(CleanButtonStyle(reduceMotion: reduceMotion))
                 .focusEffectDisabled()
@@ -260,8 +282,12 @@ struct CueView<Bridge: NativeRuntimeBridge>: View {
             .padding(.vertical, 9)
             .frame(maxWidth: .infinity, minHeight: controlsRevealed || isOpen ? 62 : 52, alignment: .leading)
             .background(
-                accent.opacity(isSelected ? 0.18 : isOpen ? 0.13 : 0.075),
+                isSelected || isOpen ? accent.opacity(isSelected ? 0.18 : 0.13) : controlSurface,
                 in: RoundedRectangle(cornerRadius: 16, style: .continuous)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(isSelected || isOpen ? accent.opacity(0.62) : controlStroke, lineWidth: 1)
             )
             .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
@@ -336,8 +362,12 @@ struct CueView<Bridge: NativeRuntimeBridge>: View {
             .padding(.horizontal, 10)
             .frame(maxWidth: .infinity, minHeight: 34)
             .background(
-                Color.white.opacity(0.06),
+                controlSurface,
                 in: RoundedRectangle(cornerRadius: 12, style: .continuous)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(controlStroke, lineWidth: 1)
             )
             .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
@@ -363,8 +393,12 @@ struct CueView<Bridge: NativeRuntimeBridge>: View {
                 .foregroundStyle(.primary)
                 .frame(width: 38, height: 34)
                 .background(
-                    Color.white.opacity(promptAssist == .mention ? 0.13 : 0.06),
+                    promptAssist == .mention ? accent.opacity(0.16) : controlSurface,
                     in: RoundedRectangle(cornerRadius: 12, style: .continuous)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .stroke(promptAssist == .mention ? accent.opacity(0.72) : controlStroke, lineWidth: 1)
                 )
                 .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
@@ -429,8 +463,12 @@ struct CueView<Bridge: NativeRuntimeBridge>: View {
             .padding(.horizontal, 13)
             .frame(minHeight: 38)
             .background(
-                selected ? accent.opacity(0.15) : Color.white.opacity(0.06),
+                selected ? accent.opacity(0.15) : controlSurface,
                 in: RoundedRectangle(cornerRadius: 13, style: .continuous)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 13, style: .continuous)
+                    .stroke(selected ? accent.opacity(0.72) : controlStroke, lineWidth: 1)
             )
             .contentShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
         }
@@ -454,8 +492,12 @@ struct CueView<Bridge: NativeRuntimeBridge>: View {
         .padding(.horizontal, 13)
         .frame(minHeight: 38)
         .background(
-            Color.white.opacity(0.04),
+            controlSurfaceSubtle,
             in: RoundedRectangle(cornerRadius: 13, style: .continuous)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 13, style: .continuous)
+                .stroke(controlStroke, lineWidth: 1)
         )
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("No mapped option")
@@ -499,8 +541,12 @@ struct CueView<Bridge: NativeRuntimeBridge>: View {
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            Color.white.opacity(0.075),
+            fieldSurface,
             in: RoundedRectangle(cornerRadius: 17, style: .continuous)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 17, style: .continuous)
+                .stroke(controlStroke, lineWidth: 1)
         )
         .animation(surfaceAnimation, value: promptAssist)
     }
@@ -516,7 +562,14 @@ struct CueView<Bridge: NativeRuntimeBridge>: View {
                 .font(.system(size: 13, weight: .bold, design: .monospaced))
                 .foregroundStyle(.primary)
                 .frame(width: 34, height: 34)
-                .background(Color.white.opacity(promptAssist == assist ? 0.14 : 0.07), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .background(
+                    promptAssist == assist ? accent.opacity(0.16) : controlSurfaceSubtle,
+                    in: RoundedRectangle(cornerRadius: 8, style: .continuous)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .stroke(promptAssist == assist ? accent.opacity(0.72) : controlStroke, lineWidth: 1)
+                )
         }
         .buttonStyle(CleanButtonStyle(reduceMotion: reduceMotion))
         .focused($focusedElement, equals: focus)
@@ -552,7 +605,11 @@ struct CueView<Bridge: NativeRuntimeBridge>: View {
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(.primary)
                     .frame(maxWidth: .infinity, minHeight: 34)
-                    .background(Color.white.opacity(0.09), in: RoundedRectangle(cornerRadius: 13, style: .continuous))
+                    .background(controlSurface, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 13, style: .continuous)
+                            .stroke(controlStroke, lineWidth: 1)
+                    )
                     .contentShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
             }
             .buttonStyle(CleanButtonStyle(reduceMotion: reduceMotion))

@@ -15,6 +15,12 @@ The packaged app was then rebuilt and visually inspected in these states:
 
 This is a lead visual witness after Sol's design gate, not a new Sol post-change acceptance verdict. It supports the requested visual direction at the observed native window size. Edit-operation compilation, exact Apply → Preview → Copy parity, persistence, Reduced Motion/Transparency, VoiceOver/IME, physical keyboard, edge/display behavior, and formal Liquid Glass branch identity remain open.
 
+## Control-surface visibility correction
+
+The next packaged build was inspected in the light desktop appearance after the user reported that the clear-root controls read as floating text. Each product control now has its own adaptive surface and clean local boundary: Create/Edit, the three image-led group buttons, Natural 50, Ratio, Resolution, Add Reference, `/`, `@`, the prompt field, and Preview. The root remains transparent, the selector row has no enclosing background well, and the orange Apply column remains individually bounded. The expanded Optics capture and a long wrapped prompt both retain the same grounded control hierarchy.
+
+This closes the observed floating-control presentation defect at the inspected window size. It does not close genuine Liquid Glass, reduced-transparency, or the broader native acceptance ceilings listed below.
+
 ## Current lead correction witness — hierarchy and adaptive behavior
 
 This is a direct packaged-app observation after the user’s latest layout correction. It supersedes the prior visual ordering described below while preserving the earlier asset and contour evidence.
