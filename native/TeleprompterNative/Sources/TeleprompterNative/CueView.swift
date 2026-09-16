@@ -32,6 +32,15 @@ struct CueView<Bridge: NativeRuntimeBridge>: View {
         }
     }
 
+    private enum ComposerMode: String, CaseIterable, Hashable {
+        case create
+        case edit
+
+        var title: String {
+            rawValue.capitalized
+        }
+    }
+
     private enum ConfigurationPanel: Equatable {
         case group(ParameterGroup)
         case ratio
@@ -94,33 +103,30 @@ struct CueView<Bridge: NativeRuntimeBridge>: View {
     @State private var promptAssist: PromptAssist?
     @State private var ratioValue = "4:5"
     @State private var resolutionValue = "2K"
+    @State private var mode: ComposerMode
+    @State private var editGroups: Set<ParameterGroup> = []
     @FocusState private var focusedElement: FocusTarget?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     init(bridge: Bridge) {
         self.bridge = bridge
-        _snapshot = State(initialValue: bridge.bootstrap())
+        let initialSnapshot = bridge.bootstrap()
+        _snapshot = State(initialValue: initialSnapshot)
         _previewText = State(initialValue: bridge.preview().text)
+        _mode = State(initialValue: ComposerMode(rawValue: initialSnapshot.activeMode) ?? .create)
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            header
+            modeSwitch
 
-            configurationArea
-
-            if let activePanel {
-                configurationPanel(for: activePanel)
-                    .transition(
-                        reduceMotion
-                            ? .opacity
-                            : .move(edge: .top).combined(with: .opacity)
-                    )
+            HStack(alignment: .top, spacing: 12) {
+                leftComposer
+                actionColumn
+                    .frame(width: 92)
+                    .frame(maxHeight: .infinity, alignment: .top)
             }
-
-            auxiliaryControls
-
-            promptAndActions
+            .padding(.top, 12)
 
             if previewVisible {
                 previewSection
@@ -141,42 +147,68 @@ struct CueView<Bridge: NativeRuntimeBridge>: View {
         )
         .animation(surfaceAnimation, value: activePanel)
         .animation(surfaceAnimation, value: previewVisible)
+        .animation(surfaceAnimation, value: mode)
         .defaultFocus($focusedElement, .prompt)
         .onExitCommand(perform: dismissPanel)
     }
 
-    private var header: some View {
-        HStack(alignment: .center, spacing: 10) {
-            Image(systemName: "text.badge.plus")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(.cyan)
-                .frame(width: 30, height: 30)
-                .background(Color.cyan.opacity(0.14), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
-                .accessibilityHidden(true)
-
-            Text("Cue")
-                .font(.system(size: 16, weight: .bold, design: .rounded))
-
-            Spacer(minLength: 0)
-
-            Text("Create")
-                .font(.system(size: 12, weight: .semibold, design: .rounded))
-                .foregroundStyle(.secondary)
-                .opacity(controlsRevealed ? 1 : 0)
-                .accessibilityHidden(!controlsRevealed)
-                .animation(surfaceAnimation, value: controlsRevealed)
+    private var modeSwitch: some View {
+        HStack(spacing: 3) {
+            ForEach(ComposerMode.allCases, id: \.self) { option in
+                Button {
+                    withAnimation(surfaceAnimation) {
+                        mode = option
+                        activePanel = nil
+                        editGroups = []
+                    }
+                } label: {
+                    Text(option.title)
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .foregroundStyle(mode == option ? Color.black : Color.primary)
+                        .frame(width: 78, height: 30)
+                        .background(
+                            mode == option ? Color.cyan.opacity(0.9) : Color.clear,
+                            in: Capsule()
+                        )
+                }
+                .buttonStyle(CleanButtonStyle(reduceMotion: reduceMotion))
+                .accessibilityIdentifier("cue-mode-\(option.rawValue)")
+                .accessibilityAddTraits(mode == option ? .isSelected : [])
+                .accessibilityHint(
+                    option == .edit
+                        ? "Edit mode supports selecting multiple change operations"
+                        : "Create mode builds a new prompt"
+                )
+            }
         }
-        .padding(.bottom, 14)
+        .padding(3)
+        .background(Color.white.opacity(0.07), in: Capsule())
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("cue-mode-switch")
+    }
+
+    private var leftComposer: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            if let activePanel {
+                configurationPanel(for: activePanel)
+                    .transition(
+                        reduceMotion
+                            ? .opacity
+                            : .move(edge: .bottom).combined(with: .opacity)
+                    )
+            }
+
+            configurationArea
+            promptBar
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var configurationArea: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 9) {
-                ForEach(ParameterGroup.allCases, id: \.self) { group in
-                    parameterButton(for: group)
-                }
+        HStack(spacing: 9) {
+            ForEach(ParameterGroup.allCases, id: \.self) { group in
+                parameterButton(for: group)
             }
-
         }
         .onHover { isHovered in
             controlsHovered = isHovered
@@ -188,39 +220,43 @@ struct CueView<Bridge: NativeRuntimeBridge>: View {
         controlsHovered || activePanel != nil || focusedElement?.revealsControls == true
     }
 
-    private var auxiliaryControls: some View {
-        HStack(spacing: 8) {
-            outputButton(title: "Ratio", value: ratioValue, symbol: "rectangle.portrait", panel: .ratio, focus: .ratio)
-            outputButton(title: "Resolution", value: resolutionValue, symbol: "square.resize", panel: .resolution, focus: .resolution)
-            referenceButton
-        }
-        .padding(.top, 10)
-    }
-
     @ViewBuilder
     private func parameterButton(for group: ParameterGroup) -> some View {
         let isOpen = activePanel == .group(group)
+        let isSelected = mode == .edit && editGroups.contains(group)
 
         Button {
             focusedElement = .group(group)
-            togglePanel(.group(group))
+            withAnimation(surfaceAnimation) {
+                if mode == .edit {
+                    editGroups.formSymmetricDifference([group])
+                }
+                activePanel = isOpen ? nil : .group(group)
+                previewVisible = false
+            }
         } label: {
             HStack(spacing: 10) {
                 nativeAsset(named: group.assetName)
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 52, height: 46)
+                    .frame(width: 44, height: 42)
                     .accessibilityHidden(true)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(group.title)
                         .font(.system(size: 13, weight: .bold, design: .rounded))
                         .foregroundStyle(.primary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.82)
+                        .allowsTightening(true)
 
                     if controlsRevealed || isOpen {
                         Text(group.axisTitle)
                             .font(.system(size: 11, weight: .medium, design: .rounded))
                             .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.78)
+                            .allowsTightening(true)
                             .transition(.opacity)
                     }
                 }
@@ -232,21 +268,38 @@ struct CueView<Bridge: NativeRuntimeBridge>: View {
                     .foregroundStyle(.secondary)
                     .opacity(controlsRevealed || isOpen ? 1 : 0.55)
             }
-            .padding(.horizontal, 11)
+            .padding(.horizontal, 8)
             .padding(.vertical, 9)
             .frame(maxWidth: .infinity, minHeight: controlsRevealed || isOpen ? 62 : 52, alignment: .leading)
             .background(
-                Color.white.opacity(isOpen ? 0.13 : 0.075),
+                Color.cyan.opacity(isSelected ? 0.18 : isOpen ? 0.13 : 0.075),
                 in: RoundedRectangle(cornerRadius: 16, style: .continuous)
             )
             .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
         .buttonStyle(CleanButtonStyle(reduceMotion: reduceMotion))
         .focused($focusedElement, equals: .group(group))
+        .onHover { isHovered in
+            controlsHovered = isHovered
+            if isHovered && !isOpen {
+                withAnimation(surfaceAnimation) {
+                    activePanel = .group(group)
+                    previewVisible = false
+                }
+            }
+        }
         .accessibilityIdentifier("cue-group-\(group.rawValue)")
         .accessibilityLabel(group.title)
-        .accessibilityValue(isOpen ? "\(group.axisTitle), expanded" : "\(group.axisTitle), collapsed")
-        .accessibilityHint("Shows \(group.title) choices")
+        .accessibilityValue(
+            isSelected
+                ? "selected edit operation, \(group.axisTitle)"
+                : isOpen ? "\(group.axisTitle), expanded" : "\(group.axisTitle), collapsed"
+        )
+        .accessibilityHint(
+            mode == .edit
+                ? "Selects or removes this edit operation and shows its choices"
+                : "Shows \(group.title) choices"
+        )
         .help("\(group.title) — \(group.axisTitle)")
     }
 
@@ -258,11 +311,24 @@ struct CueView<Bridge: NativeRuntimeBridge>: View {
         panel: ConfigurationPanel,
         focus: FocusTarget
     ) -> some View {
-        let isOpen = activePanel == panel
-
-        Button {
-            focusedElement = focus
-            togglePanel(panel)
+        Menu {
+            switch panel {
+            case .ratio:
+                ForEach(["1:1", "4:5", "16:9"], id: \.self) { option in
+                    Button(option) {
+                        ratioValue = option
+                    }
+                }
+            case .resolution:
+                ForEach(["1K", "2K", "4K"], id: \.self) { option in
+                    Button(option) {
+                        resolutionValue = option
+                    }
+                }
+            default:
+                Button(value) {}
+                    .disabled(true)
+            }
         } label: {
             HStack(spacing: 7) {
                 Image(systemName: symbol)
@@ -270,51 +336,45 @@ struct CueView<Bridge: NativeRuntimeBridge>: View {
                     .foregroundStyle(.secondary)
                     .accessibilityHidden(true)
 
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(title)
-                        .font(.system(size: 10, weight: .semibold, design: .rounded))
-                        .foregroundStyle(.secondary)
-                    Text("\(value) · UI")
-                        .font(.system(size: 12, weight: .bold, design: .rounded))
-                        .foregroundStyle(.primary)
-                }
+                Text(value)
+                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                    .foregroundStyle(.primary)
 
-                Image(systemName: isOpen ? "chevron.up" : "chevron.down")
+                Image(systemName: "chevron.down")
                     .font(.system(size: 9, weight: .bold))
                     .foregroundStyle(.secondary)
             }
             .padding(.horizontal, 10)
-            .padding(.vertical, 7)
+            .frame(maxWidth: .infinity, minHeight: 34)
             .background(
-                Color.white.opacity(isOpen ? 0.13 : 0.06),
+                Color.white.opacity(0.06),
                 in: RoundedRectangle(cornerRadius: 12, style: .continuous)
             )
             .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
-        .buttonStyle(CleanButtonStyle(reduceMotion: reduceMotion))
+        .menuStyle(.borderlessButton)
         .focused($focusedElement, equals: focus)
         .accessibilityIdentifier(
             panel == .ratio ? "cue-ratio" : panel == .resolution ? "cue-resolution" : "cue-output-control"
         )
         .accessibilityLabel("\(title), \(value), UI only")
         .accessibilityHint("UI-only affordance; not saved or sent to the bridge")
-        .help("\(title): \(value), UI only")
+        .help("\(title): \(value)")
     }
 
     private var referenceButton: some View {
-        let isOpen = activePanel == .reference
-
         return Button {
             focusedElement = .reference
-            togglePanel(.reference)
+            withAnimation(surfaceAnimation) {
+                promptAssist = promptAssist == .mention ? nil : .mention
+            }
         } label: {
-            Label("Add Reference", systemImage: "plus")
-                .font(.system(size: 11, weight: .semibold, design: .rounded))
+            Image(systemName: "photo.badge.plus")
+                .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(.primary)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 8)
+                .frame(width: 38, height: 34)
                 .background(
-                    Color.white.opacity(isOpen ? 0.13 : 0.06),
+                    Color.white.opacity(promptAssist == .mention ? 0.13 : 0.06),
                     in: RoundedRectangle(cornerRadius: 12, style: .continuous)
                 )
                 .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
@@ -357,8 +417,7 @@ struct CueView<Bridge: NativeRuntimeBridge>: View {
             in: RoundedRectangle(cornerRadius: 18, style: .continuous)
         )
         .shadow(color: .black.opacity(0.16), radius: 16, y: 8)
-        .padding(.top, 4)
-        .padding(.bottom, 12)
+        .padding(.bottom, 2)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier(panel.accessibilityIdentifier)
         .accessibilityLabel("\(panelTitle(panel)) selection panel")
@@ -481,52 +540,46 @@ struct CueView<Bridge: NativeRuntimeBridge>: View {
         return Image(nsImage: image)
     }
 
-    private var promptAndActions: some View {
-        HStack(alignment: .bottom, spacing: 12) {
-            VStack(alignment: .leading, spacing: 9) {
-                TextField("Describe the subject, action, and scene", text: $what, axis: .vertical)
-                    .font(.system(size: 15, weight: .medium, design: .rounded))
-                    .textFieldStyle(.plain)
-                    .lineLimit(2...6)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .focused($focusedElement, equals: .prompt)
-                    .accessibilityIdentifier("cue-what")
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 12)
-                    .frame(maxWidth: .infinity, minHeight: 76, alignment: .topLeading)
-                    .background(Color.white.opacity(0.075), in: RoundedRectangle(cornerRadius: 17, style: .continuous))
-                    .accessibilityLabel("Prompt")
-                    .accessibilityHint("Describe the subject, action, and scene")
+    private var promptBar: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            TextField("Describe the subject, action, and scene", text: $what, axis: .vertical)
+                .font(.system(size: 15, weight: .medium, design: .rounded))
+                .textFieldStyle(.plain)
+                .lineLimit(1...6)
+                .fixedSize(horizontal: false, vertical: true)
+                .focused($focusedElement, equals: .prompt)
+                .accessibilityIdentifier("cue-what")
+                .frame(maxWidth: .infinity, minHeight: 62, alignment: .topLeading)
+                .accessibilityLabel("Prompt")
+                .accessibilityHint("Describe the subject, action, and scene")
 
-                HStack(spacing: 7) {
-                    promptHookButton(symbol: "/", label: "Slash commands", focus: .slash, assist: .slash)
-                    promptHookButton(symbol: "@", label: "Reference mentions", focus: .mention, assist: .mention)
-                    Text("Future hooks")
-                        .font(.system(size: 10, weight: .medium, design: .rounded))
-                        .foregroundStyle(.secondary)
+            HStack(spacing: 6) {
+                outputButton(title: "Ratio", value: ratioValue, symbol: "rectangle.portrait", panel: .ratio, focus: .ratio)
+                    .frame(width: 72)
+                outputButton(title: "Resolution", value: resolutionValue, symbol: "square.resize", panel: .resolution, focus: .resolution)
+                    .frame(width: 72)
+                referenceButton
 
-                    if let promptAssist {
-                        Text(promptAssist.title)
-                            .font(.system(size: 10, weight: .semibold, design: .rounded))
-                            .foregroundStyle(.cyan)
-                            .transition(.opacity)
-                    }
-                }
-                .animation(surfaceAnimation, value: promptAssist)
+                Spacer(minLength: 0)
 
-                if promptAssist != nil {
-                    Text("This native UI hook is visible without inserting or compiling a command.")
-                        .font(.system(size: 10, weight: .medium, design: .rounded))
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .transition(.opacity)
-                }
+                promptHookButton(symbol: "/", label: "Slash commands", focus: .slash, assist: .slash)
+                promptHookButton(symbol: "@", label: "Reference mentions", focus: .mention, assist: .mention)
             }
-            .layoutPriority(1)
 
-            actionColumn
+            if let promptAssist {
+                Text(promptAssist.title)
+                    .font(.system(size: 10, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.cyan)
+                    .transition(.opacity)
+            }
         }
-        .padding(.top, activePanel == nil ? 12 : 0)
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            Color.white.opacity(0.075),
+            in: RoundedRectangle(cornerRadius: 17, style: .continuous)
+        )
+        .animation(surfaceAnimation, value: promptAssist)
     }
 
     @ViewBuilder
@@ -539,7 +592,7 @@ struct CueView<Bridge: NativeRuntimeBridge>: View {
             Text(symbol)
                 .font(.system(size: 13, weight: .bold, design: .monospaced))
                 .foregroundStyle(.primary)
-                .frame(width: 28, height: 24)
+                .frame(width: 34, height: 34)
                 .background(Color.white.opacity(promptAssist == assist ? 0.14 : 0.07), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
         }
         .buttonStyle(CleanButtonStyle(reduceMotion: reduceMotion))
@@ -553,24 +606,29 @@ struct CueView<Bridge: NativeRuntimeBridge>: View {
     private var actionColumn: some View {
         VStack(spacing: 8) {
             Button(action: apply) {
-                Image(systemName: applied ? "checkmark" : "arrow.up.forward")
-                    .font(.system(size: 21, weight: .bold))
-                    .foregroundStyle(Color.black)
-                    .frame(width: 58, height: 58)
-                    .background(Color.cyan.opacity(0.92), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-                    .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                VStack(spacing: 6) {
+                    Image(systemName: applied ? "checkmark" : "arrow.up.forward")
+                        .font(.system(size: 24, weight: .bold))
+                    Text(applied ? "Applied" : "Apply")
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                }
+                .foregroundStyle(Color.black)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color.cyan.opacity(0.92), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
             }
             .buttonStyle(CleanButtonStyle(reduceMotion: reduceMotion))
             .focused($focusedElement, equals: .apply)
             .accessibilityIdentifier("cue-apply")
             .accessibilityLabel(applied ? "Applied" : "Apply")
             .help(applied ? "Applied" : "Apply")
+            .frame(maxWidth: .infinity, minHeight: 132)
 
             Button(action: openPreview) {
                 Image(systemName: previewVisible ? "eye.slash" : "eye")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(.primary)
-                    .frame(width: 42, height: 36)
+                    .frame(maxWidth: .infinity, minHeight: 34)
                     .background(Color.white.opacity(0.09), in: RoundedRectangle(cornerRadius: 13, style: .continuous))
                     .contentShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
             }
@@ -580,7 +638,7 @@ struct CueView<Bridge: NativeRuntimeBridge>: View {
             .accessibilityLabel(previewVisible ? "Hide Preview" : "Preview")
             .help(previewVisible ? "Hide Preview" : "Preview")
         }
-        .frame(width: 60)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
     private var previewSection: some View {

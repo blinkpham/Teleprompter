@@ -1,5 +1,33 @@
 # Native Cue witness — 2026-09-16
 
+## Current lead correction witness — hierarchy and adaptive behavior
+
+This is a direct packaged-app observation after the user’s latest layout correction. It supersedes the prior visual ordering described below while preserving the earlier asset and contour evidence.
+
+Package observed:
+
+`native/TeleprompterNative/.build/TeleprompterNative.app`
+
+Observed states:
+
+- Default Create state: the only header control is the Create/Edit switch; no visible Cue title or brand appears. Optics, Stage, and Finish remain equal-row image-led controls using the accepted v2 generated rasters.
+- Open Optics state: the Focal selection panel appears above the three group buttons. The prompt bar and the fixed-width Apply/Preview column remain aligned below/alongside it; the group row is not pushed underneath the prompt.
+- Open Stage state: the Composition panel replaces the Optics panel in the same upward slot. The previous Optics edit selection remains selected when Stage is selected in Edit mode.
+- Edit state: Optics and Stage can both remain selected while only one detail panel is open. The selection is exposed through AX as `selected edit operation`.
+- Prompt bar: Ratio (`4:5`), Resolution (`2K`), icon-only Add Reference, `/`, and `@` are inside one rounded bar. Ratio and Resolution open compact menus without inserting a full composer panel. The compact controls are equal-height, and no explanatory Ratio/Resolution labels are visible.
+- Long prompt: a long multi-clause value wrapped to four lines inside the bar without clipping the compact controls or changing the action-column width.
+- Action column: Apply and Preview share one fixed column width. Apply is the tall primary action; Preview is icon-only and sits beneath it.
+
+This is a lead implementation witness, not a new Sol review. It proves the requested layout and adaptive behavior at the observed native window size; it does not prove Edit-operation compilation, compiler/clipboard parity, persistence, Reduced Motion/Transparency, VoiceOver/IME, physical keyboard behavior, edge/display adaptation, or genuine Liquid Glass branch identity.
+
+Focused checks for this correction passed:
+
+- `npm run typecheck`
+- `npm run test:logic` — 16 files, 79 tests
+- `npm run build`
+- `swift build --package-path native/TeleprompterNative -c debug`
+- `native/TeleprompterNative/Scripts/package-app.sh`
+
 ## Outcome
 
 The bounded native parity fix is implemented and packaged. Live evidence shows the three accepted v2 Cue identity assets in the native controls and their corresponding in-flow panels. The bounded parity result is **CLEAN / partial**: Sol's final post-witness review accepted the contour and image-led parity fix, while the broader native acceptance matrix remains partial or unwitnessed.

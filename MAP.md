@@ -3,7 +3,16 @@
 Goal: Implement the Teleprompter upgrade: dark-only Cue Create/Edit, shortcut spotlight, redesigned library, generated artwork, and structured long-term curation.
 Updated: 2026-09-16
 
-## Current checkpoint — final Sol parity review and image-led native Cue (2026-09-16)
+## Current checkpoint — native Cue hierarchy correction (2026-09-16)
+
+- The latest user correction is implemented in `native/TeleprompterNative/Sources/TeleprompterNative/CueView.swift`: the mode switch is now the only header control; no visible Cue title or brand remains.
+- Detailed Optics/Stage/Finish panels now open above the three group buttons with a spring transition. The prompt bar and right action column keep their placement while the panel is open; the AppKit/window edge is not used as a product control border.
+- Ratio, Resolution, Add Reference, `/`, and `@` now live inside one adaptive prompt bar. Ratio and Resolution are value-only compact menus (`4:5`, `2K`), all compact controls share a 34-point control height, and the prompt grows from one through six lines without clipping.
+- Apply and Preview are a fixed-width right column: Apply is the tall primary action and Preview is the icon-only secondary action below it. The group title cards keep one row height and the accepted v2 generated Optics, Stage, and Finish rasters; utility actions remain native SF Symbols.
+- Edit mode now exposes multi-selectable group operations in the native UI while retaining the Create layout. One detail panel can be open at a time, and selection state remains visible for multiple chosen operations. The bridge still only publishes the existing `set-what` command; Edit operation compilation remains an explicitly open contract seam.
+- Direct packaged-app observations verified the collapsed default, upward Optics and Stage panels, Edit multi-select state, value menus, and a long wrapped prompt. Focused checks pass: `npm run typecheck`, `npm run test:logic` (79 tests), `npm run build`, `swift build -c debug`, and native packaging. This is a lead witness for the layout correction, not a new Sol verdict.
+
+## Prior checkpoint — final Sol parity review and image-led native Cue (2026-09-16)
 
 - Final Sol post-witness review is **CLEAN for the bounded Cue parity fix**. The reported connected/squiggly button contour is closed at the product-control level: the decorative enclosing glass owner is no longer interactive, the group controls keep one consistent treatment, and the thin remaining perimeter is classified as the AppKit window edge rather than a connected button outline.
 - The native packaged Cue now visibly uses the accepted premium v2 generated family artwork for Optics, Stage, and Finish. Utility actions remain native SF Symbols. The assets are loaded explicitly from the signed app bundle and are copied into `Contents/Resources`; the live collapsed and in-flow panel captures are in `03 Docs/Teleprompter Execution/Visual Reset 2026-09-13/Native/2026-09-16/`.
@@ -11,7 +20,7 @@ Updated: 2026-09-16
 - Lead commit `9bd7e24` integrates native asset packaging, explicit raster loading, the bounded contour fix, and the native witness. Lead commit `69a45c7` records the curator's Batch 002 decision: **REVISE / KEEP PROPOSED / REFERENCE-ONLY**. The exact Flare route remains unavailable/evidenceless; no practical record-specific artwork is activated.
 - Lead checks pass: `npm run typecheck`, `npm run test:logic` (79 tests), `npm run build`, `swift build -c debug`, native packaging, codesign verification, `git diff --check`, and the focused Impeccable detector (`[]`). Remaining native ceilings are B01–B03 partial, B04–B05 unwitnessed, and no full N01–N30 passes.
 
-## Current checkpoint — native Cue redesign and handover hardening (2026-09-16)
+## Prior checkpoint — native Cue redesign and handover hardening (2026-09-16)
 
 - The latest user correction is implemented in native `CueView.swift`: the default state is collapsed, configuration controls reveal on hover/focus, selection panels insert in-flow instead of hiding the prompt/actions, the prompt wraps and grows, Apply is a large icon-only primary action, Preview is a smaller icon-only action below it, and Ratio/Resolution/Add Reference controls are present.
 - The old native witness is retained only as baseline evidence and is explicitly superseded by the 2026-09-16 design correction. The new packaged binary was directly observed with a clean material, collapsed default, in-flow Optics/Stage panels, prompt wrapping, selectable Preview, and preserved `cue-*` accessibility identifiers. Lead commit: `703c54a` (worker source: `c06694e`).
@@ -99,7 +108,7 @@ Updated: 2026-09-16
 
 ## Next
 
-1. Send the new bounded Astra plan brief with the five grievance blockers, the final Sol parity verdict, the native evidence ceilings, and the Curator/Illustration gates.
+1. Publish the completed native hierarchy correction and send Astra one informed continuation message; do not send progress announcements or partial-result updates.
 2. Revise Batch 002 as a new proposal with MECE focal/distance semantics, live IDs, an import guard, corrected fixed/variable controls, and the required draft/favorite impact audit.
 3. Continue only the remaining native witnesses: Apply → Preview/compiler/clipboard parity, persistence/defaults/settings, Reduced Motion/Transparency, adaptive edge/display behavior, search/focus, and VoiceOver/IME.
 4. Keep practical illustration blocked until the exact `gpt-image-2.5-flare` route is explicitly selectable/evidenced and the revised curator requests are accepted; do not substitute generic icons or unknown-model outputs.

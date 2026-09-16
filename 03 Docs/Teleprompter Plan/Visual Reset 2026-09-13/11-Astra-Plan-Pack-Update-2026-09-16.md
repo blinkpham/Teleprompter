@@ -6,6 +6,18 @@ Date: 2026-09-16. This is a bounded update to the existing visual-reset plan; it
 
 Continue the Teleprompter native macOS implementation from the final Sol parity checkpoint, keep every unresolved user grievance visible, and plan the smallest next work wave without overstating native acceptance, practical artwork, or Liquid Glass evidence.
 
+## Latest lead correction — user-directed hierarchy pass
+
+The user rejected the prior in-flow placement because it moved the existing controls and actions. The completed lead correction now follows this exact order:
+
+1. A Create/Edit switch is the only visible header. The Cue title/brand is removed from the surface.
+2. The left block opens detailed Optics/Stage/Finish panels upward, above the three group buttons. The group row and prompt remain below the panel; the right action column keeps its top alignment and stretches with the left block.
+3. One adaptive prompt bar owns the prompt field, value-only Ratio and Resolution menus, icon-only Add Reference, and `/`/`@` hooks. All compact controls share a 34-point height. The prompt grows from one through six lines.
+4. The right block has one fixed width: a tall labelled Apply primary action and a text-hug-height, icon-only Preview action below it.
+5. Edit mode keeps the Create anatomy but makes Optics/Stage/Finish multi-selectable. One detail panel can be open at a time while several edit operations remain selected.
+
+This pass intentionally does not invent a new bridge command. The UI exposes the Edit selection state, but the existing native bridge still publishes only `set-what`; edit-operation compilation remains a contract decision for the next plan wave.
+
 ## Success means
 
 - The final Sol verdict and the direct native screenshots are treated as the source of truth for the bounded Cue parity fix.
@@ -13,6 +25,7 @@ Continue the Teleprompter native macOS implementation from the final Sol parity 
 - Meaningful Optics/Stage/Finish identity uses premium generated raster artwork; utility actions such as Create, Add, Apply, Preview, close, disclosure, settings, and navigation stay native glyphs.
 - The next work wave has exact ownership, dependencies, evidence ceilings, and stop conditions.
 - No proposed curator records or unknown-model practical images enter the accepted 14-record runtime boundary.
+- The corrected native layout is reviewed from direct packaged-app observations before Astra receives this update.
 
 ## Read first
 
@@ -54,6 +67,8 @@ Additional user requirements remain active:
 - Use one cohesive dark color architecture with restrained accent use; do not let per-button glows, focus rings, or material tint create pseudo-borders or unrelated color families.
 - Keep the motion tactile but coordinated: panels push controls in flow with bounded spring/overshoot, text stays stable, and Reduced Motion removes scale/bounce without breaking state changes.
 - Keep the adaptive hierarchy: detailed panels first, then compact Optics/Stage/Finish controls, then the wrapping prompt, then the separate Apply/Preview action column; long prompt text must increase intrinsic height without clipping or moving the hitboxes.
+- In the corrected native order, the detailed group panels expand upward above the group row. Ratio/Resolution/Add Reference and slash/@ are embedded inside the prompt bar and must not trigger a full composer reflow.
+- Keep every same-row control at a deliberate equal height, keep both action buttons in one fixed-width column, and do not show explanatory labels where the displayed value already explains Ratio or Resolution.
 - Reserve premium generated imagery for semantic illustrations and meaningful group identity. Create/Add/Apply/Preview/settings/close/disclosure/navigation remain native utility glyphs. No crude mixed icon family should be substituted for approved art.
 - Keep the future `/` command and `@` reference mention path tied to model-recognized reference edits in the final prompt, with no upload or filesystem path leakage.
 
@@ -61,9 +76,10 @@ Additional user requirements remain active:
 
 - Lead commit `9bd7e24`: native v2 asset packaging/loading, bounded contour repair, and dated native witness.
 - Lead commit `69a45c7`: Batch 002 lead review, kept proposed/reference-only.
-- Native evidence: `03 Docs/Teleprompter Execution/Visual Reset 2026-09-13/Native/2026-09-16/02-native-cue-image-led-window.png`, `03-native-optics-open-window.png`, `04-native-stage-open-window.png`, `05-native-finish-open-window.png`, and `Witness.md`.
-- Verification: TypeScript typecheck, 79 logic tests, Electron build, Swift build, native package, strict codesign verification, diff check, and focused visual detector all pass.
-- Current native witness ceiling: B01–B03 partial; B04–B05 unwitnessed; no full N01–N30 passes. Reduced Motion/Transparency, full Liquid Glass branch identity, VoiceOver/IME, physical keyboard, search, adaptive edge/display behavior, persistence, and clipboard/compiler parity remain open.
+- The current lead correction is in `native/TeleprompterNative/Sources/TeleprompterNative/CueView.swift`; it is not yet represented by a new lead commit at the time this brief is being prepared.
+- Direct packaged-app observations verified the collapsed Create state, the upward Optics and Stage panels, the fixed-width action column, Edit multi-select state, the value menus, and a long prompt wrapping inside the bar. The prior dated image evidence remains valid for the generated v2 artwork and contour fix; the new observation is recorded in the current native witness update.
+- Verification for this correction: `npm run typecheck`, `npm run test:logic` (16 files, 79 tests), `npm run build`, `swift build --package-path native/TeleprompterNative -c debug`, and `native/TeleprompterNative/Scripts/package-app.sh` all pass.
+- Current native witness ceiling remains B01–B03 partial; B04–B05 unwitnessed; no full N01–N30 passes. Reduced Motion/Transparency, full Liquid Glass branch identity, VoiceOver/IME, physical keyboard, search, adaptive edge/display behavior, persistence, and clipboard/compiler parity remain open.
 
 ## Curator and illustration gates
 
@@ -82,7 +98,7 @@ The six practical illustration requests remain blocked. The built-in image route
 
 - Native macOS SwiftUI/AppKit is the primary route; Electron is compatibility evidence only.
 - Do not overwrite or reset existing work, source material, historical plans, or user data.
-- Do not contact Astra for progress announcements. This brief is ready for one bounded Astra planning/review message after the current lead integration is published.
+- Do not contact Astra for progress announcements or partial results. After the lead correction is committed and the final checks are recorded, send exactly one bounded continuation message with this brief and its evidence; Astra should decide the next plan wave from the complete state.
 - Stop and return a decision only if an exact model route, a materially different architecture, destructive data operation, or unresolved ownership conflict is required.
 
 ## Targeted verification

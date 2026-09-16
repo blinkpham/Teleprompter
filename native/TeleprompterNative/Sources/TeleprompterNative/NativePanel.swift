@@ -18,7 +18,7 @@ final class CuePanelController: NSObject, NSWindowDelegate {
             defer: false
         )
         super.init()
-        panel.title = "Teleprompter Cue"
+        panel.title = "Teleprompter"
         panel.titleVisibility = .hidden
         panel.titlebarAppearsTransparent = true
         panel.isOpaque = false
