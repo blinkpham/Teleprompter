@@ -2,6 +2,8 @@ import AppKit
 import SwiftUI
 
 struct CueView<Bridge: NativeRuntimeBridge>: View {
+    private let accent = Color.orange
+
     private enum ParameterGroup: String, CaseIterable, Hashable {
         case optics
         case stage
@@ -127,6 +129,7 @@ struct CueView<Bridge: NativeRuntimeBridge>: View {
                     .frame(maxHeight: .infinity, alignment: .top)
             }
             .padding(.top, 12)
+            .fixedSize(horizontal: false, vertical: true)
 
             if previewVisible {
                 previewSection
@@ -139,12 +142,6 @@ struct CueView<Bridge: NativeRuntimeBridge>: View {
         }
         .padding(18)
         .frame(minWidth: 500, idealWidth: 700, maxWidth: 820, alignment: .leading)
-        .modifier(
-            CueShellSurface(
-                shape: RoundedRectangle(cornerRadius: 28, style: .continuous),
-                tint: .cyan
-            )
-        )
         .animation(surfaceAnimation, value: activePanel)
         .animation(surfaceAnimation, value: previewVisible)
         .animation(surfaceAnimation, value: mode)
@@ -167,11 +164,12 @@ struct CueView<Bridge: NativeRuntimeBridge>: View {
                         .foregroundStyle(mode == option ? Color.black : Color.primary)
                         .frame(width: 78, height: 30)
                         .background(
-                            mode == option ? Color.cyan.opacity(0.9) : Color.clear,
+                            mode == option ? accent : Color.clear,
                             in: Capsule()
                         )
                 }
                 .buttonStyle(CleanButtonStyle(reduceMotion: reduceMotion))
+                .focusEffectDisabled()
                 .accessibilityIdentifier("cue-mode-\(option.rawValue)")
                 .accessibilityAddTraits(mode == option ? .isSelected : [])
                 .accessibilityHint(
@@ -182,7 +180,6 @@ struct CueView<Bridge: NativeRuntimeBridge>: View {
             }
         }
         .padding(3)
-        .background(Color.white.opacity(0.07), in: Capsule())
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("cue-mode-switch")
     }
@@ -235,7 +232,7 @@ struct CueView<Bridge: NativeRuntimeBridge>: View {
                 previewVisible = false
             }
         } label: {
-            HStack(spacing: 10) {
+            HStack(spacing: 8) {
                 nativeAsset(named: group.assetName)
                     .resizable()
                     .scaledToFit()
@@ -250,15 +247,6 @@ struct CueView<Bridge: NativeRuntimeBridge>: View {
                         .minimumScaleFactor(0.82)
                         .allowsTightening(true)
 
-                    if controlsRevealed || isOpen {
-                        Text(group.axisTitle)
-                            .font(.system(size: 11, weight: .medium, design: .rounded))
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.78)
-                            .allowsTightening(true)
-                            .transition(.opacity)
-                    }
                 }
 
                 Spacer(minLength: 0)
@@ -272,12 +260,13 @@ struct CueView<Bridge: NativeRuntimeBridge>: View {
             .padding(.vertical, 9)
             .frame(maxWidth: .infinity, minHeight: controlsRevealed || isOpen ? 62 : 52, alignment: .leading)
             .background(
-                Color.cyan.opacity(isSelected ? 0.18 : isOpen ? 0.13 : 0.075),
+                accent.opacity(isSelected ? 0.18 : isOpen ? 0.13 : 0.075),
                 in: RoundedRectangle(cornerRadius: 16, style: .continuous)
             )
             .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
         .buttonStyle(CleanButtonStyle(reduceMotion: reduceMotion))
+        .focusEffectDisabled()
         .focused($focusedElement, equals: .group(group))
         .onHover { isHovered in
             controlsHovered = isHovered
@@ -300,7 +289,7 @@ struct CueView<Bridge: NativeRuntimeBridge>: View {
                 ? "Selects or removes this edit operation and shows its choices"
                 : "Shows \(group.title) choices"
         )
-        .help("\(group.title) — \(group.axisTitle)")
+        .help(group.title)
     }
 
     @ViewBuilder
@@ -389,147 +378,87 @@ struct CueView<Bridge: NativeRuntimeBridge>: View {
 
     @ViewBuilder
     private func configurationPanel(for panel: ConfigurationPanel) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text(panelTitle(panel))
-                    .font(.system(size: 14, weight: .bold, design: .rounded))
+        if case let .group(group) = panel {
+            HStack(spacing: 8) {
+                switch group {
+                case .optics:
+                    selectorSlot("Natural 50", selected: true)
+                case .stage, .finish:
+                    selectorEmptySlot
+                }
 
                 Spacer(minLength: 0)
 
                 Button(action: dismissPanel) {
                     Image(systemName: "xmark")
                         .font(.system(size: 11, weight: .bold))
-                        .frame(width: 28, height: 28)
-                        .background(Color.white.opacity(0.08), in: Circle())
-                        .contentShape(Circle())
+                        .frame(width: 30, height: 34)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(CleanButtonStyle(reduceMotion: reduceMotion))
-                .accessibilityLabel("Close \(panelTitle(panel))")
+                .accessibilityLabel("Close selection")
                 .help("Close")
             }
-
-            panelContent(panel)
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            Color.black.opacity(0.16),
-            in: RoundedRectangle(cornerRadius: 18, style: .continuous)
-        )
-        .shadow(color: .black.opacity(0.16), radius: 16, y: 8)
-        .padding(.bottom, 2)
-        .accessibilityElement(children: .contain)
-        .accessibilityIdentifier(panel.accessibilityIdentifier)
-        .accessibilityLabel("\(panelTitle(panel)) selection panel")
-    }
-
-    private func panelTitle(_ panel: ConfigurationPanel) -> String {
-        switch panel {
-        case let .group(group): group.axisTitle
-        case .ratio: "Output ratio"
-        case .resolution: "Resolution target"
-        case .reference: "Add Reference"
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .accessibilityElement(children: .contain)
+            .accessibilityIdentifier(panel.accessibilityIdentifier)
+            .accessibilityLabel("\(group.title) selection")
         }
     }
 
-    @ViewBuilder
-    private func panelContent(_ panel: ConfigurationPanel) -> some View {
-        switch panel {
-        case .group(.optics):
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Focal")
-                    .font(.system(size: 11, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.secondary)
+    private func selectorSlot(_ value: String, selected: Bool) -> some View {
+        Button(action: {}) {
+            HStack(spacing: 8) {
+                Circle()
+                    .fill(selected ? accent : Color.white.opacity(0.22))
+                    .frame(width: 8, height: 8)
+                    .accessibilityHidden(true)
 
-                HStack(spacing: 10) {
-                    nativeAsset(named: ParameterGroup.optics.assetName)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 58, height: 56)
-                        .accessibilityHidden(true)
-
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Natural 50")
-                            .font(.system(size: 14, weight: .semibold, design: .rounded))
-                        Text("50 mm · development fixture choice")
-                            .font(.system(size: 11, weight: .medium, design: .rounded))
-                            .foregroundStyle(.secondary)
-                    }
-
-                    Spacer(minLength: 0)
-                }
-                .padding(10)
-                .background(Color.cyan.opacity(0.09), in: RoundedRectangle(cornerRadius: 13, style: .continuous))
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel("Natural 50, 50 millimetres")
-                .accessibilityHint("Fixture example; no selection mutation is sent by this native slice")
-            }
-
-        case .group(.stage):
-            emptyPanelMessage("No mapped choices in this fixture.", assetName: ParameterGroup.stage.assetName, tint: .purple)
-
-        case .group(.finish):
-            emptyPanelMessage("No mapped choices in this fixture.", assetName: ParameterGroup.finish.assetName, tint: .orange)
-
-        case .ratio:
-            outputPanelMessage(
-                title: "\(ratioValue) aspect ratio",
-                symbol: "rectangle.portrait",
-                tint: .cyan,
-                note: "UI hook only — the native draft bridge remains unchanged."
-            )
-
-        case .resolution:
-            outputPanelMessage(
-                title: "\(resolutionValue) resolution target",
-                symbol: "square.resize",
-                tint: .blue,
-                note: "UI hook only — the native draft bridge remains unchanged."
-            )
-
-        case .reference:
-            outputPanelMessage(
-                title: "Reference binding hook",
-                symbol: "photo.badge.plus",
-                tint: .orange,
-                note: "Future @ references can attach here without changing compiler semantics."
-            )
-        }
-    }
-
-    private func emptyPanelMessage(_ message: String, assetName: String, tint: Color) -> some View {
-        HStack(spacing: 10) {
-            nativeAsset(named: assetName)
-                .resizable()
-                .scaledToFit()
-                .frame(width: 58, height: 52)
-                .accessibilityHidden(true)
-
-            Text(message)
-                .font(.system(size: 12, weight: .medium, design: .rounded))
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-
-    private func outputPanelMessage(title: String, symbol: String, tint: Color, note: String) -> some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: symbol)
-                .font(.system(size: 17, weight: .semibold))
-                .foregroundStyle(tint)
-                .frame(width: 34, height: 34)
-                .background(tint.opacity(0.14), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-                .accessibilityHidden(true)
-
-            VStack(alignment: .leading, spacing: 3) {
-                Text(title)
+                Text(value)
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
-                Text(note)
-                    .font(.system(size: 11, weight: .medium, design: .rounded))
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+
+                if selected {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(accent)
+                        .accessibilityHidden(true)
+                }
             }
+            .padding(.horizontal, 13)
+            .frame(minHeight: 38)
+            .background(
+                selected ? accent.opacity(0.15) : Color.white.opacity(0.06),
+                in: RoundedRectangle(cornerRadius: 13, style: .continuous)
+            )
+            .contentShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
         }
+        .buttonStyle(CleanButtonStyle(reduceMotion: reduceMotion))
+        .accessibilityLabel(value)
+        .accessibilityValue(selected ? "selected" : "not selected")
+        .accessibilityHint("Fixture option; compiler selection is not wired in this native slice")
+    }
+
+    private var selectorEmptySlot: some View {
+        HStack(spacing: 8) {
+            Circle()
+                .fill(Color.white.opacity(0.18))
+                .frame(width: 8, height: 8)
+                .accessibilityHidden(true)
+
+            Text("—")
+                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                .foregroundStyle(.secondary)
+        }
+        .padding(.horizontal, 13)
+        .frame(minHeight: 38)
+        .background(
+            Color.white.opacity(0.04),
+            in: RoundedRectangle(cornerRadius: 13, style: .continuous)
+        )
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("No mapped option")
     }
 
     private func nativeAsset(named name: String) -> Image {
@@ -566,12 +495,6 @@ struct CueView<Bridge: NativeRuntimeBridge>: View {
                 promptHookButton(symbol: "@", label: "Reference mentions", focus: .mention, assist: .mention)
             }
 
-            if let promptAssist {
-                Text(promptAssist.title)
-                    .font(.system(size: 10, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.cyan)
-                    .transition(.opacity)
-            }
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -614,7 +537,7 @@ struct CueView<Bridge: NativeRuntimeBridge>: View {
                 }
                 .foregroundStyle(Color.black)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color.cyan.opacity(0.92), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .background(accent, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
                 .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
             }
             .buttonStyle(CleanButtonStyle(reduceMotion: reduceMotion))
@@ -622,7 +545,7 @@ struct CueView<Bridge: NativeRuntimeBridge>: View {
             .accessibilityIdentifier("cue-apply")
             .accessibilityLabel(applied ? "Applied" : "Apply")
             .help(applied ? "Applied" : "Apply")
-            .frame(maxWidth: .infinity, minHeight: 132)
+            .frame(maxWidth: .infinity)
 
             Button(action: openPreview) {
                 Image(systemName: previewVisible ? "eye.slash" : "eye")
@@ -638,7 +561,6 @@ struct CueView<Bridge: NativeRuntimeBridge>: View {
             .accessibilityLabel(previewVisible ? "Hide Preview" : "Preview")
             .help(previewVisible ? "Hide Preview" : "Preview")
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
     private var previewSection: some View {
@@ -719,27 +641,6 @@ struct CueView<Bridge: NativeRuntimeBridge>: View {
             withAnimation(surfaceAnimation) {
                 applied = false
             }
-        }
-    }
-}
-
-private struct CueShellSurface<S: InsettableShape>: ViewModifier {
-    let shape: S
-    let tint: Color
-    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
-
-    func body(content: Content) -> some View {
-        if #available(macOS 26.0, *), !reduceTransparency {
-            content
-                .background(shape.fill(Color.black.opacity(0.22)))
-                .glassEffect(.regular.tint(tint.opacity(0.13)), in: shape)
-                .clipShape(shape)
-                .shadow(color: .black.opacity(0.34), radius: 28, y: 15)
-        } else {
-            content
-                .background(shape.fill(Color(red: 0.055, green: 0.075, blue: 0.12)))
-                .clipShape(shape)
-                .shadow(color: .black.opacity(0.42), radius: 24, y: 13)
         }
     }
 }

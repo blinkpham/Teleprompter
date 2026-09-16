@@ -1,5 +1,20 @@
 # Native Cue witness — 2026-09-16
 
+## Current Sol-gated visual reset witness
+
+Sol reviewed the latest visual objections before this implementation pass and returned **NOT CLEAN** for the previous native presentation. The required correction was to remove the enclosing Cue surface, use compact upward slot rows instead of a selector well, remove repeated axis headings/subtitles, use one restrained orange accent family, and make the action column track the left block's intrinsic height.
+
+The packaged app was then rebuilt and visually inspected in these states:
+
+- Clear default: the transparent `NSPanel` shows individually bounded controls only; the root `CueShellSurface` and window shadow are gone.
+- Optics open: a compact `Natural 50` slot appears above the group row. It has one value label and selected state; no repeated `Focal` heading or development copy is visible.
+- Stage open: the unavailable state is reduced to a minimal dash slot rather than an explanatory panel.
+- Long prompt: a four-line prompt increases the left block and the orange Apply/Preview column follows the same height.
+- Color/focus: orange owns Create, open/selected slots, Apply, and the expansion treatment. The system blue focus ring is disabled for the product buttons; the prompt caret remains native text-editing feedback.
+- Generated art: the accepted Optics/Stage/Finish rasters remain only in the collapsed family controls; no family raster is repeated as option-specific Natural 50 art.
+
+This is a lead visual witness after Sol's design gate, not a new Sol post-change acceptance verdict. It supports the requested visual direction at the observed native window size. Edit-operation compilation, exact Apply → Preview → Copy parity, persistence, Reduced Motion/Transparency, VoiceOver/IME, physical keyboard, edge/display behavior, and formal Liquid Glass branch identity remain open.
+
 ## Current lead correction witness — hierarchy and adaptive behavior
 
 This is a direct packaged-app observation after the user’s latest layout correction. It supersedes the prior visual ordering described below while preserving the earlier asset and contour evidence.

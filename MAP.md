@@ -3,7 +3,21 @@
 Goal: Implement the Teleprompter upgrade: dark-only Cue Create/Edit, shortcut spotlight, redesigned library, generated artwork, and structured long-term curation.
 Updated: 2026-09-16
 
-## Current checkpoint — native Cue hierarchy correction (2026-09-16)
+## Current checkpoint — Sol-gated visual reset (2026-09-16)
+
+- Sol reviewed the latest visual objections before implementation and returned **NOT CLEAN** for the previous native pass. The required correction was: remove the enclosing Cue surface, use compact upward slot rows without repeated headings or axis subtitles, keep family rasters only in the collapsed group controls, use one restrained orange accent family, and let the action column follow the left block's intrinsic height.
+- The native pass now removes the root `CueShellSurface` and window shadow; the transparent `NSPanel` shows individually bounded controls only. Expanded Optics/Stage/Finish content is a compact slot row with one value label or a minimal dash state, not a background well or explanatory panel copy.
+- Visible `Focal`, `Composition`, and `Look` subtitles are gone. Orange owns active mode, open/selected slots, Apply, and expansion emphasis; accepted generated rasters retain their original identity colors.
+- Direct packaged-app inspection shows the clear default state, compact upward Optics slot, minimal Stage unavailable state, and dynamic action-column height matching both the expanded selector and a four-line prompt. The latest pass is visually improved and directly observed; a post-change Sol verdict is still separate from this lead witness.
+
+- The latest user correction is implemented in `native/TeleprompterNative/Sources/TeleprompterNative/CueView.swift`: the mode switch is now the only header control; no visible Cue title or brand remains.
+- Detailed Optics/Stage/Finish panels now open above the three group buttons with a spring transition. The prompt bar and right action column keep their placement while the panel is open; the AppKit/window edge is not used as a product control border.
+- Ratio, Resolution, Add Reference, `/`, and `@` now live inside one adaptive prompt bar. Ratio and Resolution are value-only compact menus (`4:5`, `2K`), all compact controls share a 34-point control height, and the prompt grows from one through six lines without clipping.
+- Apply and Preview are a fixed-width right column: Apply is the tall primary action and Preview is the icon-only secondary action below it. The group title cards keep one row height and the accepted v2 generated Optics, Stage, and Finish rasters; utility actions remain native SF Symbols.
+- Edit mode now exposes multi-selectable group operations in the native UI while retaining the Create layout. One detail panel can be open at a time, and selection state remains visible for multiple chosen operations. The bridge still only publishes the existing `set-what` command; Edit operation compilation remains an explicitly open contract seam.
+- Direct packaged-app observations verified the collapsed default, upward Optics and Stage panels, Edit multi-select state, value menus, and a long wrapped prompt. Focused checks pass: `npm run typecheck`, `npm run test:logic` (79 tests), `npm run build`, `swift build -c debug`, and native packaging. This is a lead witness for the layout correction, not a new Sol verdict.
+
+## Prior checkpoint — native Cue hierarchy correction (2026-09-16)
 
 - The latest user correction is implemented in `native/TeleprompterNative/Sources/TeleprompterNative/CueView.swift`: the mode switch is now the only header control; no visible Cue title or brand remains.
 - Detailed Optics/Stage/Finish panels now open above the three group buttons with a spring transition. The prompt bar and right action column keep their placement while the panel is open; the AppKit/window edge is not used as a product control border.

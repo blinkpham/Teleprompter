@@ -18,6 +18,19 @@ The user rejected the prior in-flow placement because it moved the existing cont
 
 This pass intentionally does not invent a new bridge command. The UI exposes the Edit selection state, but the existing native bridge still publishes only `set-what`; edit-operation compilation remains a contract decision for the next plan wave.
 
+## Sol design gate before the latest visual pass
+
+Sol reviewed these objections before source changes and returned **NOT CLEAN** for the previous native presentation. Sol's implementation gate was:
+
+- remove the enclosing Cue surface completely; keep the transparent `NSPanel` and individually bounded controls;
+- keep the accepted v2 rasters only in the collapsed Optics/Stage/Finish family controls;
+- use compact text-led selector slots for options that have no genuine option-specific imagery, with one value label and selected state;
+- remove repeated `Focal`, `Composition`, `Look`, development, UI-hook, and explanatory copy from visible product UI;
+- use one restrained orange family for active mode, selected slots, Apply, focus emphasis, and expansion;
+- expand one slot row upward with coordinated elastic motion; let the action column match the left block's measured height, excluding compact Ratio/Resolution menus.
+
+The lead implemented that gate and directly inspected the packaged default, Optics slot, minimal Stage state, and four-line prompt. This is a post-gate lead witness, not a new Sol acceptance verdict.
+
 ## Success means
 
 - The final Sol verdict and the direct native screenshots are treated as the source of truth for the bounded Cue parity fix.
@@ -76,8 +89,8 @@ Additional user requirements remain active:
 
 - Lead commit `9bd7e24`: native v2 asset packaging/loading, bounded contour repair, and dated native witness.
 - Lead commit `69a45c7`: Batch 002 lead review, kept proposed/reference-only.
-- The current lead correction is in `native/TeleprompterNative/Sources/TeleprompterNative/CueView.swift`; it is not yet represented by a new lead commit at the time this brief is being prepared.
-- Direct packaged-app observations verified the collapsed Create state, the upward Optics and Stage panels, the fixed-width action column, Edit multi-select state, the value menus, and a long prompt wrapping inside the bar. The prior dated image evidence remains valid for the generated v2 artwork and contour fix; the new observation is recorded in the current native witness update.
+- The current visual correction is in `native/TeleprompterNative/Sources/TeleprompterNative/CueView.swift` and `NativePanel.swift`; it removes the root Cue surface and window shadow, replaces the selector well with compact slots, strips visible axis subtitles, applies orange as the shared accent, and derives the action-column height from the left block's intrinsic layout.
+- Direct packaged-app observations verified the clear Create state, upward Optics slot, minimal Stage unavailable state, dynamic action height for selector expansion and long prompt wrapping, orange focus/selection treatment, and preserved v2 family artwork. The prior dated image evidence remains valid for the generated v2 artwork and contour fix; the new observation is recorded in the current native witness update.
 - Verification for this correction: `npm run typecheck`, `npm run test:logic` (16 files, 79 tests), `npm run build`, `swift build --package-path native/TeleprompterNative -c debug`, and `native/TeleprompterNative/Scripts/package-app.sh` all pass.
 - Current native witness ceiling remains B01–B03 partial; B04–B05 unwitnessed; no full N01–N30 passes. Reduced Motion/Transparency, full Liquid Glass branch identity, VoiceOver/IME, physical keyboard, search, adaptive edge/display behavior, persistence, and clipboard/compiler parity remain open.
 
@@ -98,7 +111,7 @@ The six practical illustration requests remain blocked. The built-in image route
 
 - Native macOS SwiftUI/AppKit is the primary route; Electron is compatibility evidence only.
 - Do not overwrite or reset existing work, source material, historical plans, or user data.
-- Do not contact Astra for progress announcements or partial results. After the lead correction is committed and the final checks are recorded, send exactly one bounded continuation message with this brief and its evidence; Astra should decide the next plan wave from the complete state.
+- Do not contact Astra for progress announcements or partial results. After this Sol-gated visual correction is committed and the final checks are recorded, send exactly one bounded continuation message with this brief and its evidence; Astra should decide the next plan wave from the complete state.
 - Stop and return a decision only if an exact model route, a materially different architecture, destructive data operation, or unresolved ownership conflict is required.
 
 ## Targeted verification
